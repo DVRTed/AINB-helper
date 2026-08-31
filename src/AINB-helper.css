@@ -620,3 +620,39 @@
 .ainb-seg-unknown {
   background: var(--background-color-disabled, #c8ccd1);
 }
+
+
+.ainb-llm-dialog.cdx-dialog__window,
+.ainb-llm-dialog .cdx-dialog__window,
+.ainb-llm-dialog {
+  width: 680px !important;
+  max-width: 90vw !important;
+}
+
+.ainb-llm-dialog .cdx-combobox,
+.ainb-llm-dialog .cdx-text-input,
+.ainb-llm-dialog .cdx-text-area,
+.ainb-llm-dialog .cdx-field {
+  width: 100% !important;
+}
+
+.ainb-preview-link-wrap {
+  font-size: 0.875em;
+  margin: 4px 0 8px;
+}
+
+.ainb-preview-box {
+  border: 1px solid #a2a9b1;
+  border-radius: 2px;
+  padding: 0.75em 1em;
+  margin-bottom: 0.75em;
+  background: #f8f9fa;
+  max-height: 300px;
+  overflow-y: auto;
+  font-size: 0.9em;
+}
+
+.skin-theme-clientpref-night .ainb-preview-box {
+  background: #2a2a2a;
+  border-color: #4a4a4a;
+}
