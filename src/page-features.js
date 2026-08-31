@@ -167,3 +167,18 @@ if (
   init_row_editing();
   init_progress_bar();
 }
+
+if (mw.config.get("wgNamespaceNumber") === 0) {
+  const llm_portlet_link = mw.util.addPortletLink(
+    "p-cactions",
+    "#",
+    "LLM tag/prod",
+    "t-llm-tag-prod",
+    "LLM tag/prod helper",
+  );
+
+  $(llm_portlet_link).on("click", function (e) {
+    e.preventDefault();
+    create_llm_tag_prod_app();
+  });
+}
