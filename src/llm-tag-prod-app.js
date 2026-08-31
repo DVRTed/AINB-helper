@@ -90,11 +90,11 @@ function create_llm_tag_prod_app() {
           if (res.parse?.text?.["*"]) {
             this.preview_html = res.parse.text["*"];
           } else {
-            this.preview_html = "<em>Could not generate preview.</em>";
+            this.preview_html = "Could not generate preview.";
           }
         } catch (err) {
           console.error("Preview error:", err);
-          this.preview_html = `<div class="ainb-error">Preview error: ${err.message}</div>`;
+          this.preview_html = `Preview error: ${err.message}`;
         } finally {
           this.preview_loading = false;
         }
@@ -118,7 +118,7 @@ function create_llm_tag_prod_app() {
           location.reload();
           this.handle_dialog_close();
         } catch (e) {
-          this.save_error = "Error submitting edit: " + e.message;
+          this.save_error = "Error submitting edit: " + e;
           console.error(e);
         } finally {
           this.saving = false;
