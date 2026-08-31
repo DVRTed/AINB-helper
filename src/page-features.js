@@ -1,0 +1,166 @@
+// for nicely formatted CSS, see [[User:DVRTed/AINB-helper.css]]
+// BUILD:DEV
+mw.loader.load("http://localhost:1212/repo/AINB-helper.css", "text/css");
+// END:BUILD
+
+// BUILD:PROD
+mw.loader.load(
+  "//en.wikipedia.org/w/index.php?title=User:DVRTed/AINB-helper.css&action=raw&ctype=text/css",
+  "text/css",
+);
+// END:BUILD
+
+// workaround to fix flash of unstyled content on progress bar
+mw.util.addCSS(`
+    .ainb-progress-wrap { margin-bottom: 1em; padding: 8px 12px; border: 1px solid var(--border-color-base, #a2a9b1); border-radius: 4px; }
+    .ainb-progress-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .ainb-progress-percent { font-size: 1.8em; font-weight: 700; line-height: 1; color: var(--color-base, #202122); }
+    .ainb-progress-top-text { display: flex; flex-direction: column; }
+    .ainb-progress-title { font-weight: 600; font-size: 0.9em; }
+    .ainb-progress-stats { font-size: 0.85em; color: var(--color-subtle, #54595d); }
+    .ainb-progress-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: #eaecf0; }
+    .ainb-seg { height: 100%; }
+    .ainb-seg-completed { background: var(--background-color-success, #14866d); }
+    .ainb-seg-unnecessary, .ainb-seg-unknown { background: var(--background-color-disabled, #c8ccd1); }
+    .ainb-seg-ongoing { background: var(--background-color-progressive, #36c); }
+    .ainb-seg-todo { background: var(--background-color-notice, #fc3); }
+    .ainb-progress-legend { display: flex; gap: 10px; margin-top: 6px; font-size: 0.8em; color: var(--color-subtle, #54595d); text-transform: capitalize; }
+    .ainb-progress-legend i.ainb-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 3px; }
+    .ainb-progress-credit { font-size: 0.75em; color: var(--color-subtle, #54595d); font-weight: normal; text-align: right; }
+    .ainb-progress-hide-row { margin-top: 6px; font-size: 0.85em; }
+    .ainb-hide-resolved .ainb-row-resolved { display: none; }
+  `);
+
+function init_row_editing() {
+  $('tr[class*="aic-row-"]').each(function () {
+    const $thead = $(this).closest("table").find("thead");
+
+    if ($thead.find("th.ainb-action-header").length === 0) {
+      $thead.find("tr").prepend('<th class="ainb-action-header">Action</th>');
+    }
+
+    const $row = $(this);
+    if ($row.find(".ainb-edit-btn").length) return;
+
+    const $first_cell = $row.find("td").first();
+    const $link = $first_cell.find("a").first();
+    if (!$link.length) return;
+
+    const $edit_td = $("<td>").addClass("ainb-action-cell");
+    $first_cell.before($edit_td);
+
+    const $edit_button = $("<button>")
+      .addClass("ainb-edit-btn")
+      .text("✎")
+      .attr("title", "Edit this row")
+      .on("click", (e) => {
+        e.preventDefault();
+        create_edit_table_app($link.text().trim());
+      });
+
+    $edit_td.append($edit_button);
+  });
+}
+
+function get_row_status($row) {
+  const match = $row.attr("class")?.match(/\baic-row-(\S+)/);
+  return match ? match[1] : "unknown";
+}
+
+function init_progress_bar() {
+  const STATUS_KEYS = [
+    "completed",
+    "unnecessary",
+    "ongoing",
+    "todo",
+    "unknown",
+  ];
+
+  $("table")
+    .has('tr[class*="aic-row-"]')
+    .each(function () {
+      const $table = $(this);
+      const stats = Object.fromEntries(STATUS_KEYS.map((k) => [k, 0]));
+
+      const $rows = $table.find('tr[class*="aic-row-"]');
+
+      $rows.each(function () {
+        const status = get_row_status($(this));
+        const key = status in stats ? status : "unknown";
+        stats[key]++;
+        if (key === "completed" || key === "unnecessary") {
+          $(this).addClass("ainb-row-resolved");
+        }
+      });
+
+      const total = Object.values(stats).reduce((a, b) => a + b, 0);
+      if (!total) return;
+
+      const resolved = stats.completed + stats.unnecessary;
+      const percent = Math.round((resolved / total) * 100);
+      const active = STATUS_KEYS.filter((key) => stats[key] > 0);
+
+      const segments = active
+        .map(
+          (key) =>
+            `<div class="ainb-seg ainb-seg-${key}" style="width:${(stats[key] / total) * 100}%" title="${stats[key]} ${key}"></div>`,
+        )
+        .join("");
+
+      const legend = active
+        .map(
+          (key) =>
+            `<span><i class="ainb-dot ainb-seg-${key}"></i>${key} (${stats[key]})</span>`,
+        )
+        .join("");
+
+      const $bar = $(`
+      <div class="ainb-progress-wrap">
+        <div class="ainb-progress-top">
+          <span class="ainb-progress-percent">${percent}%</span>
+          <div class="ainb-progress-top-text">
+            <div class="ainb-progress-title">Progress</div>
+            <div class="ainb-progress-stats">${resolved} / ${total} resolved</div>
+          </div>
+        </div>
+        <div class="ainb-progress-bar">${segments}</div>
+        <div class="ainb-progress-legend">${legend}</div>
+        <div class="ainb-progress-credit">Generated by <a href="${mw.util.getUrl("User:DVRTed/AINB-helper")}">AINB-helper</a></div>
+        <div class="ainb-progress-hide-row">
+          <label><input type="checkbox" class="ainb-hide-resolved-cb"> Hide resolved entries</label>
+        </div>
+      </div>
+    `);
+
+      $bar.find(".ainb-hide-resolved-cb").on("change", function () {
+        $table.toggleClass("ainb-hide-resolved", $(this).is(":checked"));
+      });
+
+      $table.before($bar);
+    });
+}
+
+const portlet_link = mw.util.addPortletLink(
+  "p-tb",
+  "#",
+  "New AINB tracking",
+  "t-ainb-tracking",
+  "Generate tracking subpage for AINB",
+);
+
+$(portlet_link).on("click", function (e) {
+  e.preventDefault();
+  create_main_app();
+});
+
+const wgPageName = mw.config.get("wgPageName");
+
+// if we're on an AINB tracking subpage, or the debug page,
+// enable editing rows
+if (
+  wgPageName.startsWith("Wikipedia:AI_noticeboard/") ||
+  wgPageName === DEBUG_PAGE
+) {
+  init_row_editing();
+  init_progress_bar();
+}
