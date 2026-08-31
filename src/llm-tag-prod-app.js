@@ -64,7 +64,7 @@ function create_llm_tag_prod_app() {
           this.editable_wikitext = `{{subst:Prod llm\n|reason=[[WP:LLMPRV|Presumptive removal of LLM-generated content]], see [[${target_link}]]. Feel free to reinstate by following [[WP:LLMPRVOBJ|the procedures for disputing presumptive removal of LLM-generated content]].}}`;
           this.editable_summary = `[[WP:LLMPRV|Presumptive removal of LLM-generated content]], see [[${target_link}]]. Feel free to reinstate by following [[WP:LLMPRVOBJ|the procedures for disputing presumptive removal of LLM-generated content]].`;
         } else {
-          this.editable_wikitext = `{{AI-generated |reason= [[${target_link}]] ([[WP:WWT]] is useful) |{{subst:DATE}}}}`;
+          this.editable_wikitext = `{{AI-generated |reason= [[${target_link}]] |{{subst:DATE}}}}`;
           this.editable_summary = `Added AI tag, see [[${target_link}]]`;
         }
 
