@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// concatenate src/ modules into AINB-helper.js, copy CSS
+// concatenate src/ modules into dist/AINB-helper.js, copy CSS
 
 const fs = require("fs");
 const path = require("path");
