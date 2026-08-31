@@ -1,6 +1,9 @@
 // for nicely formatted CSS, see [[User:DVRTed/AINB-helper.css]]
 // BUILD:DEV
-mw.loader.load("http://localhost:1212/repo/AINB-helper.css", "text/css");
+mw.loader.load(
+  "http://localhost:1212/AINB-helper/dist/AINB-helper.css",
+  "text/css",
+);
 // END:BUILD
 
 // BUILD:PROD
