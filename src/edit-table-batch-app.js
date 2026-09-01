@@ -74,8 +74,16 @@ function create_batch_edit_table_app(articles) {
 
           const rows = [];
           for (const article of articles) {
-            const regex = get_article_row_regex(article);
-            const match = wikitext.match(regex);
+            const global_regex = get_article_row_global_regex(article);
+            const global_matches = [...wikitext.matchAll(global_regex)];
+
+            if (global_matches.length > 1) {
+              const link = `<a href="${mw.util.getUrl("User:DVRTed/AINB-helper#Known_issues")}" target="_blank" rel="noopener noreferrer">User:DVRTed/AINB-helper#Known_issues</a>`;
+              this.error = `There are some duplicated entries, so the script cannot batch-edit this table; see ${link}.`;
+              return;
+            }
+
+            const match = global_matches[0];
 
             if (match) {
               rows.push({
@@ -160,7 +168,7 @@ function generate_batch_edit_table_template() {
       <cdx-progress-bar inline></cdx-progress-bar>
     </div>
 
-    <div v-else-if="error" class="ainb-error">{{ error }}</div>
+    <div v-else-if="error" class="ainb-error" v-html="error"></div>
 
     <table v-else class="ainb-batch-edit-table-grid">
       <thead>
