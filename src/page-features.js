@@ -35,34 +35,57 @@ mw.util.addCSS(`
   `);
 
 function init_row_editing() {
-  $('tr[class*="aic-row-"]').each(function () {
-    const $thead = $(this).closest("table").find("thead");
-
-    if ($thead.find("th.ainb-action-header").length === 0) {
+  $("table")
+    .has('tr[class*="aic-row-"]')
+    .each(function () {
+      const $table = $(this)
+      const $thead = $table.find("thead");
       $thead.find("tr").prepend('<th class="ainb-action-header">Action</th>');
-    }
 
-    const $row = $(this);
-    if ($row.find(".ainb-edit-btn").length) return;
+      // batch edit button; populate array of article names.
+      const articles = $table
+        .find('tr[class*="aic-row-"]')
+        .map(function () {
+          return $(this).find("a").first().text().trim();
+        })
+        .get()
+        .filter(Boolean);
 
-    const $first_cell = $row.find("td").first();
-    const $link = $first_cell.find("a").first();
-    if (!$link.length) return;
+      if (articles.length) {
+        const $button = $(
+          '<button type="button" class="cdx-button cdx-button--action-progressive">',
+        )
+          .text("Batch edit")
+          .on("click", (e) => {
+            e.preventDefault();
+            create_batch_edit_table_app(articles);
+          });
+        $table.before($button);
+      };
 
-    const $edit_td = $("<td>").addClass("ainb-action-cell");
-    $first_cell.before($edit_td);
+      // single-row edit buttons
+      $table.find('tr[class*="aic-row-"]').each(function () {
 
-    const $edit_button = $("<button>")
-      .addClass("ainb-edit-btn")
-      .text("✎")
-      .attr("title", "Edit this row")
-      .on("click", (e) => {
-        e.preventDefault();
-        create_edit_table_app($link.text().trim());
+        const $row = $(this);
+        const $first_cell = $row.find("td").first();
+        const $link = $first_cell.find("a").first();
+        if (!$link.length) return;
+
+        const $edit_td = $("<td>").addClass("ainb-action-cell");
+        $first_cell.before($edit_td);
+
+        const $edit_button = $("<button>")
+          .addClass("ainb-edit-btn")
+          .text("✎")
+          .attr("title", "Edit this row")
+          .on("click", (e) => {
+            e.preventDefault();
+            create_edit_table_app($link.text().trim());
+          });
+
+        $edit_td.append($edit_button);
       });
-
-    $edit_td.append($edit_button);
-  });
+    })
 }
 
 function get_row_status($row) {
@@ -164,6 +187,6 @@ if (
   wgPageName.startsWith("Wikipedia:AI_noticeboard/") ||
   wgPageName === DEBUG_PAGE
 ) {
-  init_row_editing();
   init_progress_bar();
+  init_row_editing();
 }
