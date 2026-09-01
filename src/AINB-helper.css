@@ -620,3 +620,70 @@
 .ainb-seg-unknown {
   background: var(--background-color-disabled, #c8ccd1);
 }
+
+.ainb-batch-edit-table,
+.ainb-batch-edit-table .cdx-dialog,
+.ainb-batch-edit-table .cdx-dialog__window {
+  max-width: 1200px !important;
+  width: min(95vw, 1200px) !important;
+}
+
+.ainb-batch-edit-table-grid {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #eaecf0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.ainb-batch-edit-table-grid th,
+.ainb-batch-edit-table-grid td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #eaecf0;
+}
+
+.ainb-batch-edit-table-grid th {
+  background: #f8f9fa;
+  font-weight: 700;
+}
+
+.ainb-batch-edit-table-grid tr:last-child td {
+  border-bottom: none;
+}
+
+.ainb-batch-edit-table-grid td:first-child {
+  width: 30%;
+  font-weight: 600;
+}
+
+.ainb-batch-edit-table-grid td:nth-child(2) {
+  width: 22%;
+}
+
+.ainb-batch-edit-table-grid cdx-select,
+.ainb-batch-edit-table-grid cdx-text-area {
+  display: block;
+  width: 100%;
+}
+
+.ainb-batch-edit-table-grid a {
+  color: #36c;
+  text-decoration: none;
+}
+
+.ainb-batch-edit-table-grid a:hover {
+  text-decoration: underline;
+}
+
+.ainb-batch-edit-wrap {
+  margin: 0.5em 0 1em;
+}
+
+.ainb-batch-edit-btn:focus {
+  outline: 2px solid #36c;
+  outline-offset: 2px;
+}

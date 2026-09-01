@@ -15,6 +15,7 @@ const modules = [
   "shared.js",
   "main-app.js",
   "edit-table-app.js",
+  "edit-table-batch-app.js",
   "page-features.js",
 ];
 
