@@ -1,3 +1,12 @@
+function get_article_row_regex(article) {
+  const escaped_article = mw.util.escapeRegExp(article)
+  return new RegExp(
+    `\\{\\{AIC article row\\s*\\|\\s*(?:article=)?\\s*${escaped_article}\\s*(?:\\|\\s*(?:status=)?\\s*([^|}]*))?(?:\\s*\\|\\s*(?:notes=)?\\s*([^}]*))?\\s*\\}\\}`,
+    "i",
+  );
+}
+
+
 function create_edit_table_app(article) {
   const {
     CdxButton,
@@ -66,13 +75,6 @@ function create_edit_table_app(article) {
         return status?.value || "";
       },
 
-      get_article_row_regex(escaped_article) {
-        return new RegExp(
-          `\\{\\{AIC article row\\s*\\|\\s*(?:article=)?\\s*${escaped_article}\\s*(?:\\|\\s*(?:status=)?\\s*([^|}]*))?(?:\\s*\\|\\s*(?:notes=)?\\s*([^}]*))?\\s*\\}\\}`,
-          "i",
-        );
-      },
-
       async load_row_data() {
         this.loading = true;
         this.error = "";
@@ -86,8 +88,7 @@ function create_edit_table_app(article) {
           });
 
           const wikitext = result.parse.wikitext["*"];
-          const escaped_article = mw.util.escapeRegExp(this.article);
-          const regex = this.get_article_row_regex(escaped_article);
+          const regex = get_article_row_regex(this.article);
 
           const match = wikitext.match(regex);
 
@@ -112,8 +113,7 @@ function create_edit_table_app(article) {
 
         try {
           const page_name = mw.config.get("wgPageName");
-          const escaped_article = mw.util.escapeRegExp(this.article);
-          const regex = this.get_article_row_regex(escaped_article);
+          const regex = get_article_row_regex(this.article);
 
           const new_row = `{{AIC article row|article=${this.article}|status=${this.status}|notes=${this.notes}}}`;
           const new_wikitext = this.wikitext.replace(regex, new_row);
