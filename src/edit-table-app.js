@@ -1,11 +1,10 @@
 function get_article_row_regex(article) {
-  const escaped_article = mw.util.escapeRegExp(article)
+  const escaped_article = mw.util.escapeRegExp(article);
   return new RegExp(
     `\\{\\{AIC article row\\s*\\|\\s*(?:article=)?\\s*${escaped_article}\\s*(?:\\|\\s*(?:status=)?\\s*([^|}]*))?(?:\\s*\\|\\s*(?:notes=)?\\s*([^}]*))?\\s*\\}\\}`,
     "i",
   );
 }
-
 
 function create_edit_table_app(article) {
   const {

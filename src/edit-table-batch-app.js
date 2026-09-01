@@ -114,13 +114,18 @@ function create_batch_edit_table_app(articles) {
             new_wikitext = new_wikitext.replace(regex, new_row);
           }
 
-          const changed_rows = this.original_rows.filter(row => {
-            const current_row = this.rows.find(e => e.article === row.article)
+          const changed_rows = this.original_rows.filter((row) => {
+            const current_row = this.rows.find(
+              (e) => e.article === row.article,
+            );
 
-            return row.status !== current_row.status || row.notes !== current_row.notes
-          })
+            return (
+              row.status !== current_row.status ||
+              row.notes !== current_row.notes
+            );
+          });
 
-          const summary = `Batch edited ${changed_rows.length} ${changed_rows.length > 1 ? 'rows' : 'row'} ${APP_AD}`;
+          const summary = `Batch edited ${changed_rows.length} ${changed_rows.length > 1 ? "rows" : "row"} ${APP_AD}`;
 
           await api.postWithEditToken({
             action: "edit",
