@@ -136,7 +136,7 @@ function create_llm_tag_prod_app() {
 
           if (parse_res.parse?.sections) {
             parse_res.parse.sections.forEach((section) => {
-              suggestions.push(`Wikipedia:AI noticeboard#${section}`);
+              suggestions.push(`Wikipedia:AI noticeboard#${section.line}`);
             });
           }
 
