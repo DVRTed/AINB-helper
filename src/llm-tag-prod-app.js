@@ -135,13 +135,8 @@ function create_llm_tag_prod_app() {
           });
 
           if (parse_res.parse?.sections) {
-            parse_res.parse.sections.forEach((sec) => {
-              if (sec.line) {
-                const clean_line = sec.line.replace(/<[^>]+>/g, "").trim();
-                if (clean_line) {
-                  suggestions.push(`Wikipedia:AI noticeboard#${clean_line}`);
-                }
-              }
+            parse_res.parse.sections.forEach((section) => {
+              suggestions.push(`Wikipedia:AI noticeboard#${section}`);
             });
           }
 
