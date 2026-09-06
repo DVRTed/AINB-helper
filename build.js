@@ -15,7 +15,7 @@ const modules = [
   "shared.js",
   "main-app.js",
   "edit-table-app.js",
-  "llm-tag-prod-app.js",
+  "edit-table-batch-app.js",
   "page-features.js",
 ];
 
@@ -69,7 +69,7 @@ const output_js = `$(async () => {\n${parts.join("\n")}\n});\n// </nowiki>`;
 fs.mkdirSync(dist, { recursive: true });
 fs.writeFileSync(dist_js, output_js, "utf8");
 
-execFileSync("npx", ["--yes", "prettier", "--write", dist_js], {
+execFileSync("npx", ["--yes", "prettier@2", "--write", dist_js], {
   stdio: "inherit",
   cwd: __dirname,
 });

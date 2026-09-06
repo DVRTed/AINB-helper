@@ -125,6 +125,7 @@ function create_main_app() {
         return [
           { value: "smaller", label: "Unselect smaller edits" },
           { value: "tag", label: "Unselect edits by tag" },
+          { value: "non_creations", label: "Unselect non-creations" },
         ];
       },
       selected_tag_list() {
@@ -194,7 +195,20 @@ function create_main_app() {
           this.unselect_smaller_edits();
         } else if (value === "tag") {
           this.open_tag_dialog();
+        } else if (value === "non_creations") {
+          this.unselect_non_creations();
         }
+      },
+      unselect_non_creations() {
+        this.article_groups.forEach((group) => {
+          group.edits.forEach((edit) => {
+            const is_creation = edit.new !== undefined;
+            if (edit.selected && !is_creation) {
+              edit.selected = false;
+            }
+          });
+          this.update_group_selection(group);
+        });
       },
       open_tag_dialog() {
         this.selected_tags_map = Object.fromEntries(
@@ -282,7 +296,7 @@ function create_main_app() {
               ...(ucend_timestamp ? { ucend: ucend_timestamp } : {}),
               ...(ucstart_timestamp ? { ucstart: ucstart_timestamp } : {}),
               uclimit: "max",
-              ucprop: "ids|title|timestamp|comment|sizediff|tags",
+              ucprop: "ids|title|timestamp|comment|sizediff|tags|flags",
               ucdir: "older",
               ...continuation,
             };

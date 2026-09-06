@@ -1,3 +1,19 @@
+function get_article_row_regex(article) {
+  const escaped_article = mw.util.escapeRegExp(article);
+  return new RegExp(
+    `\\{\\{AIC article row\\s*\\|\\s*(?:article=)?\\s*${escaped_article}\\s*(?:\\|\\s*(?:status=)?\\s*([^|}]*))?(?:\\s*\\|\\s*(?:notes=)?\\s*([^}]*))?\\s*\\}\\}`,
+    "i",
+  );
+}
+
+function get_article_row_global_regex(article) {
+  const escaped_article = mw.util.escapeRegExp(article);
+  return new RegExp(
+    `\\{\\{AIC article row\\s*\\|\\s*(?:article=)?\\s*${escaped_article}\\s*(?:\\|\\s*(?:status=)?\\s*([^|}]*))?(?:\\s*\\|\\s*(?:notes=)?\\s*([^}]*))?\\s*\\}\\}`,
+    "ig",
+  );
+}
+
 function create_edit_table_app(article) {
   const {
     CdxButton,
@@ -66,13 +82,6 @@ function create_edit_table_app(article) {
         return status?.value || "";
       },
 
-      get_article_row_regex(escaped_article) {
-        return new RegExp(
-          `\\{\\{AIC article row\\s*\\|\\s*(?:article=)?\\s*${escaped_article}\\s*(?:\\|\\s*(?:status=)?\\s*([^|}]*))?(?:\\s*\\|\\s*(?:notes=)?\\s*([^}]*))?\\s*\\}\\}`,
-          "i",
-        );
-      },
-
       async load_row_data() {
         this.loading = true;
         this.error = "";
@@ -86,12 +95,14 @@ function create_edit_table_app(article) {
           });
 
           const wikitext = result.parse.wikitext["*"];
-          const escaped_article = mw.util.escapeRegExp(this.article);
-          const regex = this.get_article_row_regex(escaped_article);
+          const regex = get_article_row_global_regex(this.article);
+          const matches = [...wikitext.matchAll(regex)];
 
-          const match = wikitext.match(regex);
-
-          if (match) {
+          if (matches.length > 1) {
+            const link = `<a href="${mw.util.getUrl("User:DVRTed/AINB-helper#Known_issues")}" target="_blank" rel="noopener noreferrer">User:DVRTed/AINB-helper#Known_issues</a>`;
+            this.error = `This entry is duplicated, so it cannot be edited with the script; see ${link}.`;
+          } else if (matches.length === 1) {
+            const match = matches[0];
             this.raw_status = match[1]?.trim() || "requested";
             this.notes = match[2]?.trim() || "";
             this.wikitext = wikitext;
@@ -112,8 +123,7 @@ function create_edit_table_app(article) {
 
         try {
           const page_name = mw.config.get("wgPageName");
-          const escaped_article = mw.util.escapeRegExp(this.article);
-          const regex = this.get_article_row_regex(escaped_article);
+          const regex = get_article_row_regex(this.article);
 
           const new_row = `{{AIC article row|article=${this.article}|status=${this.status}|notes=${this.notes}}}`;
           const new_wikitext = this.wikitext.replace(regex, new_row);
@@ -170,7 +180,7 @@ function generate_edit_table_template() {
         <cdx-progress-bar inline></cdx-progress-bar>
       </div>
       
-      <div v-else-if="error" class="ainb-error">{{ error }}</div>
+      <div v-else-if="error" class="ainb-error" v-html="error"></div>
       
       <div v-else>
         <div class="ainb-form-field">
