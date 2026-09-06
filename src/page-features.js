@@ -191,7 +191,7 @@ if (
   init_row_editing();
 }
 
-if (mw.config.get("wgNamespaceNumber") === 0) {
+if ([0, 118].includes(mw.config.get("wgNamespaceNumber"))) {
   const llm_portlet_link = mw.util.addPortletLink(
     "p-cactions",
     "#",
