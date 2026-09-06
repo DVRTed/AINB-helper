@@ -77,19 +77,13 @@ function create_batch_edit_table_app(articles) {
             const global_regex = get_article_row_global_regex(article);
             const global_matches = [...wikitext.matchAll(global_regex)];
 
-            if (global_matches.length > 1) {
-              const link = `<a href="${mw.util.getUrl("User:DVRTed/AINB-helper#Known_issues")}" target="_blank" rel="noopener noreferrer">User:DVRTed/AINB-helper#Known_issues</a>`;
-              this.error = `There are some duplicated entries, so the script cannot batch-edit this table; see ${link}.`;
-              return;
-            }
-
             const match = global_matches[0];
-
             if (match) {
               rows.push({
                 article,
                 status: this.normalize_status(match[1]?.trim() || "requested"),
                 notes: match[2]?.trim() || "",
+                multiple_matches: global_matches.length > 1,
               });
             }
           }
@@ -117,9 +111,11 @@ function create_batch_edit_table_app(articles) {
           let new_wikitext = this.wikitext;
 
           for (const row of this.rows) {
-            const regex = get_article_row_regex(row.article);
-            const new_row = `{{AIC article row|article=${row.article}|status=${row.status}|notes=${row.notes || ""}}}`;
-            new_wikitext = new_wikitext.replace(regex, new_row);
+            if (!row.multiple_matches) {
+              const regex = get_article_row_regex(row.article);
+              const new_row = `{{AIC article row|article=${row.article}|status=${row.status}|notes=${row.notes || ""}}}`;
+              new_wikitext = new_wikitext.replace(regex, new_row);
+            }
           }
 
           const changed_rows = this.original_rows.filter((row) => {
@@ -127,6 +123,7 @@ function create_batch_edit_table_app(articles) {
               (e) => e.article === row.article,
             );
 
+            if (row.multiple_matches) return false;
             return (
               row.status !== current_row.status ||
               row.notes !== current_row.notes
@@ -185,12 +182,19 @@ function generate_batch_edit_table_template() {
               {{ row.article }}
             </a>
           </td>
-          <td>
-            <cdx-select v-model:selected="row.status" :menu-items="status_options" :disabled="saving"></cdx-select>
-          </td>
-          <td>
-            <cdx-text-area v-model="row.notes" rows="2" :disabled="saving"></cdx-text-area>
-          </td>
+          <template v-if="row.multiple_matches">
+            <td colspan="2" class="ainb-error">
+              Editing disabled because the entry is duplicated.
+            </td>
+          </template>
+          <template v-else>
+            <td>
+              <cdx-select v-model:selected="row.status" :menu-items="status_options" :disabled="saving"></cdx-select>
+            </td>
+            <td>
+              <cdx-text-area v-model="row.notes" rows="2" :disabled="saving"></cdx-text-area>
+            </td>
+          </template>
         </tr>
       </tbody>
     </table>
