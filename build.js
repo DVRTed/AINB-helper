@@ -16,6 +16,7 @@ const modules = [
   "main-app.js",
   "edit-table-app.js",
   "edit-table-batch-app.js",
+  "llm-tag-prod-app.js",
   "page-features.js",
 ];
 
