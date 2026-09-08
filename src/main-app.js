@@ -47,6 +47,8 @@ function create_main_app() {
         selected_tags_map: {},
         tag_dialog_open: false,
         tag_counts: {},
+        extra_notes: "",
+        notes_visible: false,
       };
     },
 
@@ -174,6 +176,13 @@ function create_main_app() {
           this.update_group_selection(group);
         });
       },
+      append_filter_note(text) {
+        const line = `* ${text}`;
+        this.extra_notes = this.extra_notes
+          ? `${this.extra_notes}\n${line}`
+          : line;
+        this.notes_visible = true;
+      },
       unselect_smaller_edits() {
         const input = prompt("Unselect edits smaller than (bytes):", "35");
         if (input === null) return;
@@ -188,6 +197,10 @@ function create_main_app() {
           });
           this.update_group_selection(group);
         });
+
+        this.append_filter_note(
+          `Edits smaller than +/- ${threshold} bytes were excluded.`,
+        );
       },
       handle_filter_menu_select(value) {
         this.filter_menu_selected = null;
@@ -209,6 +222,8 @@ function create_main_app() {
           });
           this.update_group_selection(group);
         });
+
+        this.append_filter_note("Non-creation edits were excluded.");
       },
       open_tag_dialog() {
         this.selected_tags_map = Object.fromEntries(
@@ -242,6 +257,10 @@ function create_main_app() {
           });
           this.update_group_selection(group);
         });
+
+        this.append_filter_note(
+          `Edits tagged "${[...tags_to_unselect].join('", "')}" were excluded.`,
+        );
 
         this.tag_dialog_open = false;
       },
@@ -426,7 +445,13 @@ function create_main_app() {
           }))
           .filter((group) => group.edits.length > 0);
 
-        let wikitext = `{{NOINDEX|visible=yes}}\nRelevant report and discussion may be viewable on the talk page.\n\n== Tracking list ==\n{{AIC article list|\n`;
+        let wikitext = `{{NOINDEX|visible=yes}}\nRelevant report and discussion may be viewable on the talk page.\n\n`;
+
+        wikitext += `== Tracking list ==\n`;
+        if (this.extra_notes.trim()) {
+          wikitext += `{{Notice |heading=Notes |\n${this.extra_notes.trim()}\n}}\n\n`
+        }
+        wikitext += `{{AIC article list|\n`
 
         selected_groups.forEach((group) => {
           const links = group.edits
@@ -534,6 +559,13 @@ function generate_main_template() {
         >Filter selected</cdx-menu-button>
         <span class="ainb-total-badge"><b>{{ total_selected }}</b> of {{ total_groups }} articles selected</span>
     </div>
+
+    <div v-if="notes_visible" class="ainb-notes-field">
+        <label for="ainb-extra-notes">Notes for tracking page (e.g., applied filters)</label>
+        <textarea id="ainb-extra-notes" v-model="extra_notes" rows="3"
+            placeholder="Text to be added above the tracker..."></textarea>
+    </div>
+    <cdx-button v-else weight="quiet" class="ainb-add-note-btn" @click="notes_visible = true">+ Add a note</cdx-button>
 
     <div class="ainb-step2-layout">
         <div class="ainb-article-list">
