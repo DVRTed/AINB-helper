@@ -736,3 +736,14 @@
   font-size: 0.8em;
   color: var(--color-subtle, #54595d);
 }
+
+.ainb-thread-context {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  background: #eaf3ff;
+  border: 1px solid #c8e1ff;
+  border-radius: 4px;
+}

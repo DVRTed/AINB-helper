@@ -10,6 +10,8 @@ function create_llm_tag_prod_app() {
   } = require("@wikimedia/codex");
 
   const subpage_options = [];
+  const LAST_THREAD_KEY = "ainb-llm-tag-last-thread";
+  const LAST_THREAD_TTL_MS = 3 * 60 * 60 * 1000;
 
   create_app({
     template: generate_llm_tag_prod_template(),
@@ -60,6 +62,12 @@ function create_llm_tag_prod_app() {
         let raw_subpage = this.subpage.trim();
         let target_link = raw_subpage;
 
+        mw.storage.setObject(LAST_THREAD_KEY, {
+          subpage: raw_subpage,
+          selected_option: this.selected_option,
+          ts: Date.now(),
+        });
+
         if (this.selected_option === "llm_prod") {
           this.editable_wikitext = `{{subst:Prod llm\n|reason=[[WP:LLMPRV|Presumptive removal of LLM-generated content]], see [[${target_link}]]. Feel free to reinstate by following [[WP:LLMPRVOBJ|the procedures for disputing presumptive removal of LLM-generated content]].}}`;
           this.editable_summary = `[[WP:LLMPRV|Presumptive removal of LLM-generated content]], see [[${target_link}]]. Feel free to reinstate by following [[WP:LLMPRVOBJ|the procedures for disputing presumptive removal of LLM-generated content]].`;
@@ -70,6 +78,10 @@ function create_llm_tag_prod_app() {
 
         this.show_preview = false;
         this.step = 2;
+      },
+      go_back_to_step1() {
+        mw.storage.remove(LAST_THREAD_KEY);
+        this.step = 1;
       },
       async toggle_preview() {
         if (this.show_preview) {
@@ -159,14 +171,19 @@ function create_llm_tag_prod_app() {
       },
     },
 
-    async mounted() {
-      const suggestions = await this.fetch_ainb_suggestions();
-      if (suggestions.length > 0) {
-        this.subpage_options = suggestions.map((sp) => ({
-          value: sp,
-          label: sp,
-        }));
+    mounted() {
+      const saved = mw.storage.getObject(LAST_THREAD_KEY);
+      if (saved && saved.subpage && Date.now() - saved.ts < LAST_THREAD_TTL_MS) {
+        this.subpage = saved.subpage;
+        this.selected_option = saved.selected_option || this.selected_option;
+        this.go_to_step2();
       }
+
+      this.fetch_ainb_suggestions().then((suggestions) => {
+        if (suggestions.length > 0) {
+          this.subpage_options = suggestions.map((sp) => ({ value: sp, label: sp }));
+        }
+      });
     },
   });
 }
@@ -195,6 +212,10 @@ function generate_llm_tag_prod_template() {
     </div>
 
     <div v-if="step === 2">
+      <div class="ainb-thread-context">
+        <span>Thread: <strong>{{ subpage }}</strong></span>
+        <a href="#" @click.prevent="go_back_to_step1">Change</a>
+      </div>
       <div v-if="save_error" class="ainb-error">{{ save_error }}</div>
 
       <cdx-field>
@@ -229,7 +250,7 @@ function generate_llm_tag_prod_template() {
         </div>
 
         <div v-if="step === 2">
-          <cdx-button @click="step = 1" :disabled="saving">Back</cdx-button>
+          <cdx-button @click="go_back_to_step1" :disabled="saving">Back</cdx-button>
         </div>
         <div v-if="step === 2">
           <cdx-button action="progressive" weight="primary" @click="save_edit" :disabled="saving || !editable_wikitext">
