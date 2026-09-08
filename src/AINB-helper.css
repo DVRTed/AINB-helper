@@ -557,7 +557,7 @@
 }
 
 .ainb-progress-stats {
-  font-size: 0.85em;
+  font-size: 0.9em;
   color: var(--color-subtle, #54595d);
 }
 
@@ -593,7 +593,6 @@
   display: flex;
   gap: 10px;
   margin-top: 6px;
-  font-size: 0.8em;
   color: var(--color-subtle, #54595d);
   text-transform: capitalize;
 }
@@ -721,4 +720,19 @@
 .skin-theme-clientpref-night .ainb-preview-box {
   background: #2a2a2a;
   border-color: #4a4a4a;
+}
+
+.ainb-category-mini {
+  margin-top: 8px;
+  font-size: 0.875em;
+  color: var(--color-subtle, #54595d);
+}
+
+.ainb-category-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 0.8em;
+  color: var(--color-subtle, #54595d);
 }
