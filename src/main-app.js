@@ -707,8 +707,6 @@ function generate_main_template() {
                     format_bytes(e.sizediff) }})
                 </option>
             </select>
-            <span :class="['ainb-diff-meta-size', get_size_class(viewing_diff_edit.sizediff)]">{{
-                format_bytes(viewing_diff_edit.sizediff) }}</span>
             <a :href="get_diff_url(viewing_diff_edit.revid)" target="_blank" class="ainb-diff-meta-link">Open in new tab
                 &#8599;</a>
         </div>
@@ -716,7 +714,8 @@ function generate_main_template() {
             <cdx-checkbox v-model="viewing_diff_edit.selected"
                 @update:model-value="update_group_selection(selected_group)">Include</cdx-checkbox>
         </div>
-        <div class="ainb-diff-meta-comment" :title="viewing_diff_edit.comment"><span
+        <div class="ainb-diff-meta-comment" :title="viewing_diff_edit.comment"><span :class="['ainb-diff-meta-size', get_size_class(viewing_diff_edit.sizediff)]">{{
+                format_bytes(viewing_diff_edit.sizediff) }} bytes</span> &middot; <span
                 class="ainb-diff-meta-comment-label">Summary:</span> {{ viewing_diff_edit.comment || 'No edit summary'
             }}</div>
 
