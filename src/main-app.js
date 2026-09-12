@@ -449,18 +449,21 @@ function create_main_app() {
 
         wikitext += `== Tracking list ==\n`;
         if (this.extra_notes.trim()) {
-          wikitext += `{{Notice |heading=Notes |\n${this.extra_notes.trim()}\n}}\n\n`
+          wikitext += `{{Notice |heading=Notes |\n${this.extra_notes.trim()}\n}}\n\n`;
         }
-        wikitext += `{{AIC article list|\n`
+        wikitext += `{{AIC article list|\n`;
 
         selected_groups.forEach((group) => {
           const links = group.edits
-            .map(
-              (edit) =>
-                `[[Special:Diff/${edit.revid}|(${this.format_bytes(
-                  edit.sizediff,
-                )})]]`,
-            )
+            .map((edit) => {
+              const edit_size = this.format_bytes(edit.sizediff);
+              const edit_link = `[[Special:Diff/${edit.revid}|(${edit_size})]]`;
+
+              const creation_note =
+                edit.new !== undefined ? " (page created)" : "";
+
+              return `${edit_link}${creation_note}`;
+            })
             .join(" ");
           const edit_count = group.edits.length;
           const edit_str = edit_count > 1 ? "edits" : "edit";
