@@ -802,15 +802,6 @@
   text-decoration: underline;
 }
 
-.ainb-batch-edit-wrap {
-  margin: 0.5em 0 1em;
-}
-
-.ainb-batch-edit-btn:focus {
-  outline: 2px solid #36c;
-  outline-offset: 2px;
-}
-
 .ainb-llm-dialog.cdx-dialog__window,
 .ainb-llm-dialog .cdx-dialog__window,
 .ainb-llm-dialog {
