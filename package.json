@@ -1,0 +1,5 @@
+{
+    "scripts":{
+        "dev": "nodemon -i dist/ --ext js,mjs,cjs,json,css build.js"
+    }
+}
