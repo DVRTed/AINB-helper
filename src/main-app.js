@@ -699,7 +699,7 @@ function generate_main_template() {
     <div v-if="viewing_diff_edit" class="ainb-diff-dialog-body">
         <div class="ainb-diff-meta">
             <select class="ainb-diff-select" :value="viewing_diff_edit.revid"
-                @change="jump_to_diff($event.target.value)">
+                @change="jump_to_diff($event.target.value)" v-if="selected_group.edits.length > 1">
                 <option v-for="(e, idx) in selected_group.edits" :key="e.revid" :value="e.revid">
                     {{ idx + 1 }} / {{ selected_group.edits.length }} — {{ format_date(e.timestamp) }} ({{
                     format_bytes(e.sizediff) }})
