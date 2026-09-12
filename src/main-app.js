@@ -93,6 +93,22 @@ function create_main_app() {
           if (!val) this.viewing_diff_edit = null;
         },
       },
+      diff_edit_index() {
+        if (!this.selected_group || !this.viewing_diff_edit) return -1;
+        return this.selected_group.edits.findIndex(
+          (edit) => edit.revid === this.viewing_diff_edit.revid,
+        );
+      },
+      has_prev_diff() {
+        return this.diff_edit_index > 0;
+      },
+      has_next_diff() {
+        return (
+          this.diff_edit_index >= 0 &&
+          this.selected_group &&
+          this.diff_edit_index < this.selected_group.edits.length - 1
+        );
+      },
       filtered_sorted_groups() {
         let groups = this.article_groups;
         const query = this.article_search.trim().toLowerCase();
@@ -144,9 +160,9 @@ function create_main_app() {
         close_app();
       },
 
-      fire_hook() {
+      fire_hook(selector) {
         nextTick(() => {
-          const $content = $(".ainb-revisions-table");
+          const $content = $(selector);
           if ($content.length) {
             mw.hook("wikipage.content").fire($content);
           }
@@ -155,7 +171,7 @@ function create_main_app() {
 
       select_article(title) {
         this.selected_article_title = title;
-        this.fire_hook();
+        this.fire_hook(".ainb-revisions-table");
       },
 
       update_group_selection(group) {
@@ -392,6 +408,19 @@ function create_main_app() {
       close_diff_popup() {
         this.viewing_diff_edit = null;
       },
+      go_to_diff(offset) {
+        if (!this.selected_group || this.diff_edit_index < 0) return;
+        const next_edit =
+          this.selected_group.edits[this.diff_edit_index + offset];
+        if (next_edit) this.show_diff_popup(next_edit);
+      },
+      jump_to_diff(revid) {
+        if (!this.selected_group) return;
+        const edit = this.selected_group.edits.find(
+          (e) => String(e.revid) === String(revid),
+        );
+        if (edit) this.show_diff_popup(edit);
+      },
       async load_diff(edit) {
         if (edit.diff_content || edit.diff_loading) return;
 
@@ -498,6 +527,18 @@ function create_main_app() {
       },
       format_bytes(bytes) {
         return (bytes > 0 ? "+" : "") + (bytes || 0);
+      },
+      format_date(timestamp) {
+        if (!timestamp) return "";
+        const date = new Date(timestamp);
+        if (isNaN(date.getTime())) return timestamp;
+        return date.toLocaleString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
       },
       get_size_class(bytes) {
         return bytes > 0 ? "ainb-pos" : bytes < 0 ? "ainb-neg" : "ainb-neu";
@@ -622,35 +663,34 @@ function generate_main_template() {
                     </div>
                 </div>
 
-                <table class="ainb-revisions-table">
-                    <thead>
-                        <tr>
-                            <th class="ainb-col-cb"></th>
-                            <th class="ainb-col-actions">Diff</th>
-                            <th class="ainb-col-time">Date</th>
-                            <th class="ainb-col-size">Size</th>
-                            <th class="ainb-col-summary">Summary</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="edit in selected_group.edits" :key="edit.revid" class="ainb-diff-row"
-                            :class="{ 'ainb-diff-row-selected': edit.selected }">
-                            <td class="ainb-col-cb">
-                                <cdx-checkbox v-model="edit.selected"
-                                    @update:model-value="update_group_selection(selected_group)"></cdx-checkbox>
-                            </td>
-                            <td class="ainb-col-actions">
-                                <cdx-button @click="show_diff_popup(edit)" size="small">View</cdx-button>
-                                <a :href="get_diff_url(edit.revid)" target="_blank">↗</a>
-                            </td>
-                            <td class="ainb-col-time">{{ edit.timestamp }}</td>
-                            <td :class="['ainb-col-size', get_size_class(edit.sizediff)]">{{ format_bytes(edit.sizediff)
-                                }}</td>
-                            <td class="ainb-col-summary" :title="edit.comment">{{ edit.comment ? truncate(edit.comment,
-                                80) : 'No edit summary' }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+              <table class="ainb-revisions-table">
+                  <thead>
+                      <tr>
+                          <th class="ainb-col-cb"></th>
+                          <th class="ainb-col-actions">Diff</th>
+                          <th class="ainb-col-time">Date</th>
+                          <th class="ainb-col-size">Size</th>
+                          <th class="ainb-col-summary">Summary</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <tr v-for="edit in selected_group.edits" :key="edit.revid" class="ainb-diff-row"
+                          :class="{ 'ainb-diff-row-selected': edit.selected }">
+                          <td class="ainb-col-cb">
+                              <cdx-checkbox v-model="edit.selected"
+                                  @update:model-value="update_group_selection(selected_group)"></cdx-checkbox>
+                          </td>
+                          <td class="ainb-col-actions">
+                              <button type="button" class="ainb-diff-toggle" @click="show_diff_popup(edit)">View diff</button>
+                              <a :href="get_diff_url(edit.revid)" target="_blank" class="ainb-diff-extlink" title="Open in new tab">&#8599;</a>
+                          </td>
+                          <td class="ainb-col-time" :title="edit.timestamp">{{ format_date(edit.timestamp) }}</td>
+                          <td :class="['ainb-col-size', get_size_class(edit.sizediff)]">{{ format_bytes(edit.sizediff) }}</td>
+                          <td class="ainb-col-summary" :title="edit.comment">{{ edit.comment ? truncate(edit.comment,
+                              80) : 'No edit summary' }}</td>
+                      </tr>
+                  </tbody>
+              </table>
             </template>
             <div v-else class="ainb-revisions-empty">Select an article on the left to view its revisions.</div>
         </div>
@@ -659,19 +699,42 @@ function generate_main_template() {
   `;
 
   const diff_dialog = `
-      <cdx-dialog v-model:open="diff_dialog_open" 
+      <cdx-dialog v-model:open="diff_dialog_open"
         :title="viewing_diff_edit ? 'Diff for ' + viewing_diff_edit.title : ''"
         :use-close-button="true"
         class="ainb-diff-dialog"
-        @keyup.enter="close_diff_popup"
+        @keyup.left="go_to_diff(-1)"
+        @keyup.right="go_to_diff(1)"
       >
-        <div v-if="viewing_diff_edit">
-           <div v-if="viewing_diff_edit.diff_loading" class="ainb-diff-loading">Loading...</div>
-           <div v-else-if="viewing_diff_edit.diff_content" class="ainb-diff-content" v-html="viewing_diff_edit.diff_content"></div>
-           <div v-else class="ainb-diff-loading">No content loaded.</div>
+        <div v-if="viewing_diff_edit" class="ainb-diff-dialog-body">
+          <div class="ainb-diff-meta">
+            <select class="ainb-diff-select" :value="viewing_diff_edit.revid"
+              @change="jump_to_diff($event.target.value)">
+              <option v-for="(e, idx) in selected_group.edits" :key="e.revid" :value="e.revid">
+                {{ idx + 1 }} / {{ selected_group.edits.length }} — {{ format_date(e.timestamp) }} ({{ format_bytes(e.sizediff) }})
+              </option>
+            </select>
+            <span :class="['ainb-diff-meta-size', get_size_class(viewing_diff_edit.sizediff)]">{{ format_bytes(viewing_diff_edit.sizediff) }}</span>
+            <a :href="get_diff_url(viewing_diff_edit.revid)" target="_blank" class="ainb-diff-meta-link">Open in new tab &#8599;</a>
+          </div>
+          <div class="ainb-diff-meta-include">
+            <cdx-checkbox v-model="viewing_diff_edit.selected"
+              @update:model-value="update_group_selection(selected_group)">Include</cdx-checkbox>
+          </div>
+          <div class="ainb-diff-meta-comment" :title="viewing_diff_edit.comment"><span class="ainb-diff-meta-comment-label">Summary:</span> {{ viewing_diff_edit.comment || 'No edit summary' }}</div>
+
+          <div v-if="viewing_diff_edit.diff_loading" class="ainb-diff-loading">Loading diff...</div>
+          <div v-else-if="viewing_diff_edit.diff_content" class="ainb-diff-content" v-html="viewing_diff_edit.diff_content"></div>
+          <div v-else class="ainb-diff-loading">No content loaded.</div>
         </div>
         <template #footer>
-          <cdx-button @click="close_diff_popup">Close</cdx-button>
+          <div class="ainb-dialog-footer">
+            <div class="ainb-diff-nav">
+              <cdx-button @click="go_to_diff(-1)" :disabled="!has_prev_diff">&larr; Prev</cdx-button>
+              <cdx-button @click="go_to_diff(1)" :disabled="!has_next_diff">Next &rarr;</cdx-button>
+            </div>
+            <cdx-button @click="close_diff_popup">Close</cdx-button>
+          </div>
         </template>
       </cdx-dialog>
     `;
