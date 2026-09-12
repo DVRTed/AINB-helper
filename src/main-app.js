@@ -284,6 +284,8 @@ function create_main_app() {
         this.loading = true;
         this.error = "";
         this.progress = 0;
+        this.extra_notes = "";
+        this.notes_visible = false;
 
         try {
           const edits = [];
