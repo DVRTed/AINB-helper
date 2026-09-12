@@ -554,34 +554,32 @@ function create_main_app() {
 
 function generate_main_template() {
   const step1 = `
-    <div v-if="step === 1" class="ainb-step">
-      <div v-if="!loading">
+<div v-if="step === 1" class="ainb-step">
+    <div v-if="!loading">
         <p>Enter the username</p>
-        <cdx-text-input v-model="username" autocomplete="off" 
-          data-bwignore="true" data-lpignore="true" data-1p-ignore 
-          placeholder="User:ExampleUser or ExampleUser"
-          @keydown.enter="fetch_contributions" />
+        <cdx-text-input v-model="username" autocomplete="off" data-bwignore="true" data-lpignore="true" data-1p-ignore
+            placeholder="User:ExampleUser or ExampleUser" @keydown.enter="fetch_contributions" />
 
         <div class="ainb-date-field">
-          <label for="ainb-anchor-date">Only fetch edits made after:</label>
-          <input id="ainb-anchor-date" type="date" v-model="anchor_date" class="ainb-date-input" />
-          <p class="ainb-date-hint">Defaults to December 2022, the public release date of ChatGPT.</p>
+            <label for="ainb-anchor-date">Only fetch edits made after:</label>
+            <input id="ainb-anchor-date" type="date" v-model="anchor_date" class="ainb-date-input" />
+            <p class="ainb-date-hint">Defaults to December 2022, the public release date of ChatGPT.</p>
         </div>
 
         <div class="ainb-date-field">
-          <label for="ainb-end-date">Only fetch edits made before:</label>
-          <input id="ainb-end-date" type="date" v-model="end_date" class="ainb-date-input" />
-          <p class="ainb-date-hint">Leave blank to fetch up to the most recent edit.</p>
+            <label for="ainb-end-date">Only fetch edits made before:</label>
+            <input id="ainb-end-date" type="date" v-model="end_date" class="ainb-date-input" />
+            <p class="ainb-date-hint">Leave blank to fetch up to the most recent edit.</p>
         </div>
-      </div>
-      
-      <div v-if="error" class="ainb-error">{{ error }}</div>
-      
-      <div v-if="loading" class="ainb-loading">
+    </div>
+
+    <div v-if="error" class="ainb-error">{{ error }}</div>
+
+    <div v-if="loading" class="ainb-loading">
         <p>Fetching contributions... {{ progress > 0 ? progress + ' found' : '' }}</p>
         <cdx-progress-bar inline></cdx-progress-bar>
-      </div>
     </div>
+</div>
   `;
 
   const step2 = `
@@ -594,13 +592,8 @@ function generate_main_template() {
     <div class="ainb-step2-toolbar">
         <cdx-checkbox :model-value="all_selected" :indeterminate="some_selected && !all_selected"
             @update:model-value="toggle_all">Select all</cdx-checkbox>
-        <cdx-menu-button
-            v-model:selected="filter_menu_selected"
-            weight="normal"
-            :menu-items="filter_menu_items"
-            :disabled="!some_selected"
-            @update:selected="handle_filter_menu_select"
-        >Filter selected</cdx-menu-button>
+        <cdx-menu-button v-model:selected="filter_menu_selected" weight="normal" :menu-items="filter_menu_items"
+            :disabled="!some_selected" @update:selected="handle_filter_menu_select">Filter selected</cdx-menu-button>
         <span class="ainb-total-badge"><b>{{ total_selected }}</b> of {{ total_groups }} articles selected</span>
     </div>
 
@@ -654,43 +647,47 @@ function generate_main_template() {
                         <div class="ainb-revisions-title">
                             <a :href="get_article_url(selected_group.title)" target="_blank">{{ selected_group.title
                                 }}</a>
-                            <a :href="get_history_url(selected_group.title)" target="_blank" class="ainb-history-link">(hist)</a>
+                            <a :href="get_history_url(selected_group.title)" target="_blank"
+                                class="ainb-history-link">(hist)</a>
                         </div>
 
                         <div class="ainb-revisions-subtitle">
-                            {{ selected_group.edits.length }} edit(s) by {{normalized_username}} 
+                            {{ selected_group.edits.length }} edit(s) by {{normalized_username}}
                         </div>
                     </div>
                 </div>
 
-              <table class="ainb-revisions-table">
-                  <thead>
-                      <tr>
-                          <th class="ainb-col-cb"></th>
-                          <th class="ainb-col-actions">Diff</th>
-                          <th class="ainb-col-time">Date</th>
-                          <th class="ainb-col-size">Size</th>
-                          <th class="ainb-col-summary">Summary</th>
-                      </tr>
-                  </thead>
-                  <tbody>
-                      <tr v-for="edit in selected_group.edits" :key="edit.revid" class="ainb-diff-row"
-                          :class="{ 'ainb-diff-row-selected': edit.selected }">
-                          <td class="ainb-col-cb">
-                              <cdx-checkbox v-model="edit.selected"
-                                  @update:model-value="update_group_selection(selected_group)"></cdx-checkbox>
-                          </td>
-                          <td class="ainb-col-actions">
-                              <button type="button" class="ainb-diff-toggle" @click="show_diff_popup(edit)">View diff</button>
-                              <a :href="get_diff_url(edit.revid)" target="_blank" class="ainb-diff-extlink" title="Open in new tab">&#8599;</a>
-                          </td>
-                          <td class="ainb-col-time" :title="edit.timestamp">{{ format_date(edit.timestamp) }}</td>
-                          <td :class="['ainb-col-size', get_size_class(edit.sizediff)]">{{ format_bytes(edit.sizediff) }}</td>
-                          <td class="ainb-col-summary" :title="edit.comment">{{ edit.comment ? truncate(edit.comment,
-                              80) : 'No edit summary' }}</td>
-                      </tr>
-                  </tbody>
-              </table>
+                <table class="ainb-revisions-table">
+                    <thead>
+                        <tr>
+                            <th class="ainb-col-cb"></th>
+                            <th class="ainb-col-actions">Diff</th>
+                            <th class="ainb-col-time">Date</th>
+                            <th class="ainb-col-size">Size</th>
+                            <th class="ainb-col-summary">Summary</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="edit in selected_group.edits" :key="edit.revid" class="ainb-diff-row"
+                            :class="{ 'ainb-diff-row-selected': edit.selected }">
+                            <td class="ainb-col-cb">
+                                <cdx-checkbox v-model="edit.selected"
+                                    @update:model-value="update_group_selection(selected_group)"></cdx-checkbox>
+                            </td>
+                            <td class="ainb-col-actions">
+                                <button type="button" class="ainb-diff-toggle" @click="show_diff_popup(edit)">View
+                                    diff</button>
+                                <a :href="get_diff_url(edit.revid)" target="_blank" class="ainb-diff-extlink"
+                                    title="Open in new tab">&#8599;</a>
+                            </td>
+                            <td class="ainb-col-time" :title="edit.timestamp">{{ format_date(edit.timestamp) }}</td>
+                            <td :class="['ainb-col-size', get_size_class(edit.sizediff)]">{{ format_bytes(edit.sizediff)
+                                }}</td>
+                            <td class="ainb-col-summary" :title="edit.comment">{{ edit.comment ? truncate(edit.comment,
+                                80) : 'No edit summary' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
             </template>
             <div v-else class="ainb-revisions-empty">Select an article on the left to view its revisions.</div>
         </div>
@@ -699,121 +696,116 @@ function generate_main_template() {
   `;
 
   const diff_dialog = `
-      <cdx-dialog v-model:open="diff_dialog_open"
-        :title="viewing_diff_edit ? 'Diff for ' + viewing_diff_edit.title : ''"
-        :use-close-button="true"
-        class="ainb-diff-dialog"
-        @keyup.left="go_to_diff(-1)"
-        @keyup.right="go_to_diff(1)"
-      >
-        <div v-if="viewing_diff_edit" class="ainb-diff-dialog-body">
-          <div class="ainb-diff-meta">
+<cdx-dialog v-model:open="diff_dialog_open" :title="viewing_diff_edit ? 'Diff for ' + viewing_diff_edit.title : ''"
+    :use-close-button="true" class="ainb-diff-dialog" @keyup.left="go_to_diff(-1)" @keyup.right="go_to_diff(1)">
+    <div v-if="viewing_diff_edit" class="ainb-diff-dialog-body">
+        <div class="ainb-diff-meta">
             <select class="ainb-diff-select" :value="viewing_diff_edit.revid"
-              @change="jump_to_diff($event.target.value)">
-              <option v-for="(e, idx) in selected_group.edits" :key="e.revid" :value="e.revid">
-                {{ idx + 1 }} / {{ selected_group.edits.length }} — {{ format_date(e.timestamp) }} ({{ format_bytes(e.sizediff) }})
-              </option>
+                @change="jump_to_diff($event.target.value)">
+                <option v-for="(e, idx) in selected_group.edits" :key="e.revid" :value="e.revid">
+                    {{ idx + 1 }} / {{ selected_group.edits.length }} — {{ format_date(e.timestamp) }} ({{
+                    format_bytes(e.sizediff) }})
+                </option>
             </select>
-            <span :class="['ainb-diff-meta-size', get_size_class(viewing_diff_edit.sizediff)]">{{ format_bytes(viewing_diff_edit.sizediff) }}</span>
-            <a :href="get_diff_url(viewing_diff_edit.revid)" target="_blank" class="ainb-diff-meta-link">Open in new tab &#8599;</a>
-          </div>
-          <div class="ainb-diff-meta-include">
-            <cdx-checkbox v-model="viewing_diff_edit.selected"
-              @update:model-value="update_group_selection(selected_group)">Include</cdx-checkbox>
-          </div>
-          <div class="ainb-diff-meta-comment" :title="viewing_diff_edit.comment"><span class="ainb-diff-meta-comment-label">Summary:</span> {{ viewing_diff_edit.comment || 'No edit summary' }}</div>
-
-          <div v-if="viewing_diff_edit.diff_loading" class="ainb-diff-loading">Loading diff...</div>
-          <div v-else-if="viewing_diff_edit.diff_content" class="ainb-diff-content" v-html="viewing_diff_edit.diff_content"></div>
-          <div v-else class="ainb-diff-loading">No content loaded.</div>
+            <span :class="['ainb-diff-meta-size', get_size_class(viewing_diff_edit.sizediff)]">{{
+                format_bytes(viewing_diff_edit.sizediff) }}</span>
+            <a :href="get_diff_url(viewing_diff_edit.revid)" target="_blank" class="ainb-diff-meta-link">Open in new tab
+                &#8599;</a>
         </div>
-        <template #footer>
-          <div class="ainb-dialog-footer">
+        <div class="ainb-diff-meta-include">
+            <cdx-checkbox v-model="viewing_diff_edit.selected"
+                @update:model-value="update_group_selection(selected_group)">Include</cdx-checkbox>
+        </div>
+        <div class="ainb-diff-meta-comment" :title="viewing_diff_edit.comment"><span
+                class="ainb-diff-meta-comment-label">Summary:</span> {{ viewing_diff_edit.comment || 'No edit summary'
+            }}</div>
+
+        <div v-if="viewing_diff_edit.diff_loading" class="ainb-diff-loading">Loading diff...</div>
+        <div v-else-if="viewing_diff_edit.diff_content" class="ainb-diff-content"
+            v-html="viewing_diff_edit.diff_content"></div>
+        <div v-else class="ainb-diff-loading">No content loaded.</div>
+    </div>
+    <template #footer>
+        <div class="ainb-dialog-footer">
             <div class="ainb-diff-nav">
-              <cdx-button @click="go_to_diff(-1)" :disabled="!has_prev_diff">&larr; Prev</cdx-button>
-              <cdx-button @click="go_to_diff(1)" :disabled="!has_next_diff">Next &rarr;</cdx-button>
+                <cdx-button @click="go_to_diff(-1)" :disabled="!has_prev_diff">&larr; Prev</cdx-button>
+                <cdx-button @click="go_to_diff(1)" :disabled="!has_next_diff">Next &rarr;</cdx-button>
             </div>
             <cdx-button @click="close_diff_popup">Close</cdx-button>
-          </div>
-        </template>
-      </cdx-dialog>
+        </div>
+    </template>
+</cdx-dialog>
     `;
 
   const tag_dialog = `
-      <cdx-dialog v-model:open="tag_dialog_open"
-        title="Unselect edits by tag"
-        :use-close-button="true"
-        class="ainb-tag-dialog"
-      >
-        <p v-if="tags_in_selection.length === 0">No tags found on the selected edits.</p>
-        <div v-else>
-          <cdx-checkbox v-for="tag in tags_in_selection" :key="tag" v-model="selected_tags_map[tag]">
+<cdx-dialog v-model:open="tag_dialog_open" title="Unselect edits by tag" :use-close-button="true"
+    class="ainb-tag-dialog">
+    <p v-if="tags_in_selection.length === 0">No tags found on the selected edits.</p>
+    <div v-else>
+        <cdx-checkbox v-for="tag in tags_in_selection" :key="tag" v-model="selected_tags_map[tag]">
             {{ tag }} ({{ tag_counts[tag] }} edit{{ tag_counts[tag] === 1 ? '' : 's' }})
-          </cdx-checkbox>
-        </div>
-        <template #footer>
-          <div class="ainb-dialog-footer">
+        </cdx-checkbox>
+    </div>
+    <template #footer>
+        <div class="ainb-dialog-footer">
             <div></div>
             <div>
-              <cdx-button @click="tag_dialog_open = false">Cancel</cdx-button>
-              <cdx-button action="progressive" weight="primary"
-                @click="unselect_by_tag" :disabled="selected_tag_list.length === 0">
-                Unselect
-              </cdx-button>
+                <cdx-button @click="tag_dialog_open = false">Cancel</cdx-button>
+                <cdx-button action="progressive" weight="primary" @click="unselect_by_tag"
+                    :disabled="selected_tag_list.length === 0">
+                    Unselect
+                </cdx-button>
             </div>
-          </div>
-        </template>
-      </cdx-dialog>
+        </div>
+    </template>
+</cdx-dialog>
     `;
 
   const step3 = `
-    <div v-if="step === 3" class="ainb-step">
-      <div v-if="creating" class="ainb-loading">
+<div v-if="step === 3" class="ainb-step">
+    <div v-if="creating" class="ainb-loading">
         <p>Creating page...</p>
         <cdx-progress-bar inline></cdx-progress-bar>
-      </div>
-      
-      <div v-else-if="create_error" class="ainb-error">{{ create_error }}</div>
-      
-      <div v-else>
+    </div>
+
+    <div v-else-if="create_error" class="ainb-error">{{ create_error }}</div>
+
+    <div v-else>
         <p>Page created successfully!</p>
         <p><a :href="target_page_url" target="_blank">{{ target_page_title }}</a></p>
-      </div>
     </div>
+</div>
   `;
 
   const footer = `
-    <template #footer>
-      <div class="ainb-dialog-footer">
+<template #footer>
+    <div class="ainb-dialog-footer">
         <div v-if="step === 1"></div>
-        
-        <cdx-button v-if="step === 1" 
-          action="progressive" weight="primary" 
-          @click="fetch_contributions" :disabled="loading || !username">
-          {{ loading ? 'Fetching...' : 'Fetch contributions' }}</cdx-button>
-        
+
+        <cdx-button v-if="step === 1" action="progressive" weight="primary" @click="fetch_contributions"
+            :disabled="loading || !username">
+            {{ loading ? 'Fetching...' : 'Fetch contributions' }}</cdx-button>
+
         <template v-if="step === 2">
-          <div class="ainb-subpage-info">Target: <strong>{{ target_page_title }}</strong></div>
-          <div class="ainb-footer-buttons">
-            <cdx-button @click="step = 1">Back</cdx-button>
-            <cdx-button @click="copy_wikitext"
-              :disabled="total_selected_diffs === 0">Copy wikitext
-            </cdx-button>
-            <cdx-button action="progressive" 
-              weight="primary" @click="generate_report"
-              :disabled="total_selected_diffs === 0">Create Page
-            </cdx-button>
-          </div>
+            <div class="ainb-subpage-info">Target: <strong>{{ target_page_title }}</strong></div>
+            <div class="ainb-footer-buttons">
+                <cdx-button @click="step = 1">Back</cdx-button>
+                <cdx-button @click="copy_wikitext" :disabled="total_selected_diffs === 0">Copy wikitext
+                </cdx-button>
+                <cdx-button action="progressive" weight="primary" @click="generate_report"
+                    :disabled="total_selected_diffs === 0">Create Page
+                </cdx-button>
+            </div>
         </template>
-        
+
         <template v-if="step === 3">
-          <div></div>
-          <div>
-            <cdx-button @click="handle_dialog_close">Close</cdx-button>
-          </div>
+            <div></div>
+            <div>
+                <cdx-button @click="handle_dialog_close">Close</cdx-button>
+            </div>
         </template>
-      </div>
-    </template>
+    </div>
+</template>
   `;
 
   return `
