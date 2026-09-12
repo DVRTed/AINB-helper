@@ -416,9 +416,7 @@ function create_main_app() {
       },
       jump_to_diff(revid) {
         if (!this.selected_group) return;
-        const edit = this.selected_group.edits.find(
-          (e) => String(e.revid) === String(revid),
-        );
+        const edit = this.selected_group.edits.find((e) => e.revid == revid);
         if (edit) this.show_diff_popup(edit);
       },
       async load_diff(edit) {
