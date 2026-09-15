@@ -1,20 +1,12 @@
-function get_article_row_regex(article) {
+function get_article_row_regex(article, global = false) {
   const escaped_article = mw.util.escapeRegExp(article);
   return new RegExp(
     `\\{\\{AIC article row\\s*\\|\\s*(?:article=)?\\s*${escaped_article}\\s*(?:\\|\\s*(?:status=)?\\s*([^|}]*))?(?:\\s*\\|\\s*(?:notes=)?\\s*([^}]*))?\\s*\\}\\}`,
-    "i",
+    global ? "ig" : "i",
   );
 }
 
-function get_article_row_global_regex(article) {
-  const escaped_article = mw.util.escapeRegExp(article);
-  return new RegExp(
-    `\\{\\{AIC article row\\s*\\|\\s*(?:article=)?\\s*${escaped_article}\\s*(?:\\|\\s*(?:status=)?\\s*([^|}]*))?(?:\\s*\\|\\s*(?:notes=)?\\s*([^}]*))?\\s*\\}\\}`,
-    "ig",
-  );
-}
-
-function create_edit_table_app(article) {
+function create_edit_table_app(articles_input) {
   const {
     CdxButton,
     CdxDialog,
@@ -22,6 +14,8 @@ function create_edit_table_app(article) {
     CdxTextArea,
     CdxProgressBar,
   } = require("@wikimedia/codex");
+
+  const articles = Array.isArray(articles_input) ? articles_input : [articles_input];
 
   create_app({
     template: generate_edit_table_template(),
@@ -36,10 +30,9 @@ function create_edit_table_app(article) {
     data() {
       return {
         is_open: true,
-        article: article,
-        status: "",
-        raw_status: "",
-        notes: "",
+        articles,
+        rows: [],
+        original_rows: [],
         loading: false,
         saving: false,
         error: "",
@@ -62,8 +55,22 @@ function create_edit_table_app(article) {
     },
 
     computed: {
+      is_single() {
+        return this.articles.length === 1;
+      },
+      dialog_title() {
+        return this.is_single ? "Editing row" : "Batch edit";
+      },
+      dialog_class() {
+        return this.is_single ? "ainb-edit-table" : "ainb-batch-edit-table";
+      },
+      duplicate_error() {
+        const link = `<a href="${mw.util.getUrl("User:DVRTed/AINB-helper#Known_issues")}" target="_blank" rel="noopener noreferrer">User:DVRTed/AINB-helper#Known_issues</a>`;
+        return `This entry is duplicated, so it cannot be edited with the script; see ${link}.`;
+      },
       can_save() {
-        return !this.saving && !this.loading && this.status;
+        if (this.saving || this.loading || this.rows.length === 0) return false;
+        return this.rows.some((row) => !row.multiple_matches && Boolean(row.status));
       },
     },
 
@@ -72,14 +79,16 @@ function create_edit_table_app(article) {
         close_app();
       },
 
-      map_params(value) {
-        if (!value) return "";
+      get_article_url(title) {
+        return mw.util.getUrl(title);
+      },
+
+      normalize_status(value) {
+        const trimmed = value?.trim().toLowerCase() || "";
         const status = this.status_options.find(
-          (option) =>
-            option.value === value ||
-            option.aliases?.includes(value.toLowerCase()),
+          (option) => option.value === trimmed || option.aliases?.includes(trimmed),
         );
-        return status?.value || "";
+        return status ? status.value : "requested";
       },
 
       async load_row_data() {
@@ -95,19 +104,31 @@ function create_edit_table_app(article) {
           });
 
           const wikitext = result.parse.wikitext["*"];
-          const regex = get_article_row_global_regex(this.article);
-          const matches = [...wikitext.matchAll(regex)];
+          this.wikitext = wikitext;
 
-          if (matches.length > 1) {
-            const link = `<a href="${mw.util.getUrl("User:DVRTed/AINB-helper#Known_issues")}" target="_blank" rel="noopener noreferrer">User:DVRTed/AINB-helper#Known_issues</a>`;
-            this.error = `This entry is duplicated, so it cannot be edited with the script; see ${link}.`;
-          } else if (matches.length === 1) {
-            const match = matches[0];
-            this.raw_status = match[1]?.trim() || "requested";
-            this.notes = match[2]?.trim() || "";
-            this.wikitext = wikitext;
+          const rows = [];
+          for (const article of this.articles) {
+            const global_matches = [...wikitext.matchAll(get_article_row_regex(article, true))];
+
+            if (global_matches.length > 0) {
+              const match = global_matches[0];
+              rows.push({
+                article,
+                status: this.normalize_status(match[1]?.trim()),
+                notes: match[2]?.trim() || "",
+                multiple_matches: global_matches.length > 1,
+              });
+            }
+          }
+
+          if (rows.length === 0) {
+            this.error = "Could not find row data"
           } else {
-            this.error = "Could not find row data for this article.";
+            this.rows = rows;
+            this.original_rows = structuredClone(rows);
+            if (this.is_single && rows[0].multiple_matches) {
+              this.error = this.duplicate_error;
+            }
           }
         } catch (e) {
           this.error = "Error loading row data: " + e.message;
@@ -123,16 +144,33 @@ function create_edit_table_app(article) {
 
         try {
           const page_name = mw.config.get("wgPageName");
-          const regex = get_article_row_regex(this.article);
+          let new_wikitext = this.wikitext;
 
-          const new_row = `{{AIC article row|article=${this.article}|status=${this.status}|notes=${this.notes}}}`;
-          const new_wikitext = this.wikitext.replace(regex, new_row);
+          for (const row of this.rows) {
+            if (!row.multiple_matches) {
+              const new_row = `{{AIC article row|article=${row.article}|status=${row.status}|notes=${row.notes || ""}}}`;
+              new_wikitext = new_wikitext.replace(get_article_row_regex(row.article), new_row);
+            }
+          }
+
+          const changed_rows = this.original_rows.filter((row) => {
+            const current_row = this.rows.find((e) => e.article === row.article);
+            if (!current_row || row.multiple_matches) return false;
+            return (
+              row.status !== current_row.status ||
+              (row.notes || "") !== (current_row.notes || "")
+            );
+          });
+
+          const summary = this.rows.length === 1
+            ? `Updated row for [[${this.rows[0].article}]] ${APP_AD}`
+            : `Batch edited ${changed_rows.length} ${changed_rows.length === 1 ? "row" : "rows"} ${APP_AD}`;
 
           await api.postWithEditToken({
             action: "edit",
             title: page_name,
             text: new_wikitext,
-            summary: `Updated row for [[${this.article}]] ${APP_AD}`,
+            summary,
           });
 
           location.reload();
@@ -148,58 +186,83 @@ function create_edit_table_app(article) {
 
     async mounted() {
       await this.load_row_data();
-      this.status = this.map_params(this.raw_status);
     },
   });
 }
 
 function generate_edit_table_template() {
-  const footer = `    
+  return `
+<div>
+  <cdx-dialog :class="dialog_class" v-model:open="is_open" 
+    :title="dialog_title" :use-close-button="true"
+    @update:open="handle_dialog_close">
+    
+    <div v-if="loading" class="ainb-loading">
+      <p>Loading row data...</p>
+      <cdx-progress-bar inline></cdx-progress-bar>
+    </div>
+    
+    <div v-else-if="error" class="ainb-error" v-html="error"></div>
+    
+    <div v-else-if="is_single && rows.length === 1" class="ainb-edit-step">
+      <div class="ainb-form-field">
+        Article: <strong><a :href="get_article_url(rows[0].article)" target="_blank" rel="noopener noreferrer">{{ rows[0].article }}</a></strong>
+      </div>
+      
+      <div class="ainb-form-field">
+        <div class="ainb-form-label">Status:</div>
+        <div><cdx-select v-model:selected="rows[0].status" :menu-items="status_options" :disabled="saving"></cdx-select></div>
+      </div>
+      
+      <div class="ainb-form-field">
+        <div class="ainb-form-label">Notes:</div>
+        <cdx-text-area v-model="rows[0].notes" rows="4" :disabled="saving"></cdx-text-area>
+      </div>
+    </div>
+    
+    <table v-else class="ainb-batch-edit-table-grid">
+      <thead>
+        <tr>
+          <th>Article</th>
+          <th>Status</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="row in rows" :key="row.article">
+          <td>
+            <a :href="get_article_url(row.article)" target="_blank" rel="noopener noreferrer">
+              {{ row.article }}
+            </a>
+          </td>
+          <template v-if="row.multiple_matches">
+            <td colspan="2" class="ainb-error" v-html="duplicate_error"></td>
+          </template>
+          <template v-else>
+            <td>
+              <cdx-select v-model:selected="row.status" :menu-items="status_options" :disabled="saving"></cdx-select>
+            </td>
+            <td>
+              <cdx-text-area v-model="row.notes" rows="2" :disabled="saving"></cdx-text-area>
+            </td>
+          </template>
+        </tr>
+      </tbody>
+    </table>
+
     <template #footer>
       <div class="ainb-dialog-footer">
         <div></div>
         <div>
-          <cdx-button @click="handle_dialog_close">Cancel</cdx-button>
+          <cdx-button @click="handle_dialog_close" :disabled="saving">Cancel</cdx-button>
           <cdx-button action="progressive" weight="primary" 
             @click="save_changes" :disabled="!can_save">
             {{ saving ? 'Saving...' : 'Save' }}
           </cdx-button>
         </div>
       </div>
-    </template>`;
-
-  return `
-<div>
-  <cdx-dialog class="ainb-edit-table" v-model:open="is_open" 
-    title="Editing row" :use-close-button="true"
-    @update:open="handle_dialog_close">
-    
-    <div class="ainb-edit-step">
-      <div v-if="loading" class="ainb-loading">
-        <p>Loading row data...</p>
-        <cdx-progress-bar inline></cdx-progress-bar>
-      </div>
-      
-      <div v-else-if="error" class="ainb-error" v-html="error"></div>
-      
-      <div v-else>
-        <div class="ainb-form-field">
-          Article: <strong>{{ article }}</strong>
-        </div>
-        
-        <div class="ainb-form-field">
-          <div class="ainb-form-label">Status:</div>
-          <div><cdx-select v-model:selected="status" :menu-items="status_options"></cdx-select></div>
-        </div>
-        
-        <div class="ainb-form-field">
-          <div class="ainb-form-label">Notes:</div>
-          <cdx-text-area v-model="notes" rows="4"></cdx-text-area>
-        </div>
-      </div>
-    </div>
-    ${footer}
+    </template>
   </cdx-dialog>
 </div>
-    `;
+  `;
 }

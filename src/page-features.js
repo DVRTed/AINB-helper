@@ -58,7 +58,7 @@ function init_row_editing() {
           .text("Batch edit")
           .on("click", (e) => {
             e.preventDefault();
-            create_batch_edit_table_app(articles);
+            create_edit_table_app(articles);
           });
         $table.before($button);
       };

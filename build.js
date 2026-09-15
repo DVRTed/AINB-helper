@@ -15,7 +15,6 @@ const modules = [
   "shared.js",
   "main-app.js",
   "edit-table-app.js",
-  "edit-table-batch-app.js",
   "llm-tag-prod-app.js",
   "category-stats-app.js",
   "page-features.js",
