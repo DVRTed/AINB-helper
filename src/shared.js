@@ -33,9 +33,10 @@ function close_app() {
 }
 
 // reuseable function to create and mount the app
-// that handles dups
+// that registers a bunch of components and handles dups
 function create_app(App) {
   const { createMwApp } = Vue;
+  const codex = require("@wikimedia/codex");
 
   close_app();
 
@@ -43,7 +44,31 @@ function create_app(App) {
   mount_point.id = APP_ID;
   document.body.appendChild(mount_point);
 
-  const app = createMwApp(App);
+  const app = createMwApp({
+    ...App,
+    mixins: [
+      {
+        methods: {
+          handle_dialog_close() {
+            close_app();
+          },
+        },
+      },
+      ...(App.mixins || []),
+    ],
+  });
+
+  const {
+    CdxButton, CdxCheckbox, CdxCombobox, CdxDialog, CdxField,
+    CdxMenuButton, CdxProgressBar, CdxRadio, CdxSelect,
+    CdxTextArea, CdxTextInput,
+  } = codex;
+  Object.entries({
+    CdxButton, CdxCheckbox, CdxCombobox, CdxDialog, CdxField,
+    CdxMenuButton, CdxProgressBar, CdxRadio, CdxSelect,
+    CdxTextArea, CdxTextInput,
+  }).forEach(([name, c]) => app.component(name, c));
+
   app.mount(mount_point);
   current_app = app;
 }

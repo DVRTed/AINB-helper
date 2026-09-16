@@ -1,29 +1,10 @@
 function create_llm_tag_prod_app() {
-  const {
-    CdxButton,
-    CdxTextInput,
-    CdxTextArea,
-    CdxDialog,
-    CdxRadio,
-    CdxField,
-    CdxCombobox,
-  } = require("@wikimedia/codex");
-
   const subpage_options = [];
   const LAST_THREAD_KEY = "ainb-llm-tag-last-thread";
   const LAST_THREAD_TTL_MS = 3 * 60 * 60 * 1000;
 
   create_app({
     template: generate_llm_tag_prod_template(),
-    components: {
-      CdxButton,
-      CdxTextInput,
-      CdxTextArea,
-      CdxDialog,
-      CdxRadio,
-      CdxField,
-      CdxCombobox,
-    },
 
     data() {
       return {
@@ -55,9 +36,6 @@ function create_llm_tag_prod_app() {
     },
 
     methods: {
-      handle_dialog_close() {
-        close_app();
-      },
       go_to_step2() {
         let raw_subpage = this.subpage.trim();
         let target_link = raw_subpage;

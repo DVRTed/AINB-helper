@@ -7,25 +7,10 @@ function get_article_row_regex(article, global = false) {
 }
 
 function create_edit_table_app(articles_input) {
-  const {
-    CdxButton,
-    CdxDialog,
-    CdxSelect,
-    CdxTextArea,
-    CdxProgressBar,
-  } = require("@wikimedia/codex");
-
   const articles = Array.isArray(articles_input) ? articles_input : [articles_input];
 
   create_app({
     template: generate_edit_table_template(),
-    components: {
-      CdxButton,
-      CdxDialog,
-      CdxSelect,
-      CdxTextArea,
-      CdxProgressBar,
-    },
 
     data() {
       return {
@@ -75,10 +60,6 @@ function create_edit_table_app(articles_input) {
     },
 
     methods: {
-      handle_dialog_close() {
-        close_app();
-      },
-
       get_article_url(title) {
         return mw.util.getUrl(title);
       },

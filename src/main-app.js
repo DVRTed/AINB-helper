@@ -1,24 +1,8 @@
 function create_main_app() {
   const { nextTick } = Vue;
-  const {
-    CdxButton,
-    CdxTextInput,
-    CdxDialog,
-    CdxCheckbox,
-    CdxProgressBar,
-    CdxMenuButton,
-  } = require("@wikimedia/codex");
 
   create_app({
     template: generate_main_template(),
-    components: {
-      CdxButton,
-      CdxTextInput,
-      CdxDialog,
-      CdxCheckbox,
-      CdxProgressBar,
-      CdxMenuButton,
-    },
 
     data() {
       return {
@@ -156,10 +140,6 @@ function create_main_app() {
       },
     },
     methods: {
-      handle_dialog_close() {
-        close_app();
-      },
-
       fire_hook(selector) {
         nextTick(() => {
           const $content = $(selector);
