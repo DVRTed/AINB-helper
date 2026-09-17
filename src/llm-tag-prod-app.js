@@ -17,6 +17,8 @@ function create_llm_tag_prod_app() {
         editable_summary: "",
         saving: false,
         save_error: "",
+        step1_error: "",
+        checking_page: false,
         show_preview: false,
         preview_html: "",
         preview_loading: false,
@@ -36,8 +38,45 @@ function create_llm_tag_prod_app() {
     },
 
     methods: {
-      go_to_step2() {
+      async go_to_step2() {
         let raw_subpage = this.subpage.trim();
+        this.step1_error = "";
+
+        if (raw_subpage) {
+          this.checking_page = true;
+          const [page_title, ...section_parts] = raw_subpage.split("#");
+          const page = page_title.trim();
+          const section = section_parts.join("#").trim();
+
+          try {
+            const res = await api.get({
+              action: "parse",
+              page: page,
+              prop: "sections",
+              redirects: true,
+            });
+
+            if (section) {
+              const sections = res.parse?.sections || [];
+              const section_exists = sections.some(
+                (s) =>
+                  s.line === section ||
+                  s.anchor === section ||
+                  s.line.replace(/_/g, " ") === section.replace(/_/g, " "),
+              );
+              if (!section_exists) {
+                this.step1_error = `Section "${section}" does not exist on "${page}"`;
+                return;
+              }
+            }
+          } catch (err) {
+            this.step1_error = `Page does not exist: "${err}"`;
+            return;
+          } finally {
+            this.checking_page = false;
+          }
+        }
+
         let target_link = raw_subpage;
 
         mw.storage.setObject(LAST_THREAD_KEY, {
@@ -46,12 +85,15 @@ function create_llm_tag_prod_app() {
           ts: Date.now(),
         });
 
+        const see_clause = target_link ? `, see [[${target_link}]]` : "";
+        const ai_reason = target_link ? ` |reason= [[${target_link}]]` : "";
+
         if (this.selected_option === "llm_prod") {
-          this.editable_wikitext = `{{subst:Prod llm\n|reason=[[WP:LLMPRV|Presumptive removal of LLM-generated content]], see [[${target_link}]]. Feel free to reinstate by following [[WP:LLMPRVOBJ|the procedures for disputing presumptive removal of LLM-generated content]].}}`;
-          this.editable_summary = `[[WP:LLMPRV|Presumptive removal of LLM-generated content]], see [[${target_link}]]. Feel free to reinstate by following [[WP:LLMPRVOBJ|the procedures for disputing presumptive removal of LLM-generated content]].`;
+          this.editable_wikitext = `{{subst:Prod llm\n|reason=[[WP:LLMPRV|Presumptive removal of LLM-generated content]]${see_clause}. Feel free to reinstate by following [[WP:LLMPRVOBJ|the procedures for disputing presumptive removal of LLM-generated content]].}}`;
+          this.editable_summary = `[[WP:LLMPRV|Presumptive removal of LLM-generated content]]${see_clause}. Feel free to reinstate by following [[WP:LLMPRVOBJ|the procedures for disputing presumptive removal of LLM-generated content]].`;
         } else {
-          this.editable_wikitext = `{{AI-generated |reason= [[${target_link}]] |{{subst:DATE}}}}`;
-          this.editable_summary = `Added AI tag, see [[${target_link}]]`;
+          this.editable_wikitext = `{{AI-generated${ai_reason} |{{subst:DATE}}}}`;
+          this.editable_summary = `Added AI tag${see_clause}`;
         }
 
         this.show_preview = false;
@@ -59,6 +101,7 @@ function create_llm_tag_prod_app() {
       },
       go_back_to_step1() {
         mw.storage.remove(LAST_THREAD_KEY);
+        this.step1_error = "";
         this.step = 1;
       },
       async toggle_preview() {
@@ -122,6 +165,7 @@ function create_llm_tag_prod_app() {
             action: "parse",
             page: "Wikipedia:AI noticeboard",
             prop: "sections",
+            redirects: true,
           });
 
           if (parse_res.parse?.sections) {
@@ -174,18 +218,19 @@ function generate_llm_tag_prod_template() {
     @update:open="handle_dialog_close">
     
     <div v-if="step === 1">
+      <div v-if="step1_error" class="ainb-error">{{ step1_error }}</div>
       <cdx-field>
-        <cdx-radio v-model="selected_option" input-value="llm_prod" :inline="true">
+        <cdx-radio v-model="selected_option" input-value="llm_prod" :inline="true" :disabled="checking_page">
           Prod LLM
         </cdx-radio>
-        <cdx-radio v-model="selected_option" input-value="ai_tag" :inline="true">
+        <cdx-radio v-model="selected_option" input-value="ai_tag" :inline="true" :disabled="checking_page">
           Add &#123;&#123;AI-generated&#125;&#125; tag
         </cdx-radio>
       </cdx-field>
 
       <cdx-field>
-        <template #description>Tip: Type the username to autocomplete from Wikipedia:AI noticeboard</template>
-        <cdx-combobox v-model:selected="subpage" :menu-items="filtered_subpage_options" placeholder="Relevant thread or subpage"></cdx-combobox>
+        <template #description>Tip: Type the username to autocomplete from Wikipedia:AI noticeboard. You can leave this blank to proceed anyway.</template>
+        <cdx-combobox v-model:selected="subpage" :menu-items="filtered_subpage_options" placeholder="Relevant thread or subpage (optional)" :disabled="checking_page"></cdx-combobox>
       </cdx-field>
     </div>
 
@@ -224,7 +269,9 @@ function generate_llm_tag_prod_template() {
           <cdx-button @click="handle_dialog_close">Cancel</cdx-button>
         </div>
         <div v-if="step === 1">
-          <cdx-button action="progressive" weight="primary" @click="go_to_step2">Next</cdx-button>
+          <cdx-button action="progressive" weight="primary" @click="go_to_step2" :disabled="checking_page">
+            {{ checking_page ? 'Checking...' : 'Next' }}
+          </cdx-button>
         </div>
 
         <div v-if="step === 2">
