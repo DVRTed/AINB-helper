@@ -10,6 +10,7 @@ function create_main_app() {
         step: 1,
         username: "",
         normalized_username: "",
+        normalized_usernames: [],
         anchor_date: "2022-12-01",
         end_date: "",
         loading: false,
@@ -137,6 +138,9 @@ function create_main_app() {
         return this.available_tags.filter(
           (tag) => (this.tag_counts[tag] || 0) > 0,
         );
+      },
+      is_multiple_users() {
+        return this.normalized_usernames.length > 1;
       },
     },
     methods: {
@@ -271,14 +275,28 @@ function create_main_app() {
           const edits = [];
           let continuation = null;
 
+          const raw_users = this.username
+            .split("|")
+            .map((u) => u.trim().replace(/^user:/i, ""))
+            .filter(Boolean);
+
+          if (raw_users.length === 0) {
+            this.error = "Please enter a username.";
+            return;
+          }
+
           // check for users w/ too many edits
           const user_info = await api.get({
             action: "query",
             list: "users",
-            ususers: this.username,
+            ususers: raw_users.join("|"),
             usprop: "editcount",
           });
-          const edit_count = user_info.query.users[0].editcount;
+          const users = user_info.query?.users || [];
+          const edit_count = users.reduce(
+            (sum, u) => sum + (u.editcount || 0),
+            0,
+          );
 
           if (edit_count > 20000) {
             if (
@@ -295,7 +313,19 @@ function create_main_app() {
             return;
           }
 
-          this.normalized_username = user_info.query.users[0].name;
+          const normalized_users = users
+            .filter((u) => u.name && !u.missing && !u.invalid)
+            .map((u) => u.name);
+          this.normalized_usernames = normalized_users;
+          this.normalized_username = normalized_users[0] || "";
+
+          if (normalized_users.length > 1) {
+            const user_list = normalized_users
+              .map((u) => `[[User:${u}]]`)
+              .join(", ");
+            this.extra_notes = `* Includes contributions from multiple accounts: ${user_list}`;
+            this.notes_visible = true;
+          }
 
           const ucend_timestamp = this.anchor_date
             ? `${this.anchor_date}T00:00:00Z`
@@ -309,11 +339,11 @@ function create_main_app() {
               action: "query",
               list: "usercontribs",
               ucnamespace: 0,
-              ucuser: this.normalized_username,
+              ucuser: normalized_users.join("|"),
               ...(ucend_timestamp ? { ucend: ucend_timestamp } : {}),
               ...(ucstart_timestamp ? { ucstart: ucstart_timestamp } : {}),
               uclimit: "max",
-              ucprop: "ids|title|timestamp|comment|sizediff|tags|flags",
+              ucprop: "ids|title|timestamp|comment|sizediff|tags|flags|user",
               ucdir: "older",
               ...continuation,
             };
@@ -505,6 +535,11 @@ function create_main_app() {
       get_contribs_url(username) {
         return mw.util.getUrl(`Special:Contributions/${username}`);
       },
+      get_group_users(group) {
+        if (!group?.edits) return "";
+        const users = [...new Set(group.edits.map((e) => e.user).filter(Boolean))];
+        return users.length ? users.join(", ") : this.normalized_username;
+      },
       format_bytes(bytes) {
         return (bytes > 0 ? "+" : "") + (bytes || 0);
       },
@@ -565,8 +600,11 @@ function generate_main_template() {
   const step2 = `
 <div v-if="step === 2" class="ainb-step2">
     <div class="ainb-step2-subtitle">
-        <a :href="get_user_url(normalized_username)" target="_blank">User:{{ normalized_username }}</a>
-        &middot; <a :href="get_contribs_url(normalized_username)" target="_blank">(contrib)</a>
+        <template v-if="is_multiple_users">Multiple users</template>
+        <template v-else>
+            <a :href="get_user_url(normalized_username)" target="_blank">User:{{ normalized_username }}</a>
+            &middot; <a :href="get_contribs_url(normalized_username)" target="_blank">(contrib)</a>
+        </template>
         &middot; {{ edit_count }} edit(s) across {{ article_groups.length }} article(s)
     </div>
     <div class="ainb-step2-toolbar">
@@ -632,7 +670,7 @@ function generate_main_template() {
                         </div>
 
                         <div class="ainb-revisions-subtitle">
-                            {{ selected_group.edits.length }} edit(s) by {{normalized_username}}
+                            {{ selected_group.edits.length }} edit(s) by {{ get_group_users(selected_group) }}
                         </div>
                     </div>
                 </div>
