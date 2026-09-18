@@ -2,6 +2,7 @@ function create_llm_tag_prod_app() {
   const LAST_THREAD_KEY = "ainb-llm-tag-last-thread";
   const LAST_THREAD_TTL_MS = 3 * 60 * 60 * 1000;
   const LOG_TO_USERPAGE_OPTION = "userjs-ainb-log-userpage";
+  const LOG_PAGE_SUFFIX = "LLMPROD log";
 
 
   create_app({
@@ -16,6 +17,7 @@ function create_llm_tag_prod_app() {
         step: 1,
         username: mw.config.get("wgUserName"),
         page_name: mw.config.get("wgPageName"),
+        logging_page: `User:${mw.config.get("wgUserName")}/${LOG_PAGE_SUFFIX}`,
         selected_option: "llm_prod",
         subpage: "",
         subpage_options: [],
@@ -160,7 +162,7 @@ function create_llm_tag_prod_app() {
 
         await api.postWithEditToken({
           action: "edit",
-          title: `User:${this.username}/LLMPROD log`,
+          title: this.logging_page,
           appendtext: `\n# [[:${page}]]: Added {{tl|${template_name}}} with [[special:diff/${revid}|this edit]]${thread_clause}, ~~~~~`,
           summary: `Logging ${template_text} on [[${page}]] ${APP_AD}`,
         });
@@ -243,7 +245,7 @@ function generate_llm_tag_prod_template() {
     
     <div class="ainb-llm-top-options">
       <span v-if="log_to_userpage" class="ainb-log-target-hint">
-        (will be logged to User:{{ username }}/LLMPROD log)
+        (will be logged to {{ logging_page }})
       </span>
       <cdx-checkbox v-model="log_to_userpage" :disabled="saving">
         Log to your userpage
