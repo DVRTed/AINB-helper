@@ -493,20 +493,36 @@ function create_main_app() {
         wikitext += `{{AIC article list|\n`;
 
         selected_groups.forEach((group) => {
-          const links = group.edits
-            .map((edit) => {
-              const edit_size = this.format_bytes(edit.sizediff);
-              const edit_link = `[[Special:Diff/${edit.revid}|(${edit_size})]]`;
+          const format_edit = (edit) => {
+            const edit_size = this.format_bytes(edit.sizediff);
+            const edit_link = `[[Special:Diff/${edit.revid}|(${edit_size})]]`;
+            const creation_note =
+              edit.new !== undefined ? " (page created)" : "";
+            return `${edit_link}${creation_note}`;
+          };
 
-              const creation_note =
-                edit.new !== undefined ? " (page created)" : "";
+          let links_text = "";
+          if (this.is_multiple_users) {
+            const user_groups = {};
+            group.edits.forEach((edit) => {
+              const u = edit.user;
+              if (!user_groups[u]) user_groups[u] = [];
+              user_groups[u].push(format_edit(edit));
+            });
+            links_text = Object.entries(user_groups)
+              .map(
+                ([user, links]) =>
+                  `[[Special:Contributions/${user}|${user}]]: ${links.join(" ")}`,
+              )
+              .join("\n");
+          } else {
+            links_text = group.edits.map(format_edit).join(" ");
+          }
 
-              return `${edit_link}${creation_note}`;
-            })
-            .join(" ");
           const edit_count = group.edits.length;
           const edit_str = edit_count > 1 ? "edits" : "edit";
-          wikitext += `{{AIC article row|article=${group.title}|status=requested|notes=${edit_count} ${edit_str}: ${links}}}\n`;
+          const separator = this.is_multiple_users ? "\n" : " ";
+          wikitext += `{{AIC article row|article=${group.title}|status=requested|notes=${edit_count} ${edit_str}:${separator}${links_text}}}\n`;
         });
 
         wikitext += `}}\n`;
