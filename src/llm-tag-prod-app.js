@@ -1,18 +1,25 @@
 function create_llm_tag_prod_app() {
-  const subpage_options = [];
   const LAST_THREAD_KEY = "ainb-llm-tag-last-thread";
   const LAST_THREAD_TTL_MS = 3 * 60 * 60 * 1000;
+  const LOG_TO_USERPAGE_OPTION = "userjs-ainb-log-userpage";
+
 
   create_app({
     template: generate_llm_tag_prod_template(),
 
     data() {
+      const initial_log_to_userpage =
+        mw.user.options.get(LOG_TO_USERPAGE_OPTION) === "1";
+
       return {
         is_open: true,
         step: 1,
+        username: mw.config.get("wgUserName"),
+        page_name: mw.config.get("wgPageName"),
         selected_option: "llm_prod",
         subpage: "",
-        subpage_options: subpage_options,
+        subpage_options: [],
+        log_to_userpage: initial_log_to_userpage,
         editable_wikitext: "",
         editable_summary: "",
         saving: false,
@@ -23,6 +30,16 @@ function create_llm_tag_prod_app() {
         preview_html: "",
         preview_loading: false,
       };
+    },
+
+    watch: {
+      log_to_userpage(new_val) {
+        const val_str = new_val ? "1" : "0";
+        mw.user.options.set(LOG_TO_USERPAGE_OPTION, val_str);
+        api.saveOption(LOG_TO_USERPAGE_OPTION, val_str).catch((err) => {
+          console.error("Failed to save user option:", err);
+        });
+      },
     },
 
     computed: {
@@ -58,11 +75,10 @@ function create_llm_tag_prod_app() {
 
             if (section) {
               const sections = res.parse?.sections || [];
+              const normalize = (s) => s.replace(/_/g, " ");
               const section_exists = sections.some(
                 (s) =>
-                  s.line === section ||
-                  s.anchor === section ||
-                  s.line.replace(/_/g, " ") === section.replace(/_/g, " "),
+                  s.anchor === section || normalize(s.line) === normalize(section),
               );
               if (!section_exists) {
                 this.step1_error = `Section "${section}" does not exist on "${page}"`;
@@ -77,7 +93,7 @@ function create_llm_tag_prod_app() {
           }
         }
 
-        let target_link = raw_subpage;
+        const target_link = raw_subpage;
 
         mw.storage.setObject(LAST_THREAD_KEY, {
           subpage: raw_subpage,
@@ -116,7 +132,7 @@ function create_llm_tag_prod_app() {
           const res = await api.post({
             action: "parse",
             text: this.editable_wikitext,
-            title: mw.config.get("wgPageName"),
+            title: this.page_name,
             pst: true,
             prop: "text",
           });
@@ -132,20 +148,41 @@ function create_llm_tag_prod_app() {
           this.preview_loading = false;
         }
       },
+      async log_to_userpage_action(revid) {
+        if (!revid) return;
+        const page = this.page_name;
+        const template_name =
+          this.selected_option === "llm_prod" ? "Prod llm" : "AI-generated";
+        const template_text = this.selected_option === "llm_prod" ? "LLMPROD" : "AI tag addition"
+
+        const thread = this.subpage.trim();
+        const thread_clause = thread ? ` (relevant page: [[${thread}]])` : "";
+
+        await api.postWithEditToken({
+          action: "edit",
+          title: `User:${this.username}/LLMPROD log`,
+          appendtext: `\n# [[:${page}]]: Added {{tl|${template_name}}} with [[special:diff/${revid}|this edit]]${thread_clause}, ~~~~~`,
+          summary: `Logging ${template_text} on [[${page}]] ${APP_AD}`,
+        });
+      },
       async save_edit() {
         this.saving = true;
         this.save_error = "";
         try {
-          const page_name = mw.config.get("wgPageName");
           const prepended_text = this.editable_wikitext.trim() + "\n";
           const edit_summary = `${this.editable_summary.trim()} ${APP_AD}`;
 
-          await api.postWithEditToken({
+          const edit_res = await api.postWithEditToken({
             action: "edit",
-            title: page_name,
+            title: this.page_name,
             prependtext: prepended_text,
             summary: edit_summary,
           });
+
+
+          if (this.log_to_userpage) {
+            await this.log_to_userpage_action(edit_res.edit?.newrevid);
+          }
 
           mw.notify("Edit submitted successfully!", { type: "success" });
           location.reload();
@@ -171,19 +208,6 @@ function create_llm_tag_prod_app() {
           if (parse_res.parse?.sections) {
             parse_res.parse.sections.forEach((section) => {
               suggestions.push(`Wikipedia:AI noticeboard#${section.line}`);
-            });
-          }
-
-          const subpages_res = await api.get({
-            action: "query",
-            list: "prefixsearch",
-            pssearch: "Wikipedia:AI noticeboard/",
-            pslimit: 100,
-          });
-
-          if (subpages_res.query?.prefixsearch) {
-            subpages_res.query.prefixsearch.forEach((item) => {
-              suggestions.push(item.title);
             });
           }
         } catch (err) {
@@ -217,6 +241,15 @@ function generate_llm_tag_prod_template() {
     title="LLM tag / prod" :use-close-button="true"
     @update:open="handle_dialog_close">
     
+    <div class="ainb-llm-top-options">
+      <span v-if="log_to_userpage" class="ainb-log-target-hint">
+        (will be logged to User:{{ username }}/LLMPROD log)
+      </span>
+      <cdx-checkbox v-model="log_to_userpage" :disabled="saving">
+        Log to your userpage
+      </cdx-checkbox>
+    </div>
+
     <div v-if="step === 1">
       <div v-if="step1_error" class="ainb-error">{{ step1_error }}</div>
       <cdx-field>

@@ -862,3 +862,22 @@
   border: 1px solid #c8e1ff;
   border-radius: 4px;
 }
+
+.ainb-llm-top-options {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.85em;
+}
+
+.ainb-llm-top-options .cdx-checkbox {
+  font-size: 0.9em;
+}
+
+.ainb-log-target-hint {
+  font-size: 0.85em;
+  color: var(--color-subtle, #54595d);
+}
