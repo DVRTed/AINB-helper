@@ -64,7 +64,10 @@ function create_edit_table_app(articles_input) {
       has_red_links() {
         return this.rows.some(
           (row) =>
-            row.is_new && !row.multiple_matches && row.status !== "completed",
+            row.is_new &&
+            !row.multiple_matches &&
+            row.status !== "completed" &&
+            row.status !== "unnecessary",
         );
       },
     },
