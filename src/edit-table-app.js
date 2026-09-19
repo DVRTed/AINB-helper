@@ -7,7 +7,9 @@ function get_article_row_regex(article, global = false) {
 }
 
 function create_edit_table_app(articles_input) {
-  const articles = Array.isArray(articles_input) ? articles_input : [articles_input];
+  const articles = Array.isArray(articles_input)
+    ? articles_input
+    : [articles_input];
 
   create_app({
     template: generate_edit_table_template(),
@@ -55,7 +57,15 @@ function create_edit_table_app(articles_input) {
       },
       can_save() {
         if (this.saving || this.loading || this.rows.length === 0) return false;
-        return this.rows.some((row) => !row.multiple_matches && Boolean(row.status));
+        return this.rows.some(
+          (row) => !row.multiple_matches && Boolean(row.status),
+        );
+      },
+      has_red_links() {
+        return this.rows.some(
+          (row) =>
+            row.is_new && !row.multiple_matches && row.status !== "completed",
+        );
       },
     },
 
@@ -67,7 +77,8 @@ function create_edit_table_app(articles_input) {
       normalize_status(value) {
         const trimmed = value?.trim().toLowerCase() || "";
         const status = this.status_options.find(
-          (option) => option.value === trimmed || option.aliases?.includes(trimmed),
+          (option) =>
+            option.value === trimmed || option.aliases?.includes(trimmed),
         );
         return status ? status.value : "requested";
       },
@@ -88,8 +99,10 @@ function create_edit_table_app(articles_input) {
           this.wikitext = wikitext;
 
           const rows = [];
-          for (const article of this.articles) {
-            const global_matches = [...wikitext.matchAll(get_article_row_regex(article, true))];
+          for (const { article, is_new } of this.articles) {
+            const global_matches = [
+              ...wikitext.matchAll(get_article_row_regex(article, true)),
+            ];
 
             if (global_matches.length > 0) {
               const match = global_matches[0];
@@ -98,12 +111,13 @@ function create_edit_table_app(articles_input) {
                 status: this.normalize_status(match[1]?.trim()),
                 notes: match[2]?.trim() || "",
                 multiple_matches: global_matches.length > 1,
+                is_new,
               });
             }
           }
 
           if (rows.length === 0) {
-            this.error = "Could not find row data"
+            this.error = "Could not find row data";
           } else {
             this.rows = rows;
             this.original_rows = structuredClone(rows);
@@ -119,6 +133,14 @@ function create_edit_table_app(articles_input) {
         }
       },
 
+      mark_all_deleted_as_completed() {
+        for (const row of this.rows) {
+          if (row.is_new && !row.multiple_matches) {
+            row.status = "completed";
+          }
+        }
+      },
+
       async save_changes() {
         this.saving = true;
         this.error = "";
@@ -130,12 +152,17 @@ function create_edit_table_app(articles_input) {
           for (const row of this.rows) {
             if (!row.multiple_matches) {
               const new_row = `{{AIC article row|article=${row.article}|status=${row.status}|notes=${row.notes || ""}}}`;
-              new_wikitext = new_wikitext.replace(get_article_row_regex(row.article), new_row);
+              new_wikitext = new_wikitext.replace(
+                get_article_row_regex(row.article),
+                new_row,
+              );
             }
           }
 
           const changed_rows = this.original_rows.filter((row) => {
-            const current_row = this.rows.find((e) => e.article === row.article);
+            const current_row = this.rows.find(
+              (e) => e.article === row.article,
+            );
             if (!current_row || row.multiple_matches) return false;
             return (
               row.status !== current_row.status ||
@@ -143,9 +170,10 @@ function create_edit_table_app(articles_input) {
             );
           });
 
-          const summary = this.rows.length === 1
-            ? `Updated row for [[${this.rows[0].article}]] ${APP_AD}`
-            : `Batch edited ${changed_rows.length} ${changed_rows.length === 1 ? "row" : "rows"} ${APP_AD}`;
+          const summary =
+            this.rows.length === 1
+              ? `Updated row for [[${this.rows[0].article}]] ${APP_AD}`
+              : `Batch edited ${changed_rows.length} ${changed_rows.length === 1 ? "row" : "rows"} ${APP_AD}`;
 
           await api.postWithEditToken({
             action: "edit",
@@ -187,7 +215,7 @@ function generate_edit_table_template() {
     
     <div v-else-if="is_single && rows.length === 1" class="ainb-edit-step">
       <div class="ainb-form-field">
-        Article: <strong><a :href="get_article_url(rows[0].article)" target="_blank" rel="noopener noreferrer">{{ rows[0].article }}</a></strong>
+        Article: <strong><a :href="get_article_url(rows[0].article)" :class="{ new: rows[0].is_new }" rel="mw:WikiLink" target="_blank">{{ rows[0].article }}</a></strong>
       </div>
       
       <div class="ainb-form-field">
@@ -212,7 +240,7 @@ function generate_edit_table_template() {
       <tbody>
         <tr v-for="row in rows" :key="row.article">
           <td>
-            <a :href="get_article_url(row.article)" target="_blank" rel="noopener noreferrer">
+            <a :href="get_article_url(row.article)" :class="{ new: row.is_new }" rel="mw:WikiLink" target="_blank">
               {{ row.article }}
             </a>
           </td>
@@ -233,7 +261,11 @@ function generate_edit_table_template() {
 
     <template #footer>
       <div class="ainb-dialog-footer">
-        <div></div>
+        <div>
+          <cdx-button v-if="!is_single && has_red_links" @click="mark_all_deleted_as_completed" :disabled="saving">
+            Mark all deleted articles as completed
+          </cdx-button>
+        </div>
         <div>
           <cdx-button @click="handle_dialog_close" :disabled="saving">Cancel</cdx-button>
           <cdx-button action="progressive" weight="primary" 

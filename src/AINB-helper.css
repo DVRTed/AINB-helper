@@ -793,15 +793,6 @@
   width: 100%;
 }
 
-.ainb-batch-edit-table-grid a {
-  color: #36c;
-  text-decoration: none;
-}
-
-.ainb-batch-edit-table-grid a:hover {
-  text-decoration: underline;
-}
-
 .ainb-llm-dialog.cdx-dialog__window,
 .ainb-llm-dialog .cdx-dialog__window,
 .ainb-llm-dialog {
