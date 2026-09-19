@@ -38,15 +38,18 @@ function init_row_editing() {
   $("table")
     .has('tr[class*="aic-row-"]')
     .each(function () {
-      const $table = $(this)
+      const $table = $(this);
       const $thead = $table.find("thead");
       $thead.find("tr").prepend('<th class="ainb-action-header">Action</th>');
 
-      // batch edit button; populate array of article names.
+      // batch edit button; populate array of { article, is_new } objects.
       const articles = $table
         .find('tr[class*="aic-row-"]')
         .map(function () {
-          return $(this).find("a").first().text().trim();
+          const $link = $(this).find("a").first();
+          const title = $link.text().trim();
+          if (!title) return null;
+          return { article: title, is_new: $link.hasClass("new") };
         })
         .get()
         .filter(Boolean);
@@ -61,11 +64,10 @@ function init_row_editing() {
             create_edit_table_app(articles);
           });
         $table.before($button);
-      };
+      }
 
       // single-row edit buttons
       $table.find('tr[class*="aic-row-"]').each(function () {
-
         const $row = $(this);
         const $first_cell = $row.find("td").first();
         const $link = $first_cell.find("a").first();
@@ -80,12 +82,15 @@ function init_row_editing() {
           .attr("title", "Edit this row")
           .on("click", (e) => {
             e.preventDefault();
-            create_edit_table_app($link.text().trim());
+            create_edit_table_app({
+              article: $link.text().trim(),
+              is_new: $link.hasClass("new"),
+            });
           });
 
         $edit_td.append($edit_button);
       });
-    })
+    });
 }
 
 function get_row_status($row) {
