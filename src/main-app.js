@@ -490,7 +490,7 @@ function create_main_app() {
         if (this.extra_notes.trim()) {
           wikitext += `{{Notice |heading=Notes |\n${this.extra_notes.trim()}\n}}\n\n`;
         }
-        wikitext += `(tracker start date: ${this.anchor_date || "unset"} &middot; end date: ${this.end_date || "unset"})\n\n`;
+        wikitext += `(tracker start date: ${this.anchor_date || "unset"} &middot; end date: ${this.end_date || this.current_date})\n\n`;
         wikitext += `{{AIC article list|\n`;
 
         selected_groups.forEach((group) => {
