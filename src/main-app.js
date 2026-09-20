@@ -484,13 +484,22 @@ function create_main_app() {
           }))
           .filter((group) => group.edits.length > 0);
 
-        let wikitext = `{{NOINDEX|visible=yes}}\nRelevant report and discussion may be viewable on the talk page.\n\n`;
+        const infocard_user = this.is_multiple_users
+          ? "multiple users; see notes below."
+          : `{{Userlinks|1=${this.normalized_username}}}`;
+
+        const infocard = `{{InfoCard|content='''Tracker detail'''
+* User: ${infocard_user}
+* Start date: ${this.anchor_date || "unset"} 
+* End date: ${this.end_date || this.current_date}
+}}`;
+
+        let wikitext = `{{NOINDEX|visible=yes}}\nRelevant report and discussion may be viewable on the talk page.\n\n${infocard}\n\n`;
 
         wikitext += `== Tracking list ==\n`;
         if (this.extra_notes.trim()) {
           wikitext += `{{Notice |heading=Notes |\n${this.extra_notes.trim()}\n}}\n\n`;
         }
-        wikitext += `(tracker start date: ${this.anchor_date || "unset"} &middot; end date: ${this.end_date || this.current_date})\n\n`;
         wikitext += `{{AIC article list|\n`;
 
         selected_groups.forEach((group) => {
@@ -554,7 +563,9 @@ function create_main_app() {
       },
       get_group_users(group) {
         if (!group?.edits) return "";
-        const users = [...new Set(group.edits.map((e) => e.user).filter(Boolean))];
+        const users = [
+          ...new Set(group.edits.map((e) => e.user).filter(Boolean)),
+        ];
         return users.length ? users.join(", ") : this.normalized_username;
       },
       format_bytes(bytes) {
