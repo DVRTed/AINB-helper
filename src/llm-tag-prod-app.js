@@ -2,8 +2,9 @@ function create_llm_tag_prod_app() {
   const LAST_THREAD_KEY = "ainb-llm-tag-last-thread";
   const LAST_THREAD_TTL_MS = 3 * 60 * 60 * 1000;
   const LOG_TO_USERPAGE_OPTION = "userjs-ainb-log-userpage";
+  const HELP_OFF_OPTION = "userjs-ainb-help-off";
+  const WATCH_PAGE_OPTION = "userjs-ainb-watch-page";
   const LOG_PAGE_SUFFIX = "LLMPROD log";
-
 
   create_app({
     template: generate_llm_tag_prod_template(),
@@ -11,6 +12,8 @@ function create_llm_tag_prod_app() {
     data() {
       const initial_log_to_userpage =
         mw.user.options.get(LOG_TO_USERPAGE_OPTION) === "1";
+      const initial_help_off = mw.user.options.get(HELP_OFF_OPTION) === "1";
+      const initial_watch_page = mw.user.options.get(WATCH_PAGE_OPTION) === "1";
 
       return {
         is_open: true,
@@ -22,6 +25,7 @@ function create_llm_tag_prod_app() {
         subpage: "",
         subpage_options: [],
         log_to_userpage: initial_log_to_userpage,
+        help_off: initial_help_off,
         editable_wikitext: "",
         editable_summary: "",
         saving: false,
@@ -31,6 +35,8 @@ function create_llm_tag_prod_app() {
         show_preview: false,
         preview_html: "",
         preview_loading: false,
+        show_advanced: false,
+        watch_page: initial_watch_page,
       };
     },
 
@@ -38,9 +44,17 @@ function create_llm_tag_prod_app() {
       log_to_userpage(new_val) {
         const val_str = new_val ? "1" : "0";
         mw.user.options.set(LOG_TO_USERPAGE_OPTION, val_str);
-        api.saveOption(LOG_TO_USERPAGE_OPTION, val_str).catch((err) => {
-          console.error("Failed to save user option:", err);
-        });
+        api.saveOption(LOG_TO_USERPAGE_OPTION, val_str);
+      },
+      help_off(new_val) {
+        const val_str = new_val ? "1" : "0";
+        mw.user.options.set(HELP_OFF_OPTION, val_str);
+        api.saveOption(HELP_OFF_OPTION, val_str);
+      },
+      watch_page(new_val) {
+        const val_str = new_val ? "1" : "0";
+        mw.user.options.set(WATCH_PAGE_OPTION, val_str);
+        api.saveOption(WATCH_PAGE_OPTION, val_str);
       },
     },
 
@@ -80,7 +94,8 @@ function create_llm_tag_prod_app() {
               const normalize = (s) => s.replace(/_/g, " ");
               const section_exists = sections.some(
                 (s) =>
-                  s.anchor === section || normalize(s.line) === normalize(section),
+                  s.anchor === section ||
+                  normalize(s.line) === normalize(section),
               );
               if (!section_exists) {
                 this.step1_error = `Section "${section}" does not exist on "${page}"`;
@@ -107,7 +122,8 @@ function create_llm_tag_prod_app() {
         const ai_reason = target_link ? ` |reason= [[${target_link}]]` : "";
 
         if (this.selected_option === "llm_prod") {
-          this.editable_wikitext = `{{subst:Prod llm\n|reason=[[WP:LLMPRV|Presumptive removal of LLM-generated content]]${see_clause}. Feel free to reinstate by following [[WP:LLMPRVOBJ|the procedures for disputing presumptive removal of LLM-generated content]].}}`;
+          const help_off_clause = this.help_off ? "|help=off\n" : "";
+          this.editable_wikitext = `{{subst:Prod llm\n${help_off_clause}|reason=[[WP:LLMPRV|Presumptive removal of LLM-generated content]]${see_clause}. Feel free to reinstate by following [[WP:LLMPRVOBJ|the procedures for disputing presumptive removal of LLM-generated content]].}}`;
           this.editable_summary = `[[WP:LLMPRV|Presumptive removal of LLM-generated content]]${see_clause}. Feel free to reinstate by following [[WP:LLMPRVOBJ|the procedures for disputing presumptive removal of LLM-generated content]].`;
         } else {
           this.editable_wikitext = `{{AI-generated${ai_reason} |{{subst:DATE}}}}`;
@@ -120,6 +136,7 @@ function create_llm_tag_prod_app() {
       go_back_to_step1() {
         mw.storage.remove(LAST_THREAD_KEY);
         this.step1_error = "";
+        this.show_advanced = false;
         this.step = 1;
       },
       async toggle_preview() {
@@ -155,7 +172,8 @@ function create_llm_tag_prod_app() {
         const page = this.page_name;
         const template_name =
           this.selected_option === "llm_prod" ? "Prod llm" : "AI-generated";
-        const template_text = this.selected_option === "llm_prod" ? "LLMPROD" : "AI tag addition"
+        const template_text =
+          this.selected_option === "llm_prod" ? "LLMPROD" : "AI tag addition";
 
         const thread = this.subpage.trim();
         const thread_clause = thread ? ` (relevant page: [[${thread}]])` : "";
@@ -179,8 +197,8 @@ function create_llm_tag_prod_app() {
             title: this.page_name,
             prependtext: prepended_text,
             summary: edit_summary,
+            watchlist: this.watch_page ? "watch" : "nochange",
           });
-
 
           if (this.log_to_userpage) {
             await this.log_to_userpage_action(edit_res.edit?.newrevid);
@@ -221,7 +239,11 @@ function create_llm_tag_prod_app() {
 
     mounted() {
       const saved = mw.storage.getObject(LAST_THREAD_KEY);
-      if (saved && saved.subpage && Date.now() - saved.ts < LAST_THREAD_TTL_MS) {
+      if (
+        saved &&
+        saved.subpage &&
+        Date.now() - saved.ts < LAST_THREAD_TTL_MS
+      ) {
         this.subpage = saved.subpage;
         this.selected_option = saved.selected_option || this.selected_option;
         this.go_to_step2();
@@ -229,7 +251,10 @@ function create_llm_tag_prod_app() {
 
       this.fetch_ainb_suggestions().then((suggestions) => {
         if (suggestions.length > 0) {
-          this.subpage_options = suggestions.map((sp) => ({ value: sp, label: sp }));
+          this.subpage_options = suggestions.map((sp) => ({
+            value: sp,
+            label: sp,
+          }));
         }
       });
     },
@@ -267,6 +292,21 @@ function generate_llm_tag_prod_template() {
         <template #description>Tip: Type the username to autocomplete from Wikipedia:AI noticeboard. You can leave this blank to proceed anyway.</template>
         <cdx-combobox v-model:selected="subpage" :menu-items="filtered_subpage_options" placeholder="Relevant thread or subpage (optional)" :disabled="checking_page"></cdx-combobox>
       </cdx-field>
+
+      <div class="ainb-advanced-wrap">
+        <a href="#" class="ainb-advanced-toggle" @click.prevent="show_advanced = !show_advanced">
+          {{ show_advanced ? '▾' : '▸' }} Advanced options
+        </a>
+        <cdx-field v-if="show_advanced">
+          <cdx-checkbox v-if="selected_option === 'llm_prod'" v-model="help_off" :disabled="checking_page">
+            Set help to off (will suppress the notification instructions; see
+            <a href="https://en.wikipedia.org/wiki/Template:Prod_llm#Usage" target="_blank" rel="noopener">docs</a>)
+          </cdx-checkbox>
+          <cdx-checkbox v-model="watch_page" :disabled="checking_page">
+            Watch this page
+          </cdx-checkbox>
+        </cdx-field>
+      </div>
     </div>
 
     <div v-if="step === 2">

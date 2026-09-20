@@ -872,3 +872,29 @@
   font-size: 0.85em;
   color: var(--color-subtle, #54595d);
 }
+
+.ainb-advanced-toggle {
+  display: inline-block;
+  font-size: 0.85em;
+  color: var(--color-subtle, #72777d);
+  text-decoration: none;
+  margin: 4px 0 8px;
+}
+
+.ainb-advanced-toggle:hover {
+  color: var(--color-base, #202122);
+  text-decoration: underline;
+}
+
+.ainb-advanced-wrap {
+  margin-top: 4px;
+}
+
+.ainb-advanced-wrap .cdx-field {
+  margin-top: 4px;
+}
+
+.ainb-advanced-wrap .cdx-checkbox__label,
+.ainb-advanced-wrap .cdx-checkbox .cdx-label__label {
+  font-size: 0.95em;
+}
