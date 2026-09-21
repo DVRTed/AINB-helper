@@ -136,7 +136,7 @@ function create_llm_tag_prod_app() {
           const help_off_clause = this.help_off ? "|help=off\n" : "";
 
           const llm_reason = `[[WP:LLMPRV|Presumptive removal of LLM-generated content]]${see_clause}. Please do not remove this tag before following [[WP:LLMPRVOBJ|the procedures for disputing presumptive removal of LLM-generated content]].`;
-          this.editable_wikitext = `{{subst:Prod llm\n${help_off_clause}|reason=${llm_reason}}`;
+          this.editable_wikitext = `{{subst:Prod llm\n${help_off_clause}|reason=${llm_reason}}}`;
           this.editable_summary = llm_reason;
         } else {
           this.editable_wikitext = `{{AI-generated${ai_reason} |{{subst:DATE}}}}`;
