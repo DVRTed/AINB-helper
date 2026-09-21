@@ -223,7 +223,7 @@ function create_llm_tag_prod_app() {
           });
           const wikitext = res.parse?.wikitext?.["*"] || "";
           let match = wikitext.match(
-            /\{\{\s*AIC status.*tracking_subpage\s*=\s*([^|}]+)/i,
+            /\{\{\s*AIC status.*(?:tracking_)?subpage\s*=\s*([^|}]+)/i,
           );
 
           if (!match) {
