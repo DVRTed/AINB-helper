@@ -222,9 +222,16 @@ function create_llm_tag_prod_app() {
             prop: "wikitext",
           });
           const wikitext = res.parse?.wikitext?.["*"] || "";
-          const match = wikitext.match(
-            /\{\{AIC status\|[^}]*\btracking_subpage\s*=\s*([^|}]+)/i,
+          let match = wikitext.match(
+            /\{\{\s*AIC status.*tracking_subpage\s*=\s*([^|}]+)/i,
           );
+
+          if (!match) {
+            match = wikitext.match(
+              /\{\{\s*AIC status\s*\|\s*[^|}=]+\|\s*([^|}=]+)/i,
+            );
+          }
+
           if (!match) return;
 
           const raw_value = rm_underscores(match[1].trim());
