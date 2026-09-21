@@ -5,6 +5,10 @@ function create_llm_tag_prod_app() {
   const HELP_OFF_OPTION = "userjs-ainb-help-off";
   const WATCH_PAGE_OPTION = "userjs-ainb-watch-page";
   const LOG_PAGE_SUFFIX = "LLMPROD log";
+  const TRACKER_PREFIX = "Wikipedia:AI noticeboard/";
+
+  // todo: move this and other commonly used helpers to the shared file
+  const rm_underscores = (s) => s.replace(/_/g, " ");
 
   create_app({
     template: generate_llm_tag_prod_template(),
@@ -19,7 +23,7 @@ function create_llm_tag_prod_app() {
         is_open: true,
         step: 1,
         username: mw.config.get("wgUserName"),
-        page_name: mw.config.get("wgPageName"),
+        page_name: rm_underscores(mw.config.get("wgPageName")),
         logging_page: `User:${mw.config.get("wgUserName")}/${LOG_PAGE_SUFFIX}`,
         selected_option: "llm_prod",
         subpage: "",
@@ -29,7 +33,6 @@ function create_llm_tag_prod_app() {
         editable_wikitext: "",
         editable_summary: "",
         saving: false,
-        save_error: "",
         step1_error: "",
         checking_page: false,
         show_preview: false,
@@ -37,6 +40,11 @@ function create_llm_tag_prod_app() {
         preview_loading: false,
         show_advanced: false,
         watch_page: initial_watch_page,
+        tracking_subpage: "",
+        tracking_subpage_locked: false,
+        update_tracker: true,
+        save_steps: [],
+        reload_seconds: null,
       };
     },
 
@@ -74,6 +82,11 @@ function create_llm_tag_prod_app() {
       async go_to_step2() {
         let raw_subpage = this.subpage.trim();
         this.step1_error = "";
+        this.save_steps = [];
+
+        if (!this.tracking_subpage_locked) {
+          this.tracking_subpage = "";
+        }
 
         if (raw_subpage) {
           this.checking_page = true;
@@ -89,18 +102,23 @@ function create_llm_tag_prod_app() {
               redirects: true,
             });
 
+            let section_index = null;
             if (section) {
               const sections = res.parse?.sections || [];
-              const normalize = (s) => s.replace(/_/g, " ");
-              const section_exists = sections.some(
+              const matched = sections.find(
                 (s) =>
                   s.anchor === section ||
-                  normalize(s.line) === normalize(section),
+                  rm_underscores(s.line) === rm_underscores(section),
               );
-              if (!section_exists) {
+              if (!matched) {
                 this.step1_error = `Section "${section}" does not exist on "${page}"`;
                 return;
               }
+              section_index = matched.index;
+            }
+
+            if (section_index !== null && !this.tracking_subpage_locked) {
+              await this.infer_tracking_subpage(page, section_index);
             }
           } catch (err) {
             this.step1_error = `Page does not exist: "${err}"`;
@@ -111,13 +129,6 @@ function create_llm_tag_prod_app() {
         }
 
         const target_link = raw_subpage;
-
-        mw.storage.setObject(LAST_THREAD_KEY, {
-          subpage: raw_subpage,
-          selected_option: this.selected_option,
-          ts: Date.now(),
-        });
-
         const see_clause = target_link ? `, see [[${target_link}]]` : "";
         const ai_reason = target_link ? ` |reason= [[${target_link}]]` : "";
 
@@ -130,13 +141,29 @@ function create_llm_tag_prod_app() {
           this.editable_summary = `Added AI tag${see_clause}`;
         }
 
+        this.persist_last_thread();
+
         this.show_preview = false;
         this.step = 2;
+      },
+      persist_last_thread() {
+        mw.storage.setObject(LAST_THREAD_KEY, {
+          subpage: this.subpage.trim(),
+          selected_option: this.selected_option,
+          tracking_subpage: this.tracking_subpage,
+          tracking_subpage_locked: this.tracking_subpage_locked,
+          update_tracker: this.update_tracker,
+          editable_wikitext: this.editable_wikitext,
+          editable_summary: this.editable_summary,
+          ts: Date.now(),
+        });
       },
       go_back_to_step1() {
         mw.storage.remove(LAST_THREAD_KEY);
         this.step1_error = "";
         this.show_advanced = false;
+        this.tracking_subpage = "";
+        this.tracking_subpage_locked = false;
         this.step = 1;
       },
       async toggle_preview() {
@@ -185,34 +212,161 @@ function create_llm_tag_prod_app() {
           summary: `Logging ${template_text} on [[${page}]] ${APP_AD}`,
         });
       },
-      async save_edit() {
-        this.saving = true;
-        this.save_error = "";
+
+      async infer_tracking_subpage(page, section_index) {
         try {
-          const prepended_text = this.editable_wikitext.trim() + "\n";
-          const edit_summary = `${this.editable_summary.trim()} ${APP_AD}`;
-
-          const edit_res = await api.postWithEditToken({
-            action: "edit",
-            title: this.page_name,
-            prependtext: prepended_text,
-            summary: edit_summary,
-            watchlist: this.watch_page ? "watch" : "nochange",
+          const res = await api.get({
+            action: "parse",
+            page: page,
+            section: section_index,
+            prop: "wikitext",
           });
+          const wikitext = res.parse?.wikitext?.["*"] || "";
+          const match = wikitext.match(
+            /\{\{AIC status\|[^}]*\btracking_subpage\s*=\s*([^|}]+)/i,
+          );
+          if (!match) return;
 
-          if (this.log_to_userpage) {
-            await this.log_to_userpage_action(edit_res.edit?.newrevid);
+          const raw_value = rm_underscores(match[1].trim());
+          if (!raw_value) return;
+
+          this.tracking_subpage = raw_value.startsWith("Wikipedia:")
+            ? raw_value
+            : `${TRACKER_PREFIX}${raw_value}`;
+        } catch (err) {
+          console.error("Tracker inference failed:", err);
+        }
+      },
+
+      change_tracking_subpage() {
+        const input = prompt(
+          "Tracker subpage:",
+          this.tracking_subpage || TRACKER_PREFIX,
+        );
+        if (input === null) return;
+        this.tracking_subpage = input.trim();
+        this.tracking_subpage_locked = true;
+      },
+
+      on_update_tracker_toggle(value) {
+        this.update_tracker = value;
+      },
+
+      async update_tracker_status(new_status) {
+        if (!this.tracking_subpage) {
+          return { ok: false, message: "no tracker page set" };
+        }
+        try {
+          const res = await api.get({
+            action: "query",
+            prop: "revisions",
+            titles: this.tracking_subpage,
+            rvprop: "content",
+            rvslots: "main",
+            formatversion: 2,
+          });
+          const page = res.query?.pages?.[0];
+          if (!page || page.missing) {
+            return {
+              ok: false,
+              message: `tracker page "${this.tracking_subpage}" not found`,
+            };
+          }
+          const wikitext = page.revisions[0].slots.main.content;
+
+          // global so we replace status of all instances of the article
+          // across all the tables
+          const row_re = get_article_row_regex(this.page_name, true);
+          const matches = [...wikitext.matchAll(row_re)];
+          if (matches.length === 0) {
+            return { ok: false, message: "row not found" };
           }
 
-          mw.notify("Edit submitted successfully!", { type: "success" });
-          location.reload();
-          this.handle_dialog_close();
-        } catch (e) {
-          this.save_error = "Error submitting edit: " + e;
-          console.error(e);
-        } finally {
-          this.saving = false;
+          const new_text = wikitext.replace(
+            row_re,
+            (full_match, status_group, notes_group) => {
+              const notes = (notes_group || "").trim();
+              return `{{AIC article row|article=${this.page_name}|status=${new_status}|notes=${notes}}}`;
+            },
+          );
+
+          if (new_text === wikitext) {
+            return { ok: false, message: "row not changed" };
+          }
+
+          await api.postWithEditToken({
+            action: "edit",
+            title: this.tracking_subpage,
+            text: new_text,
+            summary: `Updating status for [[${this.page_name}]] to ${new_status} ${APP_AD}`,
+          });
+          return { ok: true, message: "" };
+        } catch (err) {
+          console.error("Tracker update failed:", err);
+          return { ok: false, message: err.message || String(err) };
         }
+      },
+
+      async run_step(label, fn) {
+        const step = { label, status: "pending", detail: "" };
+        this.save_steps.push(step);
+        try {
+          await fn();
+          step.status = "success";
+        } catch (err) {
+          step.status = "error";
+          step.detail = err?.message || String(err);
+        }
+        return step;
+      },
+
+      async save_edit() {
+        this.saving = true;
+        this.save_steps = [];
+        this.reload_seconds = null;
+
+        this.persist_last_thread();
+
+        const edit_label =
+          this.selected_option === "llm_prod"
+            ? "Prodding article"
+            : "Adding AI-generated tag";
+
+        let edit_res;
+        const edit_step = await this.run_step(edit_label, async () => {
+          edit_res = await api.postWithEditToken({
+            action: "edit",
+            title: this.page_name,
+            prependtext: this.editable_wikitext.trim() + "\n",
+            summary: `${this.editable_summary.trim()} ${APP_AD}`,
+            watchlist: this.watch_page ? "watch" : "nochange",
+          });
+        });
+
+        if (edit_step.status !== "success") {
+          this.saving = false;
+          return;
+        }
+
+        if (this.log_to_userpage) {
+          await this.run_step("Logging to your userpage", () =>
+            this.log_to_userpage_action(edit_res.edit?.newrevid),
+          );
+        }
+
+        if (this.update_tracker && this.tracking_subpage) {
+          await this.run_step("Updating tracking table", async () => {
+            const result = await this.update_tracker_status(
+              this.selected_option === "llm_prod" ? "ongoing" : "completed",
+            );
+            if (!result.ok) {
+              throw new Error(result.message);
+            }
+          });
+        }
+
+        this.reload_seconds = 4;
+        setTimeout(() => location.reload(), 4000);
       },
 
       async fetch_ainb_suggestions() {
@@ -246,7 +400,18 @@ function create_llm_tag_prod_app() {
       ) {
         this.subpage = saved.subpage;
         this.selected_option = saved.selected_option || this.selected_option;
-        this.go_to_step2();
+        this.tracking_subpage = saved.tracking_subpage || "";
+        this.tracking_subpage_locked = !!saved.tracking_subpage_locked;
+
+        this.go_to_step2().then(() => {
+          this.update_tracker = saved.update_tracker !== false;
+          if (saved.editable_wikitext !== undefined) {
+            this.editable_wikitext = saved.editable_wikitext;
+          }
+          if (saved.editable_summary !== undefined) {
+            this.editable_summary = saved.editable_summary;
+          }
+        });
       }
 
       this.fetch_ainb_suggestions().then((suggestions) => {
@@ -265,8 +430,7 @@ function generate_llm_tag_prod_template() {
   return `
 <div>
   <cdx-dialog class="ainb-llm-dialog" v-model:open="is_open" 
-    title="LLM tag / prod" :use-close-button="true"
-    @update:open="handle_dialog_close">
+    title="LLM tag / prod" :use-close-button="true">
     
     <div class="ainb-llm-top-options">
       <span v-if="log_to_userpage" class="ainb-log-target-hint">
@@ -310,29 +474,57 @@ function generate_llm_tag_prod_template() {
     </div>
 
     <div v-if="step === 2">
-      <div class="ainb-thread-context">
+      <div v-if="!saving" class="ainb-thread-context">
         <span>Thread: <strong>{{ subpage }}</strong></span>
         <a href="#" @click.prevent="go_back_to_step1">Change</a>
       </div>
-      <div v-if="save_error" class="ainb-error">{{ save_error }}</div>
 
-      <cdx-field>
+      <div v-if="!saving" class="ainb-tracker-row">
+        <cdx-checkbox :model-value="update_tracker" @update:model-value="on_update_tracker_toggle" :disabled="saving || !tracking_subpage">
+          Mark as {{ selected_option === 'llm_prod' ? 'ongoing' : 'completed' }} on the tracker
+        </cdx-checkbox>
+        <div v-if="update_tracker">
+          <span v-if="tracking_subpage" class="ainb-tracker-target">
+            <strong>{{ tracking_subpage }}</strong> (<a href="#" @click.prevent="change_tracking_subpage">change</a>)
+          </span>
+          <div v-else class="ainb-tracker-target ainb-tracker-missing">
+            Couldn't infer tracking page. <a href="#" @click.prevent="change_tracking_subpage">Set</a>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="save_steps.length" class="ainb-save-status">
+        <div v-for="s in save_steps" :key="s.label"
+          class="ainb-save-status-line" :class="'ainb-save-status-' + s.status">
+          <span class="ainb-save-status-icon">
+            <template v-if="s.status === 'pending'">&#8230;</template>
+            <template v-else-if="s.status === 'success'">&#10003;</template>
+            <template v-else>&#10007;</template>
+          </span>
+          <span>{{ s.label }}<template v-if="s.status === 'success'">... succeeded</template><template v-else-if="s.status === 'error'">... failed: {{ s.detail }}</template><template v-else>...</template></span>
+        </div>
+        <div v-if="reload_seconds !== null" class="ainb-save-status-line ainb-save-status-reload">
+          Reloading in {{ reload_seconds }}s&#8230;
+        </div>
+      </div>
+
+      <cdx-field v-if="!saving">
         <template #label>Resulting wikitext:</template>
         <cdx-text-area v-model="editable_wikitext" rows="5" :disabled="saving"></cdx-text-area>
       </cdx-field>
 
-      <div class="ainb-preview-link-wrap">
+      <div v-if="!saving" class="ainb-preview-link-wrap">
         <a href="#" @click.prevent="toggle_preview">
           {{ show_preview ? 'Hide preview' : 'Show preview' }}
         </a>
       </div>
 
-      <div v-if="show_preview" class="ainb-preview-box">
+      <div v-if="!saving && show_preview" class="ainb-preview-box">
         <div v-if="preview_loading" class="ainb-loading">Loading preview...</div>
         <div v-else class="ainb-preview-content" v-html="preview_html"></div>
       </div>
 
-      <cdx-field>
+      <cdx-field v-if="!saving">
         <template #label>Edit summary:</template>
         <cdx-text-input v-model="editable_summary" :disabled="saving" />
       </cdx-field>
@@ -354,7 +546,7 @@ function generate_llm_tag_prod_template() {
         </div>
         <div v-if="step === 2">
           <cdx-button action="progressive" weight="primary" @click="save_edit" :disabled="saving || !editable_wikitext">
-            {{ saving ? 'Saving...' : 'Submit edit' }}
+            {{ reload_seconds !== null ? 'Done' : (saving ? 'Saving...' : 'Submit edit') }}
           </cdx-button>
         </div>
       </div>

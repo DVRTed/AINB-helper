@@ -898,3 +898,65 @@
 .ainb-advanced-wrap .cdx-checkbox .cdx-label__label {
   font-size: 0.95em;
 }
+
+.ainb-tracker-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  background: #eaf3ff;
+  border: 1px solid #c8e1ff;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+
+.ainb-save-status {
+  padding: 10px 12px;
+  margin-bottom: 0.75em;
+  background: #f8f9fa;
+  border: 1px solid #eaecf0;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.ainb-save-status-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.ainb-save-status-icon {
+  width: 1em;
+  flex-shrink: 0;
+  text-align: center;
+  font-weight: 700;
+}
+
+.ainb-save-status-pending .ainb-save-status-icon {
+  color: #72777d;
+}
+
+.ainb-save-status-success .ainb-save-status-icon {
+  color: #027202;
+}
+
+.ainb-save-status-success {
+  color: #202122;
+}
+
+.ainb-save-status-error .ainb-save-status-icon,
+.ainb-save-status-error {
+  color: #d33;
+}
+
+.ainb-save-status-reload {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed #c8ccd1;
+  color: #54595d;
+  font-style: italic;
+}
