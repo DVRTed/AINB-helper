@@ -255,6 +255,7 @@ function create_llm_tag_prod_app() {
         if (input === null) return;
         this.tracking_subpage = input.trim();
         this.tracking_subpage_locked = true;
+        this.update_tracker = !!this.tracking_subpage;
       },
 
       on_update_tracker_toggle(value) {
@@ -413,7 +414,8 @@ function create_llm_tag_prod_app() {
         this.tracking_subpage_locked = !!saved.tracking_subpage_locked;
 
         this.go_to_step2().then(() => {
-          this.update_tracker = saved.update_tracker !== false;
+          this.update_tracker =
+            saved.update_tracker !== false && this.tracking_subpage !== "";
           if (saved.editable_wikitext !== undefined) {
             this.editable_wikitext = saved.editable_wikitext;
           }
@@ -492,13 +494,11 @@ function generate_llm_tag_prod_template() {
         <cdx-checkbox :model-value="update_tracker" @update:model-value="on_update_tracker_toggle" :disabled="saving || !tracking_subpage">
           Mark as {{ selected_option === 'llm_prod' ? 'ongoing' : 'completed' }} on the tracker
         </cdx-checkbox>
-        <div v-if="update_tracker">
-          <span v-if="tracking_subpage" class="ainb-tracker-target">
-            <strong>{{ tracking_subpage }}</strong> (<a href="#" @click.prevent="change_tracking_subpage">change</a>)
-          </span>
-          <div v-else class="ainb-tracker-target ainb-tracker-missing">
-            Couldn't infer tracking page. <a href="#" @click.prevent="change_tracking_subpage">Set</a>
-          </div>
+        <span v-if="tracking_subpage && update_tracker" class="ainb-tracker-target">
+          <strong>{{ tracking_subpage }}</strong> (<a href="#" @click.prevent="change_tracking_subpage">change</a>)
+        </span>
+        <div v-else-if="!tracking_subpage" class="ainb-tracker-target ainb-tracker-missing">
+          Couldn't infer tracking page. <a href="#" @click.prevent="change_tracking_subpage">Set</a>
         </div>
       </div>
 

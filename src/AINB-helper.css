@@ -900,10 +900,6 @@
 }
 
 .ainb-tracker-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
   padding: 8px 12px;
   margin-bottom: 12px;
   background: #eaf3ff;
