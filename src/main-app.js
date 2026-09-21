@@ -275,6 +275,9 @@ function create_main_app() {
           const edits = [];
           let continuation = null;
 
+          const is_ip_address = (u) =>
+            mw.util.isIPv4Address(u) || mw.util.isIPv6Address(u);
+
           const raw_users = this.username
             .split("|")
             .map((u) => u.trim().replace(/^user:/i, ""))
@@ -285,37 +288,57 @@ function create_main_app() {
             return;
           }
 
-          // check for users w/ too many edits
-          const user_info = await api.get({
-            action: "query",
-            list: "users",
-            ususers: raw_users.join("|"),
-            usprop: "editcount",
-          });
-          const users = user_info.query?.users || [];
-          const edit_count = users.reduce(
-            (sum, u) => sum + (u.editcount || 0),
-            0,
-          );
+          const ip_users = raw_users.filter(is_ip_address);
+          const registered_raw = raw_users.filter((u) => !is_ip_address(u));
 
-          if (edit_count > 20000) {
+          let normalized_registered_users = [];
+          let registered_edit_count = 0;
+
+          // check for users w/ too many edits
+          if (registered_raw.length > 0) {
+            const user_info = await api.get({
+              action: "query",
+              list: "users",
+              ususers: registered_raw.join("|"),
+              usprop: "editcount",
+            });
+            const users = user_info.query?.users || [];
+
+            registered_edit_count = users.reduce(
+              (sum, u) => sum + (u.editcount || 0),
+              0,
+            );
+
+            normalized_registered_users = users
+              .filter((u) => u.name && !u.missing && !u.invalid)
+              .map((u) => u.name);
+          }
+
+          const normalized_users = [
+            ...new Set([...normalized_registered_users, ...ip_users]),
+          ];
+
+          if (
+            normalized_users.length === 0 ||
+            (registered_raw.length > 0 &&
+              ip_users.length === 0 &&
+              !registered_edit_count)
+          ) {
+            this.error = "No edits found. Note: usernames are case-sensitive.";
+            return;
+          }
+
+          if (registered_edit_count > 20000) {
             if (
               !confirm(
-                `User has over 20k edits (${edit_count}). Are you sure you want to continue?`,
+                `User has over 20k edits (${registered_edit_count}). Are you sure you want to continue?`,
               )
             ) {
               this.error = "Manually cancelled: User has too many edits.";
               return;
             }
-          } else if (!edit_count) {
-            this.error =
-              "No edits found in the timeframe. Note: the username is case-sensitive.";
-            return;
           }
 
-          const normalized_users = users
-            .filter((u) => u.name && !u.missing && !u.invalid)
-            .map((u) => u.name);
           this.normalized_usernames = normalized_users;
           this.normalized_username = normalized_users[0] || "";
 
