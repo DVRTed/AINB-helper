@@ -262,7 +262,8 @@ function create_llm_tag_prod_app() {
         this.update_tracker = value;
       },
 
-      async update_tracker_status(new_status) {
+      async update_tracker_status(new_status, revid) {
+        if (!revid) return { ok: true, message: "" };
         if (!this.tracking_subpage) {
           return { ok: false, message: "no tracker page set" };
         }
@@ -296,7 +297,13 @@ function create_llm_tag_prod_app() {
             row_re,
             (full_match, status_group, notes_group) => {
               const notes = (notes_group || "").trim();
-              return `{{AIC article row|article=${this.page_name}|status=${new_status}|notes=${notes}}}`;
+
+              const note_text =
+                this.selected_option === "llm_prod" ? "prodded" : "AI tagged";
+              const diff_link = `[[special:diff/${revid}|${note_text}]]`;
+
+              const new_notes = `${notes} ${diff_link}`;
+              return `{{AIC article row|article=${this.page_name}|status=${new_status}|notes=${new_notes}}}`;
             },
           );
 
@@ -308,7 +315,7 @@ function create_llm_tag_prod_app() {
             action: "edit",
             title: this.tracking_subpage,
             text: new_text,
-            summary: `Updating status for [[${this.page_name}]] to ${new_status} ${APP_AD}`,
+            summary: `Updated status for [[${this.page_name}]] to ${new_status} ${APP_AD}`,
           });
           return { ok: true, message: "" };
         } catch (err) {
@@ -368,6 +375,7 @@ function create_llm_tag_prod_app() {
           await this.run_step("Updating tracking table", async () => {
             const result = await this.update_tracker_status(
               this.selected_option === "llm_prod" ? "ongoing" : "completed",
+              edit_res.edit?.newrevid,
             );
             if (!result.ok) {
               throw new Error(result.message);
