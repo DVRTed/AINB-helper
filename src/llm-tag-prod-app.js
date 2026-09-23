@@ -374,7 +374,7 @@ function create_llm_tag_prod_app() {
         if (this.update_tracker && this.tracking_subpage) {
           await this.run_step("Updating tracking table", async () => {
             const result = await this.update_tracker_status(
-              this.selected_option === "llm_prod" ? "ongoing" : "completed",
+              this.selected_option === "llm_prod" ? "ongoing" : "tagged",
               edit_res.edit?.newrevid,
             );
             if (!result.ok) {
@@ -500,7 +500,7 @@ function generate_llm_tag_prod_template() {
 
       <div v-if="!saving" class="ainb-tracker-row">
         <cdx-checkbox :model-value="update_tracker" @update:model-value="on_update_tracker_toggle" :disabled="saving || !tracking_subpage">
-          Mark as {{ selected_option === 'llm_prod' ? 'ongoing' : 'completed' }} on the tracker
+          Mark as {{ selected_option === 'llm_prod' ? 'ongoing' : 'tagged' }} on the tracker
         </cdx-checkbox>
         <span v-if="tracking_subpage && update_tracker" class="ainb-tracker-target">
           <strong>{{ tracking_subpage }}</strong> (<a href="#" @click.prevent="change_tracking_subpage">change</a>)
