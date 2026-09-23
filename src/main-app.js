@@ -8,7 +8,7 @@ function create_main_app() {
       return {
         is_open: true,
         step: 1,
-        username: "",
+        username: mw.config.get('wgRelevantUserName') || "",
         normalized_username: "",
         normalized_usernames: [],
         anchor_date: "2022-12-01",
