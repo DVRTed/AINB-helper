@@ -713,6 +713,10 @@
   background: var(--background-color-notice, #fc3);
 }
 
+.ainb-seg-tagged {
+  background: #9546c8;
+}
+
 .ainb-progress-legend {
   display: flex;
   gap: 10px;

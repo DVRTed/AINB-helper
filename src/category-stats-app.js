@@ -43,10 +43,11 @@ function init_category_stats_app() {
         total_in_progress,
         total_completed,
         total_unnecessary,
+        total_tagged = 0,
       } = JSON.parse(rev.slots.main.content);
 
-      const total_pages = total_todo + total_in_progress + total_completed + total_unnecessary;
-      const resolved = total_completed + total_unnecessary;
+      const total_pages = total_todo + total_in_progress + total_completed + total_unnecessary + total_tagged;
+      const resolved = total_completed + total_unnecessary + total_tagged;
       const pct = Math.round((resolved / total_pages) * 100);
 
       $wrap.find(".ainb-category-meta span").first().text(
@@ -66,6 +67,7 @@ function init_category_stats_app() {
         { key: "completed", count: total_completed },
         { key: "unnecessary", count: total_unnecessary },
         { key: "ongoing", count: total_in_progress },
+        { key: "tagged", count: total_tagged },
       ].filter(({ count }) => count > 0);
 
       const segments = items
@@ -91,7 +93,7 @@ function init_category_stats_app() {
 
       $wrap.find(".ainb-category-mini").html(
         `There are <strong>${active_cases.toLocaleString()}</strong> active cases with <strong>${total_todo.toLocaleString()}</strong> pages marked as to-do, ` +
-        `<strong>${total_in_progress.toLocaleString()}</strong> in progress, <strong>${total_completed.toLocaleString()}</strong> done, ` +
+        `<strong>${total_in_progress.toLocaleString()}</strong> in progress, <strong>${total_tagged.toLocaleString()}</strong> tagged, <strong>${total_completed.toLocaleString()}</strong> done, ` +
         `and <strong>${total_unnecessary.toLocaleString()}</strong> unnecessary.`
       );
     })

@@ -27,6 +27,7 @@ mw.util.addCSS(`
     .ainb-seg-unnecessary, .ainb-seg-unknown { background: var(--background-color-disabled, #c8ccd1); }
     .ainb-seg-ongoing { background: var(--background-color-progressive, #36c); }
     .ainb-seg-todo { background: var(--background-color-notice, #fc3); }
+    .ainb-seg-tagged { background: #9546c8; }
     .ainb-progress-legend { display: flex; gap: 10px; margin-top: 6px; font-size: 0.8em; color: var(--color-subtle, #54595d); text-transform: capitalize; }
     .ainb-progress-legend i.ainb-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 3px; }
     .ainb-progress-credit { font-size: 0.75em; color: var(--color-subtle, #54595d); font-weight: normal; text-align: right; }
@@ -103,6 +104,7 @@ function init_progress_bar() {
     "completed",
     "unnecessary",
     "ongoing",
+    "tagged",
     "todo",
     "unknown",
   ];
@@ -119,7 +121,7 @@ function init_progress_bar() {
         const status = get_row_status($(this));
         const key = status in stats ? status : "unknown";
         stats[key]++;
-        if (key === "completed" || key === "unnecessary") {
+        if (key === "completed" || key === "unnecessary" || key === "tagged") {
           $(this).addClass("ainb-row-resolved");
         }
       });
@@ -127,7 +129,7 @@ function init_progress_bar() {
       const total = Object.values(stats).reduce((a, b) => a + b, 0);
       if (!total) return;
 
-      const resolved = stats.completed + stats.unnecessary;
+      const resolved = stats.completed + stats.unnecessary + stats.tagged;
       const percent = Math.round((resolved / total) * 100);
       const active = STATUS_KEYS.filter((key) => stats[key] > 0);
 

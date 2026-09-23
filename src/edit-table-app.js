@@ -33,6 +33,11 @@ function create_edit_table_app(articles_input) {
             aliases: ["u", "unneeded"],
           },
           {
+            value: "tagged",
+            label: "Tagged",
+            aliases: ["tg", "tag"],
+          },
+          {
             value: "requested",
             label: "Requested/To-do",
             aliases: ["r", "td", "todo", "to do", "t"],
