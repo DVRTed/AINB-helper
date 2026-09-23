@@ -23,11 +23,6 @@ mw.util.addCSS(`
     .ainb-progress-stats { font-size: 0.85em; color: var(--color-subtle, #54595d); }
     .ainb-progress-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: #eaecf0; }
     .ainb-seg { height: 100%; }
-    .ainb-seg-completed { background: var(--background-color-success, #14866d); }
-    .ainb-seg-unnecessary, .ainb-seg-unknown { background: var(--background-color-disabled, #c8ccd1); }
-    .ainb-seg-ongoing { background: var(--background-color-progressive, #36c); }
-    .ainb-seg-todo { background: var(--background-color-notice, #fc3); }
-    .ainb-seg-tagged { background: #9546c8; }
     .ainb-progress-legend { display: flex; gap: 10px; margin-top: 6px; font-size: 0.8em; color: var(--color-subtle, #54595d); text-transform: capitalize; }
     .ainb-progress-legend i.ainb-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 3px; }
     .ainb-progress-credit { font-size: 0.75em; color: var(--color-subtle, #54595d); font-weight: normal; text-align: right; }
