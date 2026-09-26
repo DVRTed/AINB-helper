@@ -109,7 +109,9 @@ function init_check_affected() {
 
   $('tr[class*="aic-row-"]').each(function () {
     const $row = $(this);
-    const article = $row.find("a").first().text();
+    const $a = $row.find("a").first();
+    if ($a.hasClass("new")) return;
+    const article = $a.text();
     const $notes = $row.find("td").last();
 
     const $link = $("<a>")
