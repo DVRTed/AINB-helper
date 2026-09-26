@@ -3,7 +3,7 @@
         "dev": "node build.js",
         "dev:watch": "nodemon -i dist/ --ext js,mjs,cjs,json,css build.js",
         "build": "node build.js --prod",
-        "build:usync": "node build.js --with-usync"
+        "build:usync": "node build.js --prod --with-usync"
 
     },
     "devDependencies": {
