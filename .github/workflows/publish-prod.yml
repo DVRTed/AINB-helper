@@ -26,7 +26,7 @@ jobs:
         run: npm ci
 
       - name: Build production files
-        run: npm run build -- --with-usync
+        run: npm run build:usync
 
       - name: Publish files to production branch
         run: |

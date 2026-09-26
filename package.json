@@ -2,7 +2,9 @@
     "scripts": {
         "dev": "node build.js",
         "dev:watch": "nodemon -i dist/ --ext js,mjs,cjs,json,css build.js",
-        "build": "node build.js --prod"
+        "build": "node build.js --prod",
+        "build:usync": "node build.js --with-usync"
+
     },
     "devDependencies": {
         "prettier": "^2.8.8",

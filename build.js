@@ -80,7 +80,13 @@ const output_js = `$(async () => {\n${parts.join("\n")}\n});\n// </nowiki>`;
 
 fs.mkdirSync(dist, { recursive: true });
 fs.writeFileSync(dist_js, output_js, "utf8");
+console.log(`Built ${dist_js} (${fs.statSync(dist_js).size} bytes)`);
 
+const css_source = path.join(src, "AINB-helper.css");
+fs.copyFileSync(css_source, dist_css);
+console.log(`Copied ${dist_css}`);
+
+if (build_mode === "dev") return;
 execFileSync(
   process.execPath,
   [require.resolve("prettier/bin-prettier.js"), "--write", dist_js],
@@ -113,8 +119,6 @@ const final_js = usync_header + HEADER + minified_js + FOOTER;
 
 fs.writeFileSync(dist_js, final_js, "utf8");
 
-const css_source = path.join(src, "AINB-helper.css");
-fs.copyFileSync(css_source, dist_css);
-
-console.log(`Built ${dist_js} (${fs.statSync(dist_js).size} bytes)`);
-console.log(`Copied ${dist_css}`);
+console.log(
+  `Rebuilt (minified) ${dist_js} (${fs.statSync(dist_js).size} bytes)`,
+);
