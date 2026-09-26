@@ -10,6 +10,8 @@ const HEADER =
   "// For readable source code, see: https://github.com/DVRTed/AINB-helper\n" +
   "// <nowiki>\n\n";
 
+const USYNC_HEADER =
+  "// {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=AINB-helper.js}}\n\n";
 const FOOTER = "\n// </nowiki>";
 
 const src = path.join(__dirname, "src");
@@ -17,6 +19,7 @@ const dist = path.join(__dirname, "dist");
 const dist_js = path.join(dist, "AINB-helper.js");
 const dist_css = path.join(dist, "AINB-helper.css");
 const build_mode = process.argv.includes("--prod") ? "prod" : "dev";
+const build_with_usync = process.argv.includes("--with-usync");
 
 const modules = [
   "shared.js",
@@ -104,11 +107,11 @@ execFileSync(
   },
 );
 
-fs.writeFileSync(
-  dist_js,
-  HEADER + fs.readFileSync(dist_js, "utf8") + FOOTER,
-  "utf8",
-);
+const minified_js = fs.readFileSync(dist_js, "utf8");
+const usync_header = build_with_usync ? USYNC_HEADER : "";
+const final_js = usync_header + HEADER + minified_js + FOOTER;
+
+fs.writeFileSync(dist_js, final_js, "utf8");
 
 const css_source = path.join(src, "AINB-helper.css");
 fs.copyFileSync(css_source, dist_css);

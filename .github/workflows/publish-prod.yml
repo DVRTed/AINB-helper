@@ -1,0 +1,54 @@
+name: Publish production build
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out master
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production files
+        run: npm run build -- --with-usync
+
+      - name: Publish files to production branch
+        run: |
+          artifact_dir="$(mktemp -d)"
+          cp dist/AINB-helper.js dist/AINB-helper.css "$artifact_dir/"
+
+          if git ls-remote --exit-code --heads origin refs/heads/production >/dev/null 2>&1; then
+            git fetch origin production
+            git checkout -B production FETCH_HEAD
+          else
+            git checkout --orphan production
+            git rm -rf .
+          fi
+
+          cp "$artifact_dir/AINB-helper.js" "$artifact_dir/AINB-helper.css" .
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- AINB-helper.js AINB-helper.css
+
+          if git diff --cached --quiet; then
+            echo "Production files are unchanged."
+          else
+            git commit -m "Build production files"
+            git push origin HEAD:production
+          fi
