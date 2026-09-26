@@ -1,7 +1,3 @@
-// Userscript to help generating tracking subpages at [[WP:AINB]]
-
-/* globals mw, $ */
-// <nowiki>
 const APP_ID = "ainb-helper";
 const APP_AD = "(using [[User:DVRTed/AINB-helper|AINB-helper]])";
 // BUILD:DEV
@@ -59,14 +55,30 @@ function create_app(App) {
   });
 
   const {
-    CdxButton, CdxCheckbox, CdxCombobox, CdxDialog, CdxField,
-    CdxMenuButton, CdxProgressBar, CdxRadio, CdxSelect,
-    CdxTextArea, CdxTextInput,
+    CdxButton,
+    CdxCheckbox,
+    CdxCombobox,
+    CdxDialog,
+    CdxField,
+    CdxMenuButton,
+    CdxProgressBar,
+    CdxRadio,
+    CdxSelect,
+    CdxTextArea,
+    CdxTextInput,
   } = codex;
   Object.entries({
-    CdxButton, CdxCheckbox, CdxCombobox, CdxDialog, CdxField,
-    CdxMenuButton, CdxProgressBar, CdxRadio, CdxSelect,
-    CdxTextArea, CdxTextInput,
+    CdxButton,
+    CdxCheckbox,
+    CdxCombobox,
+    CdxDialog,
+    CdxField,
+    CdxMenuButton,
+    CdxProgressBar,
+    CdxRadio,
+    CdxSelect,
+    CdxTextArea,
+    CdxTextInput,
   }).forEach(([name, c]) => app.component(name, c));
 
   app.mount(mount_point);

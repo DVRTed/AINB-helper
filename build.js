@@ -5,6 +5,13 @@ const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
 
+const HEADER =
+  "// Userscript to help generating tracking subpages at [[WP:AINB]]\n" +
+  "// For readable source code, see: https://github.com/DVRTed/AINB-helper\n" +
+  "// <nowiki>\n\n";
+
+const FOOTER = "\n// </nowiki>";
+
 const src = path.join(__dirname, "src");
 const dist = path.join(__dirname, "dist");
 const dist_js = path.join(dist, "AINB-helper.js");
@@ -62,7 +69,8 @@ function strip_module_wrapper(content) {
 const parts = modules.map((name) => {
   const file = path.join(src, name);
   const content = fs.readFileSync(file, "utf8");
-  return strip_module_wrapper(strip_conditional_blocks(content, build_mode));
+  const build_content = strip_conditional_blocks(content, build_mode);
+  return strip_module_wrapper(build_content);
 });
 
 const output_js = `$(async () => {\n${parts.join("\n")}\n});\n// </nowiki>`;
@@ -70,10 +78,37 @@ const output_js = `$(async () => {\n${parts.join("\n")}\n});\n// </nowiki>`;
 fs.mkdirSync(dist, { recursive: true });
 fs.writeFileSync(dist_js, output_js, "utf8");
 
-execFileSync("npx", ["--yes", "prettier@2", "--write", dist_js], {
-  stdio: "inherit",
-  cwd: __dirname,
-});
+execFileSync(
+  process.execPath,
+  [require.resolve("prettier/bin-prettier.js"), "--write", dist_js],
+  {
+    stdio: "inherit",
+    cwd: __dirname,
+  },
+);
+
+execFileSync(
+  process.execPath,
+  [
+    require.resolve("terser/bin/terser"),
+    dist_js,
+    "--compress",
+    "--name-cache names.json",
+    "--mangle",
+    "--output",
+    dist_js,
+  ],
+  {
+    stdio: "inherit",
+    cwd: __dirname,
+  },
+);
+
+fs.writeFileSync(
+  dist_js,
+  HEADER + fs.readFileSync(dist_js, "utf8") + FOOTER,
+  "utf8",
+);
 
 const css_source = path.join(src, "AINB-helper.css");
 fs.copyFileSync(css_source, dist_css);
