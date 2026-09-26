@@ -8,7 +8,7 @@ function create_main_app() {
       return {
         is_open: true,
         step: 1,
-        username: mw.config.get('wgRelevantUserName') || "",
+        username: mw.config.get("wgRelevantUserName") || "",
         normalized_username: "",
         normalized_usernames: [],
         anchor_date: "2022-12-01",
@@ -39,7 +39,7 @@ function create_main_app() {
 
     computed: {
       dialog_title() {
-        if (this.step === 1) return "Generate tracking subpage for AINB";
+        if (this.step === 1) return "Generate a tracking subpage for AINB";
         if (this.step === 2) return "Select diffs to include";
         return "Page Created";
       },
@@ -545,7 +545,9 @@ function create_main_app() {
             links_text = Object.entries(user_groups)
               .map(
                 ([user, links]) =>
-                  `[[Special:Contributions/${user}|${user}]]: ${links.join(" ")}`,
+                  `[[Special:Contributions/${user}|${user}]]: ${links.join(
+                    " ",
+                  )}`,
               )
               .join("\n");
           } else {
