@@ -31,6 +31,7 @@ jobs:
       - name: Publish files to production branch
         run: |
           artifact_dir="$(mktemp -d)"
+          commit_message="$(git log -1 --format=%B)"
           cp dist/AINB-helper.js dist/AINB-helper.css "$artifact_dir/"
 
           if git ls-remote --exit-code --heads origin refs/heads/production >/dev/null 2>&1; then
@@ -49,6 +50,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "Production files are unchanged."
           else
-            git commit -m "Build production files"
+            git commit -m "$commit_message"
             git push origin HEAD:production
           fi
