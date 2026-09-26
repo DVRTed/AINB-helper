@@ -714,7 +714,7 @@
 }
 
 .ainb-seg-tagged {
-  background: #9546c8;
+  background: #eb2aa7;
 }
 
 .ainb-progress-legend {
@@ -912,7 +912,6 @@
   font-size: 0.9em;
 }
 
-
 .ainb-save-status {
   padding: 10px 12px;
   margin-bottom: 0.75em;
@@ -959,4 +958,25 @@
   border-top: 1px dashed #c8ccd1;
   color: #54595d;
   font-style: italic;
+}
+
+.ainb-check-pct-wrap {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--border-color-base, #dddddd);
+}
+
+.ainb-check-pct {
+  color: var(--color-subtle, #54595d);
+  font-size: 0.85em;
+  text-decoration: none;
+}
+
+.ainb-check-pct:hover {
+  color: var(--color-base, #202122);
+}
+
+a.ainb-check-pct.ainb-disabled {
+  pointer-events: none;
+  opacity: 0.5;
 }
