@@ -29,6 +29,32 @@ export function get_article_url(title) {
   return mw.util.getUrl(title);
 }
 
+export const CASE_ORIGIN_KEY = "ainb-case-origin";
+const CASE_ORIGIN_TTL_MS = 6 * 60 * 60 * 1000;
+
+export function normalize_title(t) {
+  const title = new mw.Title(t);
+  return title.getPrefixedText();
+}
+
+// called when an article link is clicked on a tracker page
+export function set_case_origin(article, tracker) {
+  const now = Date.now();
+  const map = mw.storage.getObject(CASE_ORIGIN_KEY) || {};
+  for (const k of Object.keys(map)) {
+    if (now - map[k].ts > CASE_ORIGIN_TTL_MS) delete map[k];
+  }
+  map[normalize_title(article)] = { case: normalize_title(tracker), ts: now };
+  mw.storage.setObject(CASE_ORIGIN_KEY, map);
+}
+
+export function get_case_origin(article) {
+  const map = mw.storage.getObject(CASE_ORIGIN_KEY) || {};
+  const entry = map[normalize_title(article)];
+  if (!entry || Date.now() - entry.ts > CASE_ORIGIN_TTL_MS) return null;
+  return entry.case;
+}
+
 export async function get_page_info(title) {
   const res = await api.get({
     action: "query",

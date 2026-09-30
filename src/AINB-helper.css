@@ -856,7 +856,6 @@
   font-size: 0.8em;
   color: var(--color-subtle, #54595d);
 }
-
 .ainb-thread-context {
   display: flex;
   align-items: center;
@@ -866,6 +865,18 @@
   background: #eaf3ff;
   border: 1px solid #c8e1ff;
   border-radius: 4px;
+}
+
+.ainb-thread-context-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ainb-restore-note {
+  margin-bottom: 8px;
+  font-size: 0.85em;
+  color: var(--color-subtle, #54595d);
 }
 
 .ainb-llm-top-options {

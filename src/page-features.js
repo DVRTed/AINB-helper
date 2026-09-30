@@ -3,6 +3,7 @@ import {
   DEBUG_PAGE,
   create_app,
   rm_underscores,
+  set_case_origin,
 } from "./shared.js";
 import CategoryStats from "./category-stats.vue";
 import EditTable from "./edit-table.vue";
@@ -271,6 +272,17 @@ function init_progress_bar() {
     });
 }
 
+function init_origin_capture() {
+  $('tr[class*="aic-row-"]').each(function () {
+    const $a = $(this).find("a").first();
+    if (!$a.length || $a.hasClass("new")) return;
+    const article = $a.text().trim();
+    $a.on("click auxclick contextmenu", () =>
+      set_case_origin(article, wgPageName),
+    );
+  });
+}
+
 const wgPageName = mw.config.get("wgPageName");
 
 $(() => {
@@ -302,6 +314,7 @@ $(() => {
     init_progress_bar();
     init_row_editing();
     init_check_affected();
+    init_origin_capture();
   }
 
   if ([0, 118].includes(mw.config.get("wgNamespaceNumber")) || DEBUG_MODE) {

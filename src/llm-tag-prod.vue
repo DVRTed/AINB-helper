@@ -16,7 +16,7 @@ import {
   close_app,
   get_article_row_regex,
   get_case_origin,
-  norm_title,
+  normalize_title,
   rm_underscores,
 } from "./shared.js";
 
@@ -54,6 +54,7 @@ export default {
       current_step: 1,
       saving: false,
       save_done: false,
+      restored: false,
 
       // prod
       username: mw.config.get("wgUserName"),
@@ -101,6 +102,17 @@ export default {
     watch_page(new_val) {
       save_userpref(WATCH_PAGE_OPTION, new_val);
     },
+
+    // persist edits as they happen
+    editable_wikitext() {
+      if (this.current_step === 2) this.persist_last_case();
+    },
+    editable_summary() {
+      if (this.current_step === 2) this.persist_last_case();
+    },
+    update_tracker() {
+      if (this.current_step === 2) this.persist_last_case();
+    },
   },
 
   mounted() {
@@ -110,14 +122,13 @@ export default {
     const origin = get_case_origin(this.page_name);
 
     if (origin) {
-      if (saved_fresh && norm_title(saved.case_name) === origin) {
+      if (saved_fresh && normalize_title(saved.case_name) === origin) {
         this.restore_saved(saved);
       } else {
         if (saved_fresh) {
           this.selected_option = saved.selected_option || this.selected_option;
         }
         this.case_name = origin;
-        this.go_to_step2();
       }
     } else if (saved_fresh) {
       this.restore_saved(saved);
@@ -142,24 +153,8 @@ export default {
       location.reload();
     },
 
-    restore_saved(saved) {
-      this.case_name = saved.case_name;
-      this.selected_option = saved.selected_option || this.selected_option;
-
-      this.go_to_step2();
-      this.update_tracker = saved.update_tracker !== false;
-      if (saved.editable_wikitext !== undefined) {
-        this.editable_wikitext = saved.editable_wikitext;
-      }
-      if (saved.editable_summary !== undefined) {
-        this.editable_summary = saved.editable_summary;
-      }
-    },
-
-    go_to_step2() {
-      this.save_steps = [];
-
-      const target_link = this.case_name.trim();
+    generate_defaults() {
+      const target_link = (this.case_name || "").trim();
       const see_clause = target_link ? `, see [[${target_link}]]` : "";
       const ai_reason = target_link ? ` |reason= [[${target_link}]]` : "";
 
@@ -172,7 +167,36 @@ export default {
         this.editable_wikitext = `{{AI-generated${ai_reason} |{{subst:DATE}}}}`;
         this.editable_summary = `Added AI tag${see_clause}`;
       }
+    },
 
+    restore_saved(saved) {
+      this.case_name = saved.case_name;
+      this.selected_option = saved.selected_option || this.selected_option;
+      this.update_tracker = saved.update_tracker !== false;
+
+      this.save_steps = [];
+      this.generate_defaults();
+      if (saved.editable_wikitext !== undefined) {
+        this.editable_wikitext = saved.editable_wikitext;
+      }
+      if (saved.editable_summary !== undefined) {
+        this.editable_summary = saved.editable_summary;
+      }
+
+      this.restored = true;
+      this.show_preview = false;
+      this.current_step = 2;
+    },
+
+    next_from_step1() {
+      this.update_tracker = !!(this.case_name || "").trim();
+      this.go_to_step2();
+    },
+
+    go_to_step2() {
+      this.save_steps = [];
+      this.restored = false;
+      this.generate_defaults();
       this.persist_last_case();
       this.show_preview = false;
       this.current_step = 2;
@@ -180,7 +204,7 @@ export default {
 
     persist_last_case() {
       mw.storage.setObject(LAST_CASE_KEY, {
-        case_name: this.case_name.trim(),
+        case_name: (this.case_name || "").trim(),
         selected_option: this.selected_option,
         update_tracker: this.update_tracker,
         editable_wikitext: this.editable_wikitext,
@@ -191,6 +215,7 @@ export default {
 
     go_back_to_step1() {
       mw.storage.remove(LAST_CASE_KEY);
+      this.restored = false;
       this.current_step = 1;
     },
 
@@ -231,7 +256,7 @@ export default {
       const template_text =
         this.selected_option === "llm_prod" ? "LLMPROD" : "AI tag addition";
 
-      const case_page = this.case_name.trim();
+      const case_page = (this.case_name || "").trim();
       const case_clause = case_page ? ` (relevant page: [[${case_page}]])` : "";
 
       await api.postWithEditToken({
@@ -240,17 +265,6 @@ export default {
         appendtext: `\n# [[:${page}]]: Added {{tl|${template_name}}} with [[special:diff/${revid}|this edit]]${case_clause}, ~~~~~`,
         summary: `Logging ${template_text} on [[${page}]] ${APP_AD}`,
       });
-    },
-
-    change_case() {
-      const input = prompt("Case:", this.case_name);
-      if (input === null) return;
-      this.case_name = input.trim();
-      this.update_tracker = !!this.case_name;
-    },
-
-    on_update_tracker_toggle(value) {
-      this.update_tracker = value;
     },
 
     async update_tracker_status(new_status, revid) {
@@ -474,6 +488,11 @@ export default {
       </div>
 
       <div v-if="current_step === 2">
+        <div v-if="restored && !saving" class="ainb-restore-note">
+          Resumed from your last session.
+          <a href="#" @click.prevent="go_back_to_step1">Start over</a>
+        </div>
+
         <div v-if="!saving" class="ainb-thread-context">
           <span
             >Case: <strong>{{ case_name || "none" }}</strong></span
@@ -483,9 +502,9 @@ export default {
 
         <div v-if="!saving" class="ainb-tracker-row">
           <cdx-checkbox
-            :model-value="update_tracker"
-            @update:model-value="on_update_tracker_toggle"
-            :disabled="saving || !case_name"
+            :model-value="update_tracker && !!(case_name || '').trim()"
+            @update:model-value="update_tracker = $event"
+            :disabled="saving || !(case_name || '').trim()"
           >
             Mark as
             {{ selected_option === "llm_prod" ? "ongoing" : "tagged" }} on the
@@ -552,7 +571,7 @@ export default {
             <cdx-button
               action="progressive"
               weight="primary"
-              @click="go_to_step2"
+              @click="next_from_step1"
             >
               Next
             </cdx-button>
