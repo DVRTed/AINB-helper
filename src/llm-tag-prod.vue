@@ -52,6 +52,7 @@ export default {
       app_open: true,
       current_step: 1,
       saving: false,
+      save_done: false,
 
       // prod
       username: mw.config.get("wgUserName"),
@@ -80,7 +81,6 @@ export default {
       tracking_subpage_locked: false,
       update_tracker: true,
       save_steps: [],
-      reload_seconds: null,
     };
   },
 
@@ -141,6 +141,10 @@ export default {
       close_app();
     },
 
+    reload_page() {
+      location.reload();
+    },
+
     async go_to_step2() {
       const raw_subpage = this.subpage.trim();
       this.step1_error = "";
@@ -183,7 +187,9 @@ export default {
             await this.infer_tracking_subpage(page, section_index);
           }
         } catch (err) {
-          this.step1_error = `Page does not exist: "${err}"`;
+          this.step1_error = `Error checking the page: ${
+            err?.message ?? String(err)
+          }`;
           return;
         } finally {
           this.checking_page = false;
@@ -254,7 +260,7 @@ export default {
         }
       } catch (err) {
         console.error("Preview error:", err);
-        this.preview_html = `Preview error: ${err.message}`;
+        this.preview_html = `Preview error: ${err?.message ?? String(err)}`;
       } finally {
         this.preview_loading = false;
       }
@@ -380,7 +386,7 @@ export default {
         return { ok: true, message: "" };
       } catch (err) {
         console.error("Tracker update failed:", err);
-        return { ok: false, message: err.message || String(err) };
+        return { ok: false, message: err?.message || String(err) };
       }
     },
 
@@ -399,8 +405,8 @@ export default {
 
     async save_edit() {
       this.saving = true;
+      this.save_done = false;
       this.save_steps = [];
-      this.reload_seconds = null;
 
       this.persist_last_thread();
 
@@ -417,6 +423,7 @@ export default {
           prependtext: this.editable_wikitext.trim() + "\n",
           summary: `${this.editable_summary.trim()} ${APP_AD}`,
           watchlist: this.watch_page ? "watch" : "nochange",
+          nocreate: true,
         });
       });
 
@@ -443,8 +450,7 @@ export default {
         });
       }
 
-      this.reload_seconds = 4;
-      setTimeout(() => location.reload(), 4000);
+      this.save_done = true;
     },
 
     async fetch_ainb_suggestions() {
@@ -478,6 +484,7 @@ export default {
       v-model:open="app_open"
       title="LLM tag / prod"
       :use-close-button="true"
+      @update:open="close_app"
     >
       <div class="ainb-llm-top-options">
         <span v-if="log_to_userpage" class="ainb-log-target-hint">
@@ -608,12 +615,6 @@ export default {
               ><template v-else>...</template></span
             >
           </div>
-          <div
-            v-if="reload_seconds !== null"
-            class="ainb-save-status-line ainb-save-status-reload"
-          >
-            Reloading in {{ reload_seconds }}s&#8230;
-          </div>
         </div>
 
         <cdx-field v-if="!saving">
@@ -667,18 +668,21 @@ export default {
           </div>
           <div v-if="current_step === 2">
             <cdx-button
+              v-if="save_done"
+              action="progressive"
+              weight="primary"
+              @click="reload_page"
+            >
+              Reload page
+            </cdx-button>
+            <cdx-button
+              v-else
               action="progressive"
               weight="primary"
               @click="save_edit"
               :disabled="saving || !editable_wikitext"
             >
-              {{
-                reload_seconds !== null
-                  ? "Done"
-                  : saving
-                  ? "Saving..."
-                  : "Submit edit"
-              }}
+              {{ saving ? "Saving..." : "Submit edit" }}
             </cdx-button>
           </div>
         </div>
