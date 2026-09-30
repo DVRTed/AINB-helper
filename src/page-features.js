@@ -55,6 +55,11 @@ function init_row_editing() {
           const $link = $(this).find("a").first();
           const title = $link.text().trim();
           if (!title) return null;
+
+          $link.on("click auxclick contextmenu", () =>
+            set_case_origin(title, wgPageName),
+          );
+
           return { article: title, is_new: $link.hasClass("new") };
         })
         .get()
@@ -272,17 +277,6 @@ function init_progress_bar() {
     });
 }
 
-function init_origin_capture() {
-  $('tr[class*="aic-row-"]').each(function () {
-    const $a = $(this).find("a").first();
-    if (!$a.length || $a.hasClass("new")) return;
-    const article = $a.text().trim();
-    $a.on("click auxclick contextmenu", () =>
-      set_case_origin(article, wgPageName),
-    );
-  });
-}
-
 const wgPageName = mw.config.get("wgPageName");
 
 $(() => {
@@ -314,7 +308,6 @@ $(() => {
     init_progress_bar();
     init_row_editing();
     init_check_affected();
-    init_origin_capture();
   }
 
   if ([0, 118].includes(mw.config.get("wgNamespaceNumber")) || DEBUG_MODE) {
