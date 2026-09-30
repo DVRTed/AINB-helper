@@ -29,18 +29,30 @@ export function get_article_url(title) {
   return mw.util.getUrl(title);
 }
 
-export async function get_page_wikitext(title) {
+export async function get_page_info(title) {
   const res = await api.get({
     action: "query",
     prop: "revisions",
     titles: title,
-    rvprop: "content",
+    rvprop: "ids|timestamp|content",
     rvslots: "main",
     formatversion: 2,
+    curtimestamp: true,
   });
   const page = res.query?.pages?.[0];
   if (!page || page.missing) return null;
-  return page.revisions?.[0]?.slots?.main?.content ?? "";
+  const rev = page.revisions?.[0];
+  return {
+    text: rev?.slots?.main?.content ?? "",
+    revid: rev?.revid,
+    timestamp: rev?.timestamp,
+    starttimestamp: res.curtimestamp,
+  };
+}
+
+export async function get_page_wikitext(title) {
+  const info = await get_page_info(title);
+  return info ? info.text : null;
 }
 
 export function close_app() {

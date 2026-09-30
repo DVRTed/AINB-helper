@@ -8,6 +8,7 @@ import {
   CdxProgressBar,
   CdxTextInput,
 } from "@wikimedia/codex";
+
 import {
   DEBUG_MODE,
   DEBUG_PAGE,
@@ -15,6 +16,7 @@ import {
   close_app,
   api,
   get_page_wikitext,
+  get_page_info,
 } from "./shared.js";
 
 const TRACKING_SECTION = "Tracking list";
@@ -568,7 +570,8 @@ export default {
           if (top_article) this.select_article(top_article.title);
         }
       } catch (error) {
-        this.app_error = "Error fetching contributions: " + error.message;
+        this.app_error =
+          "Error fetching contributions: " + (error?.message ?? String(error));
         console.error(error);
       } finally {
         this.app_loading = false;
@@ -609,15 +612,21 @@ export default {
           fromrev: edit.revid,
           torelative: "prev",
           prop: "diff",
+          formatversion: 2,
         });
-        if (response.compare?.["*"]) {
-          edit.diff_content = `<table class="diff">${response.compare["*"]}</table>`;
+
+        const res_content = response.compare?.body;
+        if (res_content) {
+          edit.diff_content = `<table class="diff">${res_content}</table>`;
         } else {
           edit.diff_content = "<p>Could not load diff.</p>";
         }
       } catch (error) {
         console.error("Error loading diff:", error);
-        edit.diff_content = "<p>Error loading diff: " + error.message + "</p>";
+        edit.diff_content =
+          "<p>Error loading diff: " +
+          (error?.message ?? String(error)) +
+          "</p>";
       } finally {
         edit.diff_loading = false;
       }
@@ -711,22 +720,33 @@ export default {
       this.create_error = "";
       this.creating_page = true;
 
-      let cur_page_content;
+      let base;
       try {
-        cur_page_content = await get_page_wikitext(title);
+        base = await get_page_info(title);
       } catch (error) {
         this.creating_page = false;
         this.current_step = 3;
-        this.create_error = "Error checking the case page: " + error.message;
+        this.create_error =
+          "Error checking the case page: " + (error?.message ?? String(error));
         console.error(error);
         return;
       }
 
-      const page_exists = cur_page_content !== null;
+      const page_exists = base !== null;
       let text;
 
       if (page_exists) {
-        text = await this.insert_into_tracking_section(cur_page_content, table);
+        try {
+          text = await this.insert_into_tracking_section(base.text, table);
+        } catch (error) {
+          this.creating_page = false;
+          this.current_step = 3;
+          this.create_error =
+            "Error preparing the tracking table: " +
+            (error?.message ?? String(error));
+          console.error(error);
+          return;
+        }
         if (text === null) {
           this.creating_page = false;
           return;
@@ -748,12 +768,20 @@ export default {
           summary: page_exists
             ? `Adding tracking table ${APP_AD}`
             : `Creating case page with tracking table ${APP_AD}`,
+          ...(page_exists
+            ? {
+                baserevid: base.revid,
+                starttimestamp: base.starttimestamp,
+                nocreate: true,
+              }
+            : { createonly: true }),
         });
         this.result_message = page_exists
           ? "Tracking table added to the case page."
           : "Case page created with the tracking table.";
       } catch (error) {
-        this.create_error = "Error saving page: " + error.message;
+        this.create_error =
+          "Error saving page: " + (error?.message ?? String(error));
         console.error(error);
       } finally {
         this.creating_page = false;
@@ -1251,7 +1279,7 @@ export default {
           <template v-if="current_step === 3">
             <div></div>
             <div>
-              <cdx-button @click="handle_dialog_close">Close</cdx-button>
+              <cdx-button @click="close_app">Close</cdx-button>
             </div>
           </template>
         </div>
