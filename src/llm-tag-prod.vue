@@ -15,16 +15,17 @@ import {
   api,
   close_app,
   get_article_row_regex,
+  get_case_origin,
+  norm_title,
   rm_underscores,
 } from "./shared.js";
 
-const LAST_THREAD_KEY = "ainb-llm-tag-last-thread";
-const LAST_THREAD_TTL_MS = 3 * 60 * 60 * 1000;
+const LAST_CASE_KEY = "ainb-llm-tag-last-case";
+const LAST_CASE_TTL_MS = 3 * 60 * 60 * 1000;
 const LOG_TO_USERPAGE_OPTION = "userjs-ainb-log-userpage";
 const HELP_OFF_OPTION = "userjs-ainb-help-off";
 const WATCH_PAGE_OPTION = "userjs-ainb-watch-page";
 const LOG_PAGE_SUFFIX = "LLMPROD log";
-const TRACKER_PREFIX = "Wikipedia:AI noticeboard/";
 
 function save_userpref(option_name, value) {
   const val_str = value ? "1" : "0";
@@ -60,8 +61,8 @@ export default {
       logging_page: `User:${mw.config.get("wgUserName")}/${LOG_PAGE_SUFFIX}`,
       selected_option: "llm_prod",
 
-      subpage: "",
-      subpage_options: [],
+      case_name: "",
+      case_options: [],
 
       // adv options
       log_to_userpage: mw.user.options.get(LOG_TO_USERPAGE_OPTION) === "1",
@@ -71,24 +72,20 @@ export default {
       // output
       editable_wikitext: "",
       editable_summary: "",
-      step1_error: "",
-      checking_page: false,
       show_preview: false,
       preview_html: "",
       preview_loading: false,
       show_advanced: false,
-      tracking_subpage: "",
-      tracking_subpage_locked: false,
       update_tracker: true,
       save_steps: [],
     };
   },
 
   computed: {
-    filtered_subpage_options() {
-      const query = (this.subpage || "").trim().toLowerCase();
-      if (!query) return this.subpage_options;
-      return this.subpage_options.filter((item) =>
+    filtered_case_options() {
+      const query = (this.case_name || "").trim().toLowerCase();
+      if (!query) return this.case_options;
+      return this.case_options.filter((item) =>
         item.value.toLowerCase().includes(query),
       );
     },
@@ -107,28 +104,28 @@ export default {
   },
 
   mounted() {
-    const saved = mw.storage.getObject(LAST_THREAD_KEY);
-    if (saved && saved.subpage && Date.now() - saved.ts < LAST_THREAD_TTL_MS) {
-      this.subpage = saved.subpage;
-      this.selected_option = saved.selected_option || this.selected_option;
-      this.tracking_subpage = saved.tracking_subpage || "";
-      this.tracking_subpage_locked = !!saved.tracking_subpage_locked;
+    const saved = mw.storage.getObject(LAST_CASE_KEY);
+    const saved_fresh =
+      saved && saved.case_name && Date.now() - saved.ts < LAST_CASE_TTL_MS;
+    const origin = get_case_origin(this.page_name);
 
-      this.go_to_step2().then(() => {
-        this.update_tracker =
-          saved.update_tracker !== false && this.tracking_subpage !== "";
-        if (saved.editable_wikitext !== undefined) {
-          this.editable_wikitext = saved.editable_wikitext;
+    if (origin) {
+      if (saved_fresh && norm_title(saved.case_name) === origin) {
+        this.restore_saved(saved);
+      } else {
+        if (saved_fresh) {
+          this.selected_option = saved.selected_option || this.selected_option;
         }
-        if (saved.editable_summary !== undefined) {
-          this.editable_summary = saved.editable_summary;
-        }
-      });
+        this.case_name = origin;
+        this.go_to_step2();
+      }
+    } else if (saved_fresh) {
+      this.restore_saved(saved);
     }
 
     this.fetch_ainb_suggestions().then((suggestions) => {
       if (suggestions.length > 0) {
-        this.subpage_options = suggestions.map((sp) => ({
+        this.case_options = suggestions.map((sp) => ({
           value: sp,
           label: sp,
         }));
@@ -145,58 +142,24 @@ export default {
       location.reload();
     },
 
-    async go_to_step2() {
-      const raw_subpage = this.subpage.trim();
-      this.step1_error = "";
+    restore_saved(saved) {
+      this.case_name = saved.case_name;
+      this.selected_option = saved.selected_option || this.selected_option;
+
+      this.go_to_step2();
+      this.update_tracker = saved.update_tracker !== false;
+      if (saved.editable_wikitext !== undefined) {
+        this.editable_wikitext = saved.editable_wikitext;
+      }
+      if (saved.editable_summary !== undefined) {
+        this.editable_summary = saved.editable_summary;
+      }
+    },
+
+    go_to_step2() {
       this.save_steps = [];
 
-      if (!this.tracking_subpage_locked) {
-        this.tracking_subpage = "";
-      }
-
-      if (raw_subpage) {
-        this.checking_page = true;
-        const [page_title, ...section_parts] = raw_subpage.split("#");
-        const page = page_title.trim();
-        const section = section_parts.join("#").trim();
-
-        try {
-          const res = await api.get({
-            action: "parse",
-            page,
-            prop: "sections",
-            redirects: true,
-          });
-
-          let section_index = null;
-          if (section) {
-            const sections = res.parse?.sections || [];
-            const matched = sections.find(
-              (s) =>
-                s.anchor === section ||
-                rm_underscores(s.line) === rm_underscores(section),
-            );
-            if (!matched) {
-              this.step1_error = `Section "${section}" does not exist on "${page}"`;
-              return;
-            }
-            section_index = matched.index;
-          }
-
-          if (section_index !== null && !this.tracking_subpage_locked) {
-            await this.infer_tracking_subpage(page, section_index);
-          }
-        } catch (err) {
-          this.step1_error = `Error checking the page: ${
-            err?.message ?? String(err)
-          }`;
-          return;
-        } finally {
-          this.checking_page = false;
-        }
-      }
-
-      const target_link = raw_subpage;
+      const target_link = this.case_name.trim();
       const see_clause = target_link ? `, see [[${target_link}]]` : "";
       const ai_reason = target_link ? ` |reason= [[${target_link}]]` : "";
 
@@ -210,17 +173,15 @@ export default {
         this.editable_summary = `Added AI tag${see_clause}`;
       }
 
-      this.persist_last_thread();
+      this.persist_last_case();
       this.show_preview = false;
       this.current_step = 2;
     },
 
-    persist_last_thread() {
-      mw.storage.setObject(LAST_THREAD_KEY, {
-        subpage: this.subpage.trim(),
+    persist_last_case() {
+      mw.storage.setObject(LAST_CASE_KEY, {
+        case_name: this.case_name.trim(),
         selected_option: this.selected_option,
-        tracking_subpage: this.tracking_subpage,
-        tracking_subpage_locked: this.tracking_subpage_locked,
         update_tracker: this.update_tracker,
         editable_wikitext: this.editable_wikitext,
         editable_summary: this.editable_summary,
@@ -229,11 +190,7 @@ export default {
     },
 
     go_back_to_step1() {
-      mw.storage.remove(LAST_THREAD_KEY);
-      this.step1_error = "";
-      this.show_advanced = false;
-      this.tracking_subpage = "";
-      this.tracking_subpage_locked = false;
+      mw.storage.remove(LAST_CASE_KEY);
       this.current_step = 1;
     },
 
@@ -274,58 +231,22 @@ export default {
       const template_text =
         this.selected_option === "llm_prod" ? "LLMPROD" : "AI tag addition";
 
-      const thread = this.subpage.trim();
-      const thread_clause = thread ? ` (relevant page: [[${thread}]])` : "";
+      const case_page = this.case_name.trim();
+      const case_clause = case_page ? ` (relevant page: [[${case_page}]])` : "";
 
       await api.postWithEditToken({
         action: "edit",
         title: this.logging_page,
-        appendtext: `\n# [[:${page}]]: Added {{tl|${template_name}}} with [[special:diff/${revid}|this edit]]${thread_clause}, ~~~~~`,
+        appendtext: `\n# [[:${page}]]: Added {{tl|${template_name}}} with [[special:diff/${revid}|this edit]]${case_clause}, ~~~~~`,
         summary: `Logging ${template_text} on [[${page}]] ${APP_AD}`,
       });
     },
 
-    async infer_tracking_subpage(page, section_index) {
-      try {
-        const res = await api.get({
-          action: "parse",
-          page,
-          section: section_index,
-          prop: "wikitext",
-        });
-        const wikitext = res.parse?.wikitext?.["*"] || "";
-        let match = wikitext.match(
-          /\{\{\s*AIC status.*(?:tracking_)?subpage\s*=\s*([^|}]+)/i,
-        );
-
-        if (!match) {
-          match = wikitext.match(
-            /\{\{\s*AIC status\s*\|\s*[^|}=]+\|\s*([^|}=]+)/i,
-          );
-        }
-
-        if (!match) return;
-
-        const raw_value = rm_underscores(match[1].trim());
-        if (!raw_value) return;
-
-        this.tracking_subpage = raw_value.startsWith("Wikipedia:")
-          ? raw_value
-          : `${TRACKER_PREFIX}${raw_value}`;
-      } catch (err) {
-        console.error("Tracker inference failed:", err);
-      }
-    },
-
-    change_tracking_subpage() {
-      const input = prompt(
-        "Tracker subpage:",
-        this.tracking_subpage || TRACKER_PREFIX,
-      );
+    change_case() {
+      const input = prompt("Case:", this.case_name);
       if (input === null) return;
-      this.tracking_subpage = input.trim();
-      this.tracking_subpage_locked = true;
-      this.update_tracker = !!this.tracking_subpage;
+      this.case_name = input.trim();
+      this.update_tracker = !!this.case_name;
     },
 
     on_update_tracker_toggle(value) {
@@ -334,14 +255,14 @@ export default {
 
     async update_tracker_status(new_status, revid) {
       if (!revid) return { ok: true, message: "" };
-      if (!this.tracking_subpage) {
-        return { ok: false, message: "no tracker page set" };
+      if (!this.case_name) {
+        return { ok: false, message: "no case set" };
       }
       try {
         const res = await api.get({
           action: "query",
           prop: "revisions",
-          titles: this.tracking_subpage,
+          titles: this.case_name,
           rvprop: "content",
           rvslots: "main",
           formatversion: 2,
@@ -350,7 +271,7 @@ export default {
         if (!page || page.missing) {
           return {
             ok: false,
-            message: `tracker page "${this.tracking_subpage}" not found`,
+            message: `case page "${this.case_name}" not found`,
           };
         }
         const wikitext = page.revisions[0].slots.main.content;
@@ -379,7 +300,7 @@ export default {
 
         await api.postWithEditToken({
           action: "edit",
-          title: this.tracking_subpage,
+          title: this.case_name,
           text: new_text,
           summary: `Updated status for [[${this.page_name}]] to ${new_status} ${APP_AD}`,
         });
@@ -408,7 +329,7 @@ export default {
       this.save_done = false;
       this.save_steps = [];
 
-      this.persist_last_thread();
+      this.persist_last_case();
 
       const edit_label =
         this.selected_option === "llm_prod"
@@ -438,7 +359,7 @@ export default {
         );
       }
 
-      if (this.update_tracker && this.tracking_subpage) {
+      if (this.update_tracker && this.case_name) {
         await this.run_step("Updating tracking table", async () => {
           const result = await this.update_tracker_status(
             this.selected_option === "llm_prod" ? "ongoing" : "tagged",
@@ -456,18 +377,19 @@ export default {
     async fetch_ainb_suggestions() {
       const suggestions = [];
       try {
-        const parse_res = await api.get({
-          action: "parse",
-          page: "Wikipedia:AI noticeboard",
-          prop: "sections",
-          redirects: true,
+        const res = await api.get({
+          action: "query",
+          list: "allpages",
+          apnamespace: 4,
+          apprefix: "AI noticeboard/",
+          apfilterredir: "nonredirects",
+          aplimit: "max",
+          formatversion: 2,
         });
 
-        if (parse_res.parse?.sections) {
-          parse_res.parse.sections.forEach((section) => {
-            suggestions.push(`Wikipedia:AI noticeboard#${section.line}`);
-          });
-        }
+        (res.query?.allpages || []).forEach((page) => {
+          suggestions.push(page.title);
+        });
       } catch (err) {
         console.error("Error fetching AINB suggestions:", err);
       }
@@ -496,13 +418,11 @@ export default {
       </div>
 
       <div v-if="current_step === 1">
-        <div v-if="step1_error" class="ainb-error">{{ step1_error }}</div>
         <cdx-field>
           <cdx-radio
             v-model="selected_option"
             input-value="llm_prod"
             :inline="true"
-            :disabled="checking_page"
           >
             Prod LLM
           </cdx-radio>
@@ -510,7 +430,6 @@ export default {
             v-model="selected_option"
             input-value="ai_tag"
             :inline="true"
-            :disabled="checking_page"
           >
             Add &#123;&#123;AI-generated&#125;&#125; tag
           </cdx-radio>
@@ -518,14 +437,13 @@ export default {
 
         <cdx-field>
           <template #description
-            >Tip: Type the username to autocomplete from Wikipedia:AI
+            >Tip: Start typing to autocomplete from subpages of Wikipedia:AI
             noticeboard. You can leave this blank to proceed anyway.</template
           >
           <cdx-combobox
-            v-model:selected="subpage"
-            :menu-items="filtered_subpage_options"
-            placeholder="Relevant thread or subpage (optional)"
-            :disabled="checking_page"
+            v-model:selected="case_name"
+            :menu-items="filtered_case_options"
+            placeholder="Case (optional)"
           ></cdx-combobox>
         </cdx-field>
 
@@ -541,7 +459,6 @@ export default {
             <cdx-checkbox
               v-if="selected_option === 'llm_prod'"
               v-model="help_off"
-              :disabled="checking_page"
             >
               Set help to off (will suppress the notification instructions; see
               <a
@@ -551,9 +468,7 @@ export default {
                 >docs</a
               >)
             </cdx-checkbox>
-            <cdx-checkbox v-model="watch_page" :disabled="checking_page">
-              Watch this page
-            </cdx-checkbox>
+            <cdx-checkbox v-model="watch_page"> Watch this page </cdx-checkbox>
           </cdx-field>
         </div>
       </div>
@@ -561,7 +476,7 @@ export default {
       <div v-if="current_step === 2">
         <div v-if="!saving" class="ainb-thread-context">
           <span
-            >Thread: <strong>{{ subpage }}</strong></span
+            >Case: <strong>{{ case_name || "none" }}</strong></span
           >
           <a href="#" @click.prevent="go_back_to_step1">Change</a>
         </div>
@@ -570,29 +485,12 @@ export default {
           <cdx-checkbox
             :model-value="update_tracker"
             @update:model-value="on_update_tracker_toggle"
-            :disabled="saving || !tracking_subpage"
+            :disabled="saving || !case_name"
           >
             Mark as
             {{ selected_option === "llm_prod" ? "ongoing" : "tagged" }} on the
-            tracker
+            case page
           </cdx-checkbox>
-          <span
-            v-if="tracking_subpage && update_tracker"
-            class="ainb-tracker-target"
-          >
-            <strong>{{ tracking_subpage }}</strong> (<a
-              href="#"
-              @click.prevent="change_tracking_subpage"
-              >change</a
-            >)
-          </span>
-          <div
-            v-else-if="!tracking_subpage"
-            class="ainb-tracker-target ainb-tracker-missing"
-          >
-            Couldn't infer tracking page.
-            <a href="#" @click.prevent="change_tracking_subpage">Set</a>
-          </div>
         </div>
 
         <div v-if="save_steps.length" class="ainb-save-status">
@@ -655,9 +553,8 @@ export default {
               action="progressive"
               weight="primary"
               @click="go_to_step2"
-              :disabled="checking_page"
             >
-              {{ checking_page ? "Checking..." : "Next" }}
+              Next
             </cdx-button>
           </div>
 
