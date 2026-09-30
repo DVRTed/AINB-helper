@@ -44,6 +44,16 @@
   text-align: center;
 }
 
+.ainb-username-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ainb-username-input {
+  width: 100%;
+}
+
 .ainb-date-field {
   margin-top: 1em;
 }
@@ -71,7 +81,7 @@
   padding: 0.75em 0;
 }
 
-.ainb-step2-subtitle {
+.ainb-subtitle {
   font-size: 0.875em;
   color: #54595d;
   margin-bottom: 12px;

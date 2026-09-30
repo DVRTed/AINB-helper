@@ -1,26 +1,49 @@
-const APP_ID = "ainb-helper";
-const APP_AD = "(using [[User:DVRTed/AINB-helper|AINB-helper]])";
-// BUILD:DEV
-const DEBUG_MODE = true;
-// END:BUILD
-// BUILD:PROD
-const DEBUG_MODE = false;
-// END:BUILD
-const DEBUG_PAGE = "User:DVRTed/sandbox2";
+import { createMwApp } from "vue";
 
-const require = mw.loader.require;
-await mw.loader.using([
-  "vue",
-  "@wikimedia/codex",
-  "mediawiki.api",
-  "mediawiki.util",
-]);
-const api = new mw.Api();
-const Vue = require("vue");
+export const APP_ID = "ainb-helper";
+export const APP_AD = "(using [[User:DVRTed/AINB-helper|AINB-helper]])";
+export const DEBUG_MODE = __DEV__;
+export const DEBUG_PAGE = "User:DVRTed/sandbox2";
+
+export const api = new mw.Api();
 
 let current_app = null;
 
-function close_app() {
+export function get_article_row_regex(article, global = false) {
+  const escaped_article = mw.util.escapeRegExp(article);
+  return new RegExp(
+    `\\{\\{AIC article row\\s*\\|\\s*(?:article=)?\\s*${escaped_article}\\s*(?:\\|\\s*(?:status=)?\\s*([^|}]*))?(?:\\|\\s*(?:notes=)?\\s*([^}]*))?\\s*\\}\\}`,
+    global ? "ig" : "i",
+  );
+}
+
+export function rm_underscores(value) {
+  return value.replace(/_/g, " ");
+}
+
+export function format_number(number) {
+  return number.toLocaleString();
+}
+
+export function get_article_url(title) {
+  return mw.util.getUrl(title);
+}
+
+export async function get_page_wikitext(title) {
+  const res = await api.get({
+    action: "query",
+    prop: "revisions",
+    titles: title,
+    rvprop: "content",
+    rvslots: "main",
+    formatversion: 2,
+  });
+  const page = res.query?.pages?.[0];
+  if (!page || page.missing) return null;
+  return page.revisions?.[0]?.slots?.main?.content ?? "";
+}
+
+export function close_app() {
   if (current_app) {
     current_app.unmount();
     current_app = null;
@@ -28,59 +51,27 @@ function close_app() {
   document.getElementById(APP_ID)?.remove();
 }
 
-// reuseable function to create and mount the app
-// that registers a bunch of components and handles dups
-function create_app(App) {
-  const { createMwApp } = Vue;
-  const codex = require("@wikimedia/codex");
-
-  close_app();
+// will yank out existing mounted apps
+export function create_app(App, props = {}) {
+  const { mount_target, ...app_props } = props;
+  if (!mount_target) {
+    close_app();
+  }
 
   const mount_point = document.createElement("div");
-  mount_point.id = APP_ID;
-  document.body.appendChild(mount_point);
+  if (!mount_target) {
+    mount_point.id = APP_ID;
+  }
+  if (mount_target) {
+    mount_target.prepend(mount_point);
+  } else {
+    document.body.appendChild(mount_point);
+  }
 
-  const app = createMwApp({
-    ...App,
-    mixins: [
-      {
-        methods: {
-          handle_dialog_close() {
-            close_app();
-          },
-        },
-      },
-      ...(App.mixins || []),
-    ],
-  });
-
-  const {
-    CdxButton,
-    CdxCheckbox,
-    CdxCombobox,
-    CdxDialog,
-    CdxField,
-    CdxMenuButton,
-    CdxProgressBar,
-    CdxRadio,
-    CdxSelect,
-    CdxTextArea,
-    CdxTextInput,
-  } = codex;
-  Object.entries({
-    CdxButton,
-    CdxCheckbox,
-    CdxCombobox,
-    CdxDialog,
-    CdxField,
-    CdxMenuButton,
-    CdxProgressBar,
-    CdxRadio,
-    CdxSelect,
-    CdxTextArea,
-    CdxTextInput,
-  }).forEach(([name, c]) => app.component(name, c));
+  const app = createMwApp(App, app_props);
 
   app.mount(mount_point);
-  current_app = app;
+  if (!mount_target) {
+    current_app = app;
+  }
 }

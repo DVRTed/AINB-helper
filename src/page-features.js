@@ -1,17 +1,26 @@
-// for nicely formatted CSS, see [[User:DVRTed/AINB-helper.css]]
-// BUILD:DEV
-mw.loader.load(
-  "http://localhost:1212/AINB-helper/dist/AINB-helper.css",
-  "text/css",
-);
-// END:BUILD
+import {
+  DEBUG_MODE,
+  DEBUG_PAGE,
+  create_app,
+  rm_underscores,
+} from "./shared.js";
+import CategoryStats from "./category-stats.vue";
+import EditTable from "./edit-table.vue";
+import LlmTagProd from "./llm-tag-prod.vue";
+import Main from "./main.vue";
 
-// BUILD:PROD
-mw.loader.load(
-  "//en.wikipedia.org/w/index.php?title=User:DVRTed/AINB-helper.css&action=raw&ctype=text/css",
-  "text/css",
-);
-// END:BUILD
+// for nicely formatted CSS, see [[User:DVRTed/AINB-helper.css]]
+if (__DEV__) {
+  mw.loader.load(
+    "http://localhost:1212/AINB-helper/dist/AINB-helper.css",
+    "text/css",
+  );
+} else {
+  mw.loader.load(
+    "//en.wikipedia.org/w/index.php?title=User:DVRTed/AINB-helper.css&action=raw&ctype=text/css",
+    "text/css",
+  );
+}
 
 // workaround to fix flash of unstyled content on progress bar
 mw.util.addCSS(`
@@ -57,7 +66,7 @@ function init_row_editing() {
           .text("Batch edit")
           .on("click", (e) => {
             e.preventDefault();
-            create_edit_table_app(articles);
+            create_app(EditTable, { articles_input: articles });
           });
         $table.before($button);
       }
@@ -78,9 +87,11 @@ function init_row_editing() {
           .attr("title", "Edit this row")
           .on("click", (e) => {
             e.preventDefault();
-            create_edit_table_app({
-              article: $link.text().trim(),
-              is_new: $link.hasClass("new"),
+            create_app(EditTable, {
+              articles_input: {
+                article: $link.text().trim(),
+                is_new: $link.hasClass("new"),
+              },
             });
           });
 
@@ -97,10 +108,7 @@ function get_row_status($row) {
 function init_check_affected() {
   const wikiwho_API =
     "https://wikiwho.wmcloud.org/en/api/v1.0.0-beta/latest_rev_content/";
-  const username = wgPageName
-    .split("/")
-    .pop()
-    .replace(/_/g, " ")
+  const username = rm_underscores(wgPageName.split("/").pop())
     .replace(/^\d{4}-\d{2}-\d{2} /, "") // rm date prefix
     .replace(/ \(\d+\)$/, "") // rm (1), (2) etc from title
     .trim();
@@ -263,43 +271,51 @@ function init_progress_bar() {
     });
 }
 
-const portlet_link = mw.util.addPortletLink(
-  "p-tb",
-  "#",
-  "New AINB tracking",
-  "t-ainb-tracking",
-  "Generate tracking subpage for AINB",
-);
-
-$(portlet_link).on("click", function (e) {
-  e.preventDefault();
-  create_main_app();
-});
-
 const wgPageName = mw.config.get("wgPageName");
 
-// if we're on an AINB tracking subpage, or the debug page,
-// enable editing rows
-if (
-  wgPageName.startsWith("Wikipedia:AI_noticeboard/") ||
-  wgPageName === DEBUG_PAGE
-) {
-  init_progress_bar();
-  init_row_editing();
-  init_check_affected();
-}
+$(() => {
+  if (wgPageName === "Category:AI_noticeboard_open_cleanup_cases") {
+    const target = document.querySelector("#mw-content-text");
+    if (target) {
+      create_app(CategoryStats, { mount_target: target });
+    }
+  }
 
-if ([0, 118].includes(mw.config.get("wgNamespaceNumber")) || DEBUG_MODE) {
-  const llm_portlet_link = mw.util.addPortletLink(
-    "p-cactions",
+  const portlet_link = mw.util.addPortletLink(
+    "p-tb",
     "#",
-    "LLM tag/prod",
-    "t-llm-tag-prod",
-    "LLM tag/prod helper",
+    "New AINB tracking",
+    "t-ainb-tracking",
+    "Generate tracking subpage for AINB",
   );
-
-  $(llm_portlet_link).on("click", function (e) {
+  $(portlet_link).on("click", function (e) {
     e.preventDefault();
-    create_llm_tag_prod_app();
+    create_app(Main);
   });
-}
+
+  // if we're on an AINB tracking subpage, or the debug page,
+  // enable editing rows
+  if (
+    wgPageName.startsWith("Wikipedia:AI_noticeboard/") ||
+    wgPageName === DEBUG_PAGE
+  ) {
+    init_progress_bar();
+    init_row_editing();
+    init_check_affected();
+  }
+
+  if ([0, 118].includes(mw.config.get("wgNamespaceNumber")) || DEBUG_MODE) {
+    const llm_portlet_link = mw.util.addPortletLink(
+      "p-cactions",
+      "#",
+      "LLM tag/prod",
+      "t-llm-tag-prod",
+      "LLM tag/prod helper",
+    );
+
+    $(llm_portlet_link).on("click", function (e) {
+      e.preventDefault();
+      create_app(LlmTagProd);
+    });
+  }
+});
