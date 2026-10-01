@@ -11,22 +11,12 @@ import CategoryStats from "./category-stats.vue";
 import EditTable from "./edit-table.vue";
 import LlmTagProd from "./llm-tag-prod.vue";
 import Main from "./main.vue";
+import styles from "./AINB-helper.css?inline";
 
 const WIKIWHO_API =
   "https://wikiwho.wmcloud.org/en/api/v1.0.0-beta/latest_rev_content/";
 
-// for nicely formatted CSS, see [[User:DVRTed/AINB-helper.css]]
-if (__DEV__) {
-  mw.loader.load(
-    "http://localhost:1212/AINB-helper/dist/AINB-helper.css",
-    "text/css",
-  );
-} else {
-  mw.loader.load(
-    "//en.wikipedia.org/w/index.php?title=User:DVRTed/AINB-helper.css&action=raw&ctype=text/css",
-    "text/css",
-  );
-}
+mw.util.addCSS(styles);
 
 // workaround to fix flash of unstyled content on progress bar
 mw.util.addCSS(`

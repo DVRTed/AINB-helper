@@ -19,7 +19,6 @@ const wiki_wrap = (with_usync) => ({
       file,
       (with_usync ? USYNC_HEADER : "") + HEADER + code + FOOTER,
     );
-    fs.copyFileSync("src/AINB-helper.css", "dist/AINB-helper.css");
   },
 });
 
