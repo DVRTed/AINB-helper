@@ -9,6 +9,11 @@ export const api = new mw.Api();
 
 let current_app = null;
 
+export const CASE_ORIGIN_KEY = "ainb-case-origin";
+const CASE_ORIGIN_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+const CASE_ORIGIN_MAX_CASES = 10;
+const CASE_ORIGIN_MAX_ARTICLES = 500;
+
 export function get_article_row_regex(article, global = false) {
   const escaped_article = mw.util.escapeRegExp(article);
   return new RegExp(
@@ -31,9 +36,6 @@ export function get_article_url(title) {
   return mw.util.getUrl(title);
 }
 
-export const CASE_ORIGIN_KEY = "ainb-case-origin";
-const CASE_ORIGIN_TTL_MS = 6 * 60 * 60 * 1000;
-
 export function normalize_title(t) {
   const title = new mw.Title(t);
   return title.getPrefixedText();
@@ -52,18 +54,44 @@ export function get_case_username(page) {
 export function set_case_origin(article, tracker) {
   const now = Date.now();
   const map = mw.storage.getObject(CASE_ORIGIN_KEY) || {};
+  // remove expired cases
   for (const k of Object.keys(map)) {
-    if (now - map[k].ts > CASE_ORIGIN_TTL_MS) delete map[k];
+    const time_diff = now - map[k].ts;
+
+    if (Number.isNaN(time_diff) || time_diff > CASE_ORIGIN_TTL_MS)
+      delete map[k];
   }
-  map[normalize_title(article)] = { case: normalize_title(tracker), ts: now };
+
+  const case_name = normalize_title(tracker);
+  const title = normalize_title(article);
+  const articles = map[case_name]?.articles || [];
+  if (!articles.includes(title)) articles.push(title);
+  map[case_name] = {
+    articles: articles.slice(-CASE_ORIGIN_MAX_ARTICLES),
+    ts: now,
+  };
+
+  Object.keys(map)
+    .sort((a, b) => map[b].ts - map[a].ts)
+    .slice(CASE_ORIGIN_MAX_CASES)
+    .forEach((k) => delete map[k]);
+
   mw.storage.setObject(CASE_ORIGIN_KEY, map);
 }
 
 export function get_case_origin(article) {
   const map = mw.storage.getObject(CASE_ORIGIN_KEY) || {};
-  const entry = map[normalize_title(article)];
-  if (!entry || Date.now() - entry.ts > CASE_ORIGIN_TTL_MS) return null;
-  return entry.case;
+  const title = normalize_title(article);
+  const now = Date.now();
+
+  const rel_case = Object.entries(map)
+    .filter(([, e]) => {
+      return now - e.ts <= CASE_ORIGIN_TTL_MS && e.articles?.includes(title);
+    })
+    .sort((a, b) => b[1].ts - a[1].ts)[0]; // pick the most recent clicked case
+
+  const [case_name] = rel_case || [];
+  return case_name ?? null;
 }
 
 export async function get_page_info(title) {
