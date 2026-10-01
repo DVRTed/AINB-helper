@@ -2,13 +2,18 @@ import {
   DEBUG_MODE,
   DEBUG_PAGE,
   create_app,
-  rm_underscores,
+  get_case_origin,
+  get_case_username,
   set_case_origin,
 } from "./shared.js";
+import AuthorHighlight from "./author-highlight.vue";
 import CategoryStats from "./category-stats.vue";
 import EditTable from "./edit-table.vue";
 import LlmTagProd from "./llm-tag-prod.vue";
 import Main from "./main.vue";
+
+const WIKIWHO_API =
+  "https://wikiwho.wmcloud.org/en/api/v1.0.0-beta/latest_rev_content/";
 
 // for nicely formatted CSS, see [[User:DVRTed/AINB-helper.css]]
 if (__DEV__) {
@@ -112,13 +117,7 @@ function get_row_status($row) {
 }
 
 function init_check_affected() {
-  const wikiwho_API =
-    "https://wikiwho.wmcloud.org/en/api/v1.0.0-beta/latest_rev_content/";
-  const username = rm_underscores(wgPageName.split("/").pop())
-    .replace(/^\d{4}-\d{2}-\d{2} /, "") // rm date prefix
-    .replace(/ \(\d+\)$/, "") // rm (1), (2) etc from title
-    .trim();
-
+  const username = get_case_username(wgPageName);
   let checking = false;
 
   $('tr[class*="aic-row-"]').each(function () {
@@ -166,7 +165,7 @@ function init_check_affected() {
             in: false,
           });
           const wdata = await (
-            await fetch(`${wikiwho_API}${encodeURIComponent(article)}/?${wq}`)
+            await fetch(`${WIKIWHO_API}${encodeURIComponent(article)}/?${wq}`)
           ).json();
           if (!wdata.success) {
             $span.text("WikiWho API error");
@@ -276,6 +275,24 @@ function init_progress_bar() {
       $table.before($bar);
     });
 }
+function init_highlight_author() {
+  const origin = get_case_origin(wgPageName);
+  const target = document.querySelector("#mw-content-text");
+  console.log("here");
+  if (!origin || !target) return;
+  console.log("herex");
+
+  const username = get_case_username(origin);
+  console.log(username);
+
+  if (!username) return;
+
+  create_app(AuthorHighlight, {
+    mount_target: target,
+    article: wgPageName,
+    username,
+  });
+}
 
 const wgPageName = mw.config.get("wgPageName");
 
@@ -323,5 +340,6 @@ $(() => {
       e.preventDefault();
       create_app(LlmTagProd);
     });
+    init_highlight_author();
   }
 });
