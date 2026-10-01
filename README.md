@@ -33,3 +33,13 @@ npm run build
 ## Advanced overview
 
 There's a `build:usync` script that sets the `USYNC=1` environment variable before triggering a Vite build in production mode. The `USYNC` flag adds the USync banner at the top of the built script. The GitHub Actions workflow (`.github/workflows/public-prod.yml`) uses this script to build the file and commit it to the `prod` branch. That branch is specified in the USync template in the script's source code on Wikipedia, so the final output is automatically synced there. See [Wikipedia:USync](https://en.wikipedia.org/wiki/Wikipedia:USync) for details on how it works.
+
+## Screenshots
+<img width="1144" height="165" alt="progress_2" src="https://github.com/user-attachments/assets/872a6fa8-c566-4360-b133-364458201a13" />
+<img width="1142" height="153" alt="progress" src="https://github.com/user-attachments/assets/ba60e6a3-a98b-4227-8dc4-d9b2c999d8c7" />
+<img width="1214" height="626" alt="edit-table_2" src="https://github.com/user-attachments/assets/485f99bf-841c-4614-8dea-6e25e5932ec3" />
+<img width="621" height="424" alt="edit-table" src="https://github.com/user-attachments/assets/c1913640-0bd0-4a7d-bdc2-64d892eac783" />
+<img width="680" height="564" alt="llm-tag-prod_2" src="https://github.com/user-attachments/assets/78ecf21c-f63c-4594-88c6-38bd8b8f1cba" />
+<img width="680" height="412" alt="llm-tag-prod" src="https://github.com/user-attachments/assets/40e0fb24-cfa7-43ec-9030-07e08a0bc75d" />
+<img width="963" height="625" alt="main_2" src="https://github.com/user-attachments/assets/b649b08c-19b1-404d-a985-49e601e68f51" />
+<img width="959" height="487" alt="main" src="https://github.com/user-attachments/assets/275ef99c-1e6d-4936-b625-6245b9d2fcac" />
