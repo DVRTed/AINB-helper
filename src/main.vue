@@ -995,7 +995,7 @@ export default {
       </div>
 
       <div v-if="current_step === 2" class="ainb-step2">
-        <div class="ainb-subtitle">
+        <div class="ainb-step2-subtitle">
           <template v-if="is_multiple_users">Multiple users</template>
           <template v-else>
             <a :href="get_user_url(normalized_username)" target="_blank"
