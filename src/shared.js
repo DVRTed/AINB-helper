@@ -17,6 +17,8 @@ export function get_article_row_regex(article, global = false) {
   );
 }
 
+export const script_url = mw.util.getUrl("User:DVRTed/AINB-helper");
+
 export function rm_underscores(value) {
   return value.replace(/_/g, " ");
 }

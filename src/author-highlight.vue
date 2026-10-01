@@ -1,16 +1,23 @@
 <template>
   <cdx-card style="margin-bottom: 1em">
-    <template #title>AINB-helper</template>
+    <template #title
+      ><a :href="script_url" target="_blank">AINB-helper</a></template
+    >
     <template #description>
       <div style="margin: 0.5em 0">
         Highlight content authored by <b>User:{{ username }}</b> (using WikiWho
         API)
       </div>
+      <div if="status" style="margin: 0.5em 0; font-size: 0.9em">
+        {{ status }}
+      </div>
       <cdx-button action="progressive" :disabled="loading" @click="show">
         Show highlighted wikitext
       </cdx-button>
     </template>
-    <template v-if="status" #supporting-text>{{ status }}</template>
+    <template #supporting-text
+      >This feature is in beta; please report any issues you find.</template
+    >
   </cdx-card>
 
   <cdx-dialog
@@ -33,7 +40,7 @@
 
 <script>
 import { CdxButton, CdxCard, CdxDialog } from "@wikimedia/codex";
-import { api } from "./shared.js";
+import { api, script_url } from "./shared.js";
 
 const WIKIWHO =
   "https://wikiwho.wmcloud.org/en/api/v1.0.0-beta/latest_rev_content/";
@@ -121,7 +128,7 @@ export default {
       this.segments = segs;
       this.status = `${((mine / total) * 100).toFixed(
         1,
-      )}% (${mine}/${total} tokens), via WikiWho`;
+      )}% (${mine}/${total} tokens)`;
     },
   },
 };
