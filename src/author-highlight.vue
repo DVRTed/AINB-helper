@@ -16,7 +16,8 @@
       </cdx-button>
     </template>
     <template #supporting-text
-      >This feature is in beta; please report any issues you find.</template
+      >This feature is in beta; please report if you encounter any
+      issues.</template
     >
   </cdx-card>
 
