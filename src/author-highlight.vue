@@ -53,7 +53,13 @@ export default {
     username: { type: String, required: true },
   },
   data() {
-    return { open: false, loading: false, status: "", segments: [] };
+    return {
+      open: false,
+      loading: false,
+      status: "",
+      segments: [],
+      script_url,
+    };
   },
   methods: {
     async show() {
