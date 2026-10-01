@@ -37,6 +37,15 @@ export function normalize_title(t) {
   return title.getPrefixedText();
 }
 
+export function get_case_username(page) {
+  return normalize_title(page)
+    .split("/")
+    .pop()
+    .replace(/^\d{4}-\d{2}-\d{2} /, "") // rm date prefix
+    .replace(/ \(\d+\)$/, "") // rm (1), (2) etc from title
+    .trim();
+}
+
 // called when an article link is clicked on a tracker page
 export function set_case_origin(article, tracker) {
   const now = Date.now();
