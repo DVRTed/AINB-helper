@@ -18,23 +18,6 @@ const WIKIWHO_API =
 
 mw.util.addCSS(styles);
 
-// workaround to fix flash of unstyled content on progress bar
-mw.util.addCSS(`
-    .ainb-progress-wrap { margin-bottom: 1em; padding: 8px 12px; border: 1px solid var(--border-color-base, #a2a9b1); border-radius: 4px; }
-    .ainb-progress-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-    .ainb-progress-percent { font-size: 1.8em; font-weight: 700; line-height: 1; color: var(--color-base, #202122); }
-    .ainb-progress-top-text { display: flex; flex-direction: column; }
-    .ainb-progress-title { font-weight: 600; font-size: 0.9em; }
-    .ainb-progress-stats { font-size: 0.85em; color: var(--color-subtle, #54595d); }
-    .ainb-progress-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: #eaecf0; }
-    .ainb-seg { height: 100%; }
-    .ainb-progress-legend { display: flex; gap: 10px; margin-top: 6px; font-size: 0.8em; color: var(--color-subtle, #54595d); text-transform: capitalize; }
-    .ainb-progress-legend i.ainb-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 3px; }
-    .ainb-progress-credit { font-size: 0.75em; color: var(--color-subtle, #54595d); font-weight: normal; text-align: right; }
-    .ainb-progress-hide-row { margin-top: 6px; font-size: 0.85em; }
-    .ainb-hide-resolved .ainb-row-resolved { display: none; }
-  `);
-
 function init_row_editing() {
   $("table")
     .has('tr[class*="aic-row-"]')
