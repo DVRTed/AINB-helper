@@ -634,7 +634,7 @@ export default {
 
     // existing table dialog
 
-    // resolves to "above", "replace", or "cancel"
+    // resolves to "below", "replace", or "cancel"
     ask_existing_table_action() {
       return new Promise((resolve) => {
         this.existing_table_resolver = resolve;
@@ -690,16 +690,17 @@ export default {
       }
 
       // found list and row templates, ask
-      // if can be either "above", "replace", or "cancel"
+      // if can be either "below", "replace", or "cancel"
       const action = await this.ask_existing_table_action();
       if (action === "cancel") return null;
 
-      if (action === "above") {
-        const list_start = section_start + list_match.index;
+      if (action === "below") {
+        // add at the end of the section (before the next heading)
+        const insert_at = section_start + section.trimEnd().length;
         return (
-          cur_page_content.slice(0, list_start) +
-          `${table}\n` +
-          cur_page_content.slice(list_start)
+          cur_page_content.slice(0, insert_at) +
+          `\n\n${table.trimEnd()}` +
+          cur_page_content.slice(insert_at)
         );
       }
 
@@ -1421,15 +1422,19 @@ export default {
             >Cancel</cdx-button
           >
           <div class="ainb-footer-buttons">
-            <cdx-button @click="resolve_existing_table('above')">
-              Add above existing
-            </cdx-button>
             <cdx-button
               action="destructive"
               weight="primary"
               @click="resolve_existing_table('replace')"
             >
-              Replace existing
+              Replace existing section
+            </cdx-button>
+            <cdx-button
+              action="progressive"
+              weight="primary"
+              @click="resolve_existing_table('below')"
+            >
+              Add new table below
             </cdx-button>
           </div>
         </div>
