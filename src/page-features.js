@@ -278,13 +278,9 @@ function init_progress_bar() {
 function init_highlight_author() {
   const origin = get_case_origin(wgPageName);
   const target = document.querySelector("#mw-content-text");
-  console.log("here");
   if (!origin || !target) return;
-  console.log("herex");
 
   const username = get_case_username(origin);
-  console.log(username);
-
   if (!username) return;
 
   create_app(AuthorHighlight, {
