@@ -1,0 +1,1444 @@
+<script>
+import { nextTick } from "vue";
+import {
+  CdxButton,
+  CdxCheckbox,
+  CdxDialog,
+  CdxMenuButton,
+  CdxProgressBar,
+  CdxTextInput,
+} from "@wikimedia/codex";
+
+import {
+  DEBUG_MODE,
+  DEBUG_PAGE,
+  APP_AD,
+  close_app,
+  api,
+  get_page_wikitext,
+  get_page_info,
+} from "./shared.js";
+
+const TRACKING_SECTION = "Tracking list";
+
+const build_case_banner = (case_name) =>
+  `{{AINB case banner|ongoing|review|undetermined|${case_name}|{{subst:#time:j F Y}}|user}}`;
+
+const build_article_row = (article, notes) =>
+  `{{AIC article row|article=${article}|status=requested|notes=${notes}}}`;
+
+export default {
+  components: {
+    CdxButton,
+    CdxCheckbox,
+    CdxDialog,
+    CdxMenuButton,
+    CdxProgressBar,
+    CdxTextInput,
+  },
+
+  data() {
+    return {
+      // meta
+      app_open: true,
+      app_loading: false,
+      app_error: "",
+
+      // navigation
+      current_step: 1,
+
+      // tracker
+      username: mw.config.get("wgRelevantUserName") || "",
+      case_name: "",
+      case_name_same: true,
+      normalized_username: "", // username from the API
+      normalized_usernames: [], // ditto, but multiple
+      anchor_date: "2022-12-01",
+      end_date: "",
+      progress: 0,
+      edit_count: 0,
+
+      // revisions selection
+      /**
+       * Array of article groups.
+       * @type {Array<{
+       * title: string,
+       * edits: [usercontrib, selected: boolean, diff_loading: boolean, diff_content: string],
+       * all_selected: boolean,
+       * some_selected: boolean,
+       * selected_count: number
+       * }>}
+       */
+      article_groups: [],
+      current_diff_data: null,
+      viewing_diff_edit: null,
+
+      extra_notes: "",
+      notes_visible: false,
+      selected_article_title: "",
+      creating_page: false,
+      create_error: "",
+      generated_wikitext: "",
+      target_page_title: "",
+      target_page_url: "",
+
+      // filters and sorting
+      article_search: "",
+      sort_mode: "recent",
+      filter_menu_selected: null,
+
+      // tag dialog
+      available_tags: [],
+      selected_tags_map: {},
+      tag_dialog_open: false,
+      tag_counts: {},
+
+      // existing table dialog
+      existing_table_dialog_open: false,
+      existing_table_resolver: null,
+
+      // page created
+      result_message: "",
+    };
+  },
+
+  computed: {
+    dialog_title() {
+      if (this.current_step === 1)
+        return "Generate a tracking subpage for AINB";
+      if (this.current_step === 2) return "Select diffs to include";
+      return "Tracking table added";
+    },
+
+    effective_case_name() {
+      return this.case_name_same
+        ? this.normalized_username
+        : this.case_name.trim();
+    },
+
+    current_date() {
+      return new Date().toISOString().split("T")[0];
+    },
+
+    total_selected_articles() {
+      return this.article_groups.filter((group) => group.selected_count > 0)
+        .length;
+    },
+
+    total_selected_edits() {
+      return this.article_groups.reduce(
+        (sum, group) => sum + group.selected_count,
+        0,
+      );
+    },
+
+    total_articles() {
+      return this.article_groups.length;
+    },
+
+    // toggles checked all indicator on the checkbox next to article
+    all_selected() {
+      return (
+        this.article_groups.length > 0 &&
+        this.article_groups.every((group) => group.all_selected)
+      );
+    },
+
+    // toggles some checked indicator
+    some_selected() {
+      return this.article_groups.some(
+        (group) => group.some_selected || group.all_selected,
+      );
+    },
+
+    diff_dialog_open: {
+      get() {
+        return !!this.viewing_diff_edit;
+      },
+      set(val) {
+        if (!val) this.viewing_diff_edit = null;
+      },
+    },
+
+    diff_edit_index() {
+      if (!this.selected_group || !this.viewing_diff_edit) return -1;
+      return this.selected_group.edits.findIndex(
+        (edit) => edit.revid === this.viewing_diff_edit.revid,
+      );
+    },
+
+    has_prev_diff() {
+      return this.diff_edit_index > 0;
+    },
+
+    has_next_diff() {
+      return (
+        this.diff_edit_index >= 0 &&
+        this.selected_group &&
+        this.diff_edit_index < this.selected_group.edits.length - 1
+      );
+    },
+
+    filter_menu_items() {
+      return [
+        { value: "smaller", label: "Unselect smaller edits" },
+        { value: "tag", label: "Unselect edits by tag" },
+        { value: "non_creations", label: "Unselect non-creations" },
+      ];
+    },
+
+    /**
+     * `article_groups` but sorted and filtered;
+     * this is NOT related to the "filter selected" menu
+     * but to filtering by name and sorting
+     */
+    filtered_and_sorted_groups() {
+      let groups = this.article_groups;
+      const query = this.article_search.trim().toLowerCase();
+
+      if (query) {
+        groups = groups.filter((g) => g.title.toLowerCase().includes(query));
+      }
+
+      groups = [...groups];
+
+      if (this.sort_mode === "edits") {
+        groups.sort((a, b) => b.edits.length - a.edits.length);
+      } else if (this.sort_mode === "alpha") {
+        groups.sort((a, b) => a.title.localeCompare(b.title));
+      } else if (this.sort_mode === "recent") {
+        groups.sort((a, b) => {
+          // 0 picks the most recent edits from the group methinks
+          const a_date = new Date(a.edits[0].timestamp);
+          const b_date = new Date(b.edits[0].timestamp);
+          return b_date - a_date;
+        });
+      }
+
+      return groups;
+    },
+
+    selected_group() {
+      const related_edits = this.article_groups.find(
+        (g) => g.title === this.selected_article_title,
+      );
+
+      return related_edits;
+    },
+
+    selected_tag_list() {
+      return this.available_tags.filter((tag) => this.selected_tags_map[tag]);
+    },
+
+    tags_in_selection() {
+      return this.available_tags.filter(
+        (tag) => (this.tag_counts[tag] || 0) > 0,
+      );
+    },
+
+    is_multiple_users() {
+      return this.normalized_usernames.length > 1;
+    },
+  },
+
+  methods: {
+    close_app,
+
+    handle_dialog_close(open) {
+      if (open !== true) this.close_app();
+    },
+
+    fire_hook(selector) {
+      nextTick(() => {
+        // this is so that diff popup scripts like "navigation popups" can work
+        const $content = $(selector);
+        if ($content.length) {
+          mw.hook("wikipage.content").fire($content);
+        }
+      });
+    },
+
+    select_article(title) {
+      this.selected_article_title = title;
+      this.fire_hook(".ainb-revisions-table");
+    },
+
+    update_group_selection(group) {
+      const selected = group.edits.filter((edit) => edit.selected).length;
+      group.selected_count = selected;
+      group.all_selected = selected === group.edits.length;
+      group.some_selected = selected > 0 && selected < group.edits.length;
+    },
+
+    toggle_article(group) {
+      const new_value = !group.all_selected;
+      group.edits.forEach((edit) => (edit.selected = new_value));
+      this.update_group_selection(group);
+    },
+
+    toggle_all() {
+      const new_value = !this.all_selected;
+      this.article_groups.forEach((group) => {
+        group.edits.forEach((edit) => (edit.selected = new_value));
+        this.update_group_selection(group);
+      });
+    },
+
+    // the "filter selected" menu
+
+    append_filter_note(text) {
+      const line = `* ${text}`;
+      this.extra_notes = this.extra_notes
+        ? `${this.extra_notes}\n${line}`
+        : line;
+      this.notes_visible = true;
+    },
+
+    unselect_smaller_edits() {
+      const input = prompt("Unselect edits smaller than (bytes):", "35");
+      if (input === null) return;
+      const threshold = parseInt(input, 10);
+      if (isNaN(threshold)) return;
+
+      this.article_groups.forEach((group) => {
+        group.edits.forEach((edit) => {
+          if (edit.selected && Math.abs(edit.sizediff) < threshold) {
+            edit.selected = false;
+          }
+        });
+        this.update_group_selection(group);
+      });
+
+      this.append_filter_note(
+        `Edits smaller than +/- ${threshold} bytes were excluded.`,
+      );
+    },
+
+    handle_filter_menu_select(value) {
+      this.filter_menu_selected = null;
+      if (value === "smaller") {
+        this.unselect_smaller_edits();
+      } else if (value === "tag") {
+        this.open_tag_dialog();
+      } else if (value === "non_creations") {
+        this.unselect_non_creations();
+      }
+    },
+
+    unselect_non_creations() {
+      this.article_groups.forEach((group) => {
+        group.edits.forEach((edit) => {
+          const is_creation = edit.new !== undefined;
+          if (edit.selected && !is_creation) {
+            edit.selected = false;
+          }
+        });
+        this.update_group_selection(group);
+      });
+
+      this.append_filter_note("Non-creation edits were excluded.");
+    },
+
+    // tag dialog through "filter selected" menu
+
+    open_tag_dialog() {
+      this.selected_tags_map = Object.fromEntries(
+        this.available_tags.map((tag) => [tag, false]),
+      );
+
+      const counts = {};
+      this.article_groups.forEach((group) => {
+        group.edits.forEach((edit) => {
+          if (!edit.selected) return;
+          (edit.tags || []).forEach((tag) => {
+            counts[tag] = (counts[tag] || 0) + 1;
+          });
+        });
+      });
+      this.tag_counts = counts;
+
+      this.tag_dialog_open = true;
+    },
+
+    unselect_by_tag() {
+      const tags_to_unselect = new Set(this.selected_tag_list);
+
+      this.article_groups.forEach((group) => {
+        group.edits.forEach((edit) => {
+          if (
+            edit.selected &&
+            edit.tags?.some((tag) => tags_to_unselect.has(tag))
+          ) {
+            edit.selected = false;
+          }
+        });
+        this.update_group_selection(group);
+      });
+
+      this.append_filter_note(
+        `Edits tagged "${[...tags_to_unselect].join('", "')}" were excluded.`,
+      );
+
+      this.tag_dialog_open = false;
+    },
+
+    async fetch_contributions() {
+      this.app_loading = true;
+      this.app_error = "";
+      this.progress = 0;
+      this.extra_notes = "";
+      this.notes_visible = false;
+
+      try {
+        const edits = [];
+        let continuation = null;
+
+        // suggested here: [[special:GoToComment/c-Suðurhafsljósæta-20260921131000-Legacy_IP_accounts]]
+        const is_ip_address = (u) =>
+          mw.util.isIPv4Address(u) || mw.util.isIPv6Address(u);
+
+        const raw_users = this.username
+          .split("|")
+          .map((u) => u.trim().replace(/^user:/i, ""))
+          .filter(Boolean);
+
+        if (raw_users.length === 0) {
+          this.app_error = "Please enter a username.";
+          return;
+        }
+
+        if (!this.case_name_same && !this.case_name.trim()) {
+          this.app_error = "Please enter a case name.";
+          return;
+        }
+
+        const ip_users = raw_users.filter(is_ip_address);
+        const registered_raw = raw_users.filter((u) => !is_ip_address(u));
+
+        let normalized_registered_users = [];
+        let registered_edit_count = 0;
+
+        // check for users w/ too many edits
+        // skipped for IPs
+        if (registered_raw.length > 0) {
+          const user_info = await api.get({
+            action: "query",
+            list: "users",
+            ususers: registered_raw.join("|"),
+            usprop: "editcount",
+          });
+          const users = user_info.query?.users || [];
+
+          registered_edit_count = users.reduce(
+            (sum, u) => sum + (u.editcount || 0),
+            0,
+          );
+
+          normalized_registered_users = users
+            .filter((u) => u.name && !u.missing && !u.invalid)
+            .map((u) => u.name);
+        }
+
+        const normalized_users = [
+          ...new Set([...normalized_registered_users, ...ip_users]),
+        ];
+
+        if (
+          normalized_users.length === 0 ||
+          (registered_raw.length > 0 &&
+            ip_users.length === 0 &&
+            !registered_edit_count)
+        ) {
+          this.app_error =
+            "No edits found. Note: usernames are case-sensitive.";
+          return;
+        }
+
+        if (registered_edit_count > 20000) {
+          if (
+            !confirm(
+              `User has over 20k edits (${registered_edit_count}). Are you sure you want to continue?`,
+            )
+          ) {
+            this.app_error = "Manually cancelled: User has too many edits.";
+            return;
+          }
+        }
+
+        this.normalized_usernames = normalized_users;
+        this.normalized_username = normalized_users[0] || "";
+
+        // normalized_username is set, so the computed effective_case_name
+        // is valid from here on
+        const page_title = DEBUG_MODE
+          ? DEBUG_PAGE
+          : `Wikipedia:AI noticeboard/${this.effective_case_name}`;
+        this.target_page_title = page_title;
+        this.target_page_url = mw.util.getUrl(page_title);
+
+        const cur_page_content = await get_page_wikitext(page_title);
+        if (
+          cur_page_content === null &&
+          !confirm(
+            `Page ${page_title} doesn't exist. Make sure the case name isn't misspelled. Create the subpage anyway?`,
+          )
+        ) {
+          return;
+        }
+
+        if (normalized_users.length > 1) {
+          const user_list = normalized_users
+            .map((u) => `[[User:${u}]]`)
+            .join(", ");
+          this.extra_notes = `* Includes contributions from multiple accounts: ${user_list}`;
+          this.notes_visible = true;
+        }
+
+        const ucend_timestamp = this.anchor_date
+          ? `${this.anchor_date}T00:00:00Z`
+          : undefined;
+        const ucstart_timestamp = this.end_date
+          ? `${this.end_date}T00:00:00Z`
+          : undefined;
+
+        do {
+          const params = {
+            action: "query",
+            list: "usercontribs",
+            ucnamespace: 0,
+            ucuser: normalized_users.join("|"),
+            ...(ucend_timestamp ? { ucend: ucend_timestamp } : {}),
+            ...(ucstart_timestamp ? { ucstart: ucstart_timestamp } : {}),
+            uclimit: "max",
+            ucprop: "ids|title|timestamp|comment|sizediff|tags|flags|user",
+            ucdir: "older",
+            ...continuation,
+          };
+
+          const response = await api.get(params);
+          if (response.error) throw new Error(response.error.info);
+
+          edits.push(...response.query.usercontribs);
+          this.progress = edits.length;
+          continuation = response.continue;
+        } while (continuation);
+
+        const valid_edits = edits.filter(
+          // always filter out reverted edits by default
+          (edit) => !edit.tags?.includes("mw-reverted"),
+        );
+        const groups = {};
+
+        valid_edits.forEach((edit) => {
+          if (!groups[edit.title]) {
+            groups[edit.title] = {
+              title: edit.title,
+              edits: [],
+              all_selected: false,
+              some_selected: false,
+              selected_count: 0,
+            };
+          }
+          groups[edit.title].edits.push({
+            ...edit,
+            selected: false,
+            diff_loading: false,
+            diff_content: "",
+          });
+        });
+
+        this.edit_count = valid_edits.length;
+
+        const tag_set = new Set();
+        valid_edits.forEach((edit) => {
+          (edit.tags || []).forEach((tag) => tag_set.add(tag));
+        });
+        this.available_tags = Array.from(tag_set).sort();
+
+        this.article_groups = Object.values(groups);
+
+        this.article_groups.forEach((group) =>
+          this.update_group_selection(group),
+        );
+
+        if (this.article_groups.length === 0) {
+          this.app_error = "No contributions found in the specified period.";
+        } else {
+          this.current_step = 2;
+
+          const top_article = this.filtered_and_sorted_groups[0];
+          if (top_article) this.select_article(top_article.title);
+        }
+      } catch (error) {
+        this.app_error =
+          "Error fetching contributions: " + (error?.message ?? String(error));
+        console.error(error);
+      } finally {
+        this.app_loading = false;
+      }
+    },
+
+    show_diff_popup(edit) {
+      this.viewing_diff_edit = edit;
+      this.load_diff(edit);
+    },
+
+    close_diff_popup() {
+      this.viewing_diff_edit = null;
+    },
+
+    // next/prev on diff
+    go_to_diff(offset) {
+      if (!this.selected_group || this.diff_edit_index < 0) return;
+      const next_edit =
+        this.selected_group.edits[this.diff_edit_index + offset];
+      if (next_edit) this.show_diff_popup(next_edit);
+    },
+
+    // jump, i.e., click on a random diff
+    jump_to_diff(revid) {
+      if (!this.selected_group) return;
+      const edit = this.selected_group.edits.find((e) => e.revid == revid);
+      if (edit) this.show_diff_popup(edit);
+    },
+
+    async load_diff(edit) {
+      if (edit.diff_content || edit.diff_loading) return;
+
+      edit.diff_loading = true;
+      try {
+        const response = await api.get({
+          action: "compare",
+          fromrev: edit.revid,
+          torelative: "prev",
+          prop: "diff",
+          formatversion: 2,
+        });
+
+        const res_content = response.compare?.body;
+        if (res_content) {
+          edit.diff_content = `<table class="diff">${res_content}</table>`;
+        } else {
+          edit.diff_content = "<p>Could not load diff.</p>";
+        }
+      } catch (error) {
+        console.error("Error loading diff:", error);
+        edit.diff_content =
+          "<p>Error loading diff: " +
+          (error?.message ?? String(error)) +
+          "</p>";
+      } finally {
+        edit.diff_loading = false;
+      }
+    },
+
+    // existing table dialog
+
+    // resolves to "below", "replace", or "cancel"
+    ask_existing_table_action() {
+      return new Promise((resolve) => {
+        this.existing_table_resolver = resolve;
+        this.existing_table_dialog_open = true;
+      });
+    },
+
+    resolve_existing_table(action) {
+      const resolve = this.existing_table_resolver;
+      this.existing_table_resolver = null;
+      this.existing_table_dialog_open = false;
+      if (resolve) resolve(action);
+    },
+
+    handle_existing_table_dialog(open) {
+      if (!open) this.resolve_existing_table("cancel");
+    },
+
+    async insert_into_tracking_section(cur_page_content, table) {
+      const heading_re = new RegExp(
+        String.raw`^==[ \t]*${TRACKING_SECTION}[ \t]*==[ \t]*$`,
+        "im",
+      );
+      const match = heading_re.exec(cur_page_content);
+
+      // no tracking list section; create it at the bottom
+      if (!match) {
+        return `${cur_page_content.trimEnd()}\n\n== ${TRACKING_SECTION} ==\n${table}\n`;
+      }
+
+      const section_start = match.index + match[0].length;
+
+      // match until next lv 2 heading, so that subheadings/subsections of tracking list
+      // section will be considered parts of it
+      const next_heading = /^==[^=].*$/m.exec(
+        cur_page_content.slice(section_start),
+      );
+      const section_end = next_heading
+        ? section_start + next_heading.index
+        : cur_page_content.length;
+      const section = cur_page_content.slice(section_start, section_end);
+
+      const list_match = /\{\{AIC article list\|/i.exec(section);
+      const has_row = /\{\{AIC article row/i.test(section);
+
+      // no list or row template, add the table below the heading
+      if (!list_match || !has_row) {
+        return (
+          cur_page_content.slice(0, section_start) +
+          `\n${table}` +
+          cur_page_content.slice(section_start)
+        );
+      }
+
+      // found list and row templates, ask
+      // if can be either "below", "replace", or "cancel"
+      const action = await this.ask_existing_table_action();
+      if (action === "cancel") return null;
+
+      if (action === "below") {
+        // add at the end of the section (before the next heading)
+        const insert_at = section_start + section.trimEnd().length;
+        return (
+          cur_page_content.slice(0, insert_at) +
+          `\n\n${table.trimEnd()}` +
+          cur_page_content.slice(insert_at)
+        );
+      }
+
+      // replace EVERYTHING in the section (including subsections),
+      // keeping the heading and whatever comes after the section
+      const after = cur_page_content.slice(section_end);
+      return (
+        cur_page_content.slice(0, section_start) +
+        `\n${table.trimEnd()}\n` +
+        (after ? `\n${after}` : "")
+      );
+    },
+
+    async generate_report() {
+      const title = this.target_page_title;
+      const table = this.build_table_wikitext();
+      this.app_error = "";
+      this.create_error = "";
+      this.creating_page = true;
+
+      let base;
+      try {
+        base = await get_page_info(title);
+      } catch (error) {
+        this.creating_page = false;
+        this.current_step = 3;
+        this.create_error =
+          "Error checking the case page: " + (error?.message ?? String(error));
+        console.error(error);
+        return;
+      }
+
+      const page_exists = base !== null;
+      let text;
+
+      if (page_exists) {
+        try {
+          text = await this.insert_into_tracking_section(base.text, table);
+        } catch (error) {
+          this.creating_page = false;
+          this.current_step = 3;
+          this.create_error =
+            "Error preparing the tracking table: " +
+            (error?.message ?? String(error));
+          console.error(error);
+          return;
+        }
+        if (text === null) {
+          this.creating_page = false;
+          return;
+        }
+      } else {
+        text = `${build_case_banner(
+          this.effective_case_name,
+        )}\n\n== Discussion ==\n\n\n== ${TRACKING_SECTION} ==\n${table}\n`;
+      }
+
+      this.generated_wikitext = text;
+      this.current_step = 3;
+
+      try {
+        await api.postWithEditToken({
+          action: "edit",
+          title,
+          text,
+          summary: page_exists
+            ? `Adding tracking table ${APP_AD}`
+            : `Creating case page with tracking table ${APP_AD}`,
+          ...(page_exists
+            ? {
+                baserevid: base.revid,
+                starttimestamp: base.starttimestamp,
+                nocreate: true,
+              }
+            : { createonly: true }),
+        });
+        this.result_message = page_exists
+          ? "Tracking table added to the case page."
+          : "Case page created with the tracking table.";
+      } catch (error) {
+        this.create_error =
+          "Error saving page: " + (error?.message ?? String(error));
+        console.error(error);
+      } finally {
+        this.creating_page = false;
+      }
+    },
+
+    build_table_wikitext() {
+      const selected_groups = this.article_groups
+        .map((group) => ({
+          ...group,
+          edits: group.edits.filter((edit) => edit.selected),
+        }))
+        .filter((group) => group.edits.length > 0);
+
+      const infocard_user = this.is_multiple_users
+        ? "multiple users; see notes below."
+        : `{{Userlinks|1=${this.normalized_username}}}`;
+
+      const infocard =
+        `{{InfoCard|content='''Tracker detail'''\n` +
+        `* User: ${infocard_user}\n` +
+        `* Start date: ${this.anchor_date || "unset"}\n` +
+        `* End date: ${this.end_date || this.current_date}}}\n`;
+
+      let wikitext = infocard;
+
+      if (this.extra_notes.trim()) {
+        wikitext += `{{Notice |heading=Notes |\n${this.extra_notes.trim()}\n}}\n\n`;
+      }
+      wikitext += `{{AIC article list|\n`;
+
+      selected_groups.forEach((group) => {
+        const format_edit = (edit) => {
+          const edit_size = this.format_bytes(edit.sizediff);
+          const edit_link = `[[Special:Diff/${edit.revid}|(${edit_size})]]`;
+          const creation_note = edit.new !== undefined ? " (page created)" : "";
+          return `${edit_link}${creation_note}`;
+        };
+
+        let sized_diffs = "";
+        if (this.is_multiple_users) {
+          const user_groups = {};
+          group.edits.forEach((edit) => {
+            const u = edit.user;
+            if (!user_groups[u]) user_groups[u] = [];
+            user_groups[u].push(format_edit(edit));
+          });
+          sized_diffs = Object.entries(user_groups)
+            .map(
+              ([user, links]) =>
+                `[[Special:Contributions/${user}|${user}]]: ${links.join(" ")}`,
+            )
+            .join("\n");
+        } else {
+          sized_diffs = group.edits.map(format_edit).join(" ");
+        }
+
+        const edit_count = group.edits.length;
+        const edit_str = edit_count > 1 ? "edits" : "edit";
+        const separator = this.is_multiple_users ? "\n" : " ";
+        const notes = `${edit_count} ${edit_str}:${separator}${sized_diffs}`;
+        wikitext += build_article_row(group.title, notes) + "\n";
+      });
+
+      wikitext += `}}\n`;
+      return wikitext;
+    },
+
+    async copy_wikitext() {
+      try {
+        await navigator.clipboard.writeText(this.build_table_wikitext());
+        mw.notify("Wikitext copied to clipboard.", { type: "success" });
+      } catch (err) {
+        mw.notify("Failed to copy to clipboard.", { type: "error" });
+      }
+    },
+
+    get_diff_url(revid) {
+      return mw.util.getUrl(`Special:Diff/${revid}`);
+    },
+
+    get_article_url(title) {
+      return mw.util.getUrl(title);
+    },
+
+    get_history_url(title) {
+      return mw.util.getUrl(title, { action: "history" });
+    },
+
+    get_user_url(username) {
+      return mw.util.getUrl(`User:${username}`);
+    },
+
+    get_contribs_url(username) {
+      return mw.util.getUrl(`Special:Contributions/${username}`);
+    },
+
+    get_group_users(group) {
+      if (!group?.edits) return "";
+      const users = [
+        ...new Set(group.edits.map((e) => e.user).filter(Boolean)),
+      ];
+      return users.length ? users.join(", ") : this.normalized_username;
+    },
+
+    format_bytes(bytes) {
+      return (bytes > 0 ? "+" : "") + (bytes || 0);
+    },
+
+    format_date(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) return timestamp;
+      return date.toLocaleString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    },
+
+    get_size_class(bytes) {
+      return bytes > 0 ? "ainb-pos" : bytes < 0 ? "ainb-neg" : "ainb-neu";
+    },
+
+    truncate(string, max_length) {
+      return string?.length > max_length
+        ? string.slice(0, max_length - 1) + "..."
+        : string || "";
+    },
+  },
+};
+</script>
+
+<template>
+  <div>
+    <cdx-dialog
+      class="ainb-helper"
+      v-model:open="app_open"
+      :title="dialog_title"
+      :use-close-button="true"
+      @update:open="handle_dialog_close"
+    >
+      <div v-if="current_step === 1" class="ainb-step">
+        <div v-if="!app_loading">
+          <p>Enter the username</p>
+          <div class="ainb-username-row">
+            <cdx-text-input
+              v-model="username"
+              class="ainb-username-input"
+              autocomplete="off"
+              data-bwignore="true"
+              data-lpignore="true"
+              data-1p-ignore
+              placeholder="User:ExampleUser or ExampleUser"
+              @keydown.enter="fetch_contributions"
+            />
+            <cdx-checkbox v-model="case_name_same"
+              >Case name is same as the username</cdx-checkbox
+            >
+          </div>
+
+          <div v-if="!case_name_same">
+            <label for="ainb-case-name">Case name</label>
+            <cdx-text-input
+              id="ainb-case-name"
+              v-model="case_name"
+              autocomplete="off"
+              placeholder="e.g. ExampleUser (2)"
+              @keydown.enter="fetch_contributions"
+            />
+          </div>
+
+          <div class="ainb-date-field">
+            <label for="ainb-anchor-date">Only fetch edits made after:</label>
+            <input
+              id="ainb-anchor-date"
+              type="date"
+              v-model="anchor_date"
+              class="ainb-date-input"
+            />
+            <p class="ainb-date-hint">
+              Defaults to December 2022, the public release date of ChatGPT.
+            </p>
+          </div>
+
+          <div class="ainb-date-field">
+            <label for="ainb-end-date">Only fetch edits made before:</label>
+            <input
+              id="ainb-end-date"
+              type="date"
+              v-model="end_date"
+              class="ainb-date-input"
+            />
+            <p class="ainb-date-hint">
+              Leave blank to fetch up to the most recent edit.
+            </p>
+          </div>
+        </div>
+
+        <div v-if="app_error" class="ainb-error">{{ app_error }}</div>
+
+        <div v-if="app_loading" class="ainb-loading">
+          <p>
+            Fetching contributions...
+            {{ progress > 0 ? progress + " found" : "" }}
+          </p>
+          <cdx-progress-bar inline></cdx-progress-bar>
+        </div>
+      </div>
+
+      <div v-if="current_step === 2" class="ainb-step2">
+        <div class="ainb-step2-subtitle">
+          <template v-if="is_multiple_users">Multiple users</template>
+          <template v-else>
+            <a :href="get_user_url(normalized_username)" target="_blank"
+              >User:{{ normalized_username }}</a
+            >
+            &middot;
+            <a :href="get_contribs_url(normalized_username)" target="_blank"
+              >(contrib)</a
+            >
+          </template>
+          &middot; {{ edit_count }} edit(s) across
+          {{ article_groups.length }} article(s)
+        </div>
+        <div class="ainb-step2-toolbar">
+          <cdx-checkbox
+            :model-value="all_selected"
+            :indeterminate="some_selected && !all_selected"
+            @update:model-value="toggle_all"
+            >Select all</cdx-checkbox
+          >
+          <cdx-menu-button
+            v-model:selected="filter_menu_selected"
+            weight="normal"
+            :menu-items="filter_menu_items"
+            :disabled="!some_selected"
+            @update:selected="handle_filter_menu_select"
+            >Filter selected</cdx-menu-button
+          >
+          <span class="ainb-total-badge"
+            ><b>{{ total_selected_articles }}</b> of
+            {{ total_articles }} articles selected</span
+          >
+        </div>
+
+        <div v-if="app_error" class="ainb-error">{{ app_error }}</div>
+
+        <div v-if="notes_visible" class="ainb-notes-field">
+          <label for="ainb-extra-notes"
+            >Notes for tracking page (e.g., applied filters)</label
+          >
+          <textarea
+            id="ainb-extra-notes"
+            v-model="extra_notes"
+            rows="3"
+            placeholder="Text to be added above the tracker..."
+          ></textarea>
+        </div>
+        <cdx-button
+          v-else
+          weight="quiet"
+          class="ainb-add-note-btn"
+          @click="notes_visible = true"
+          >+ Add a note</cdx-button
+        >
+
+        <div class="ainb-step2-layout">
+          <div class="ainb-article-list">
+            <div class="ainb-article-list-controls">
+              <cdx-text-input
+                v-model="article_search"
+                placeholder="Filter articles..."
+                class="ainb-article-search"
+              ></cdx-text-input>
+              <div class="ainb-sort-toggle">
+                <button
+                  type="button"
+                  :class="{ active: sort_mode === 'edits' }"
+                  @click="sort_mode = 'edits'"
+                >
+                  Most edits
+                </button>
+                <button
+                  type="button"
+                  :class="{ active: sort_mode === 'alpha' }"
+                  @click="sort_mode = 'alpha'"
+                >
+                  A-Z
+                </button>
+                <button
+                  type="button"
+                  :class="{ active: sort_mode === 'recent' }"
+                  @click="sort_mode = 'recent'"
+                >
+                  Recent
+                </button>
+              </div>
+            </div>
+
+            <ul class="ainb-article-items">
+              <li
+                v-for="group in filtered_and_sorted_groups"
+                :key="group.title"
+                class="ainb-article-item"
+                :class="{
+                  'ainb-article-item-active':
+                    group.title === selected_article_title,
+                  'ainb-article-item-picked': group.selected_count > 0,
+                }"
+                @click="select_article(group.title)"
+              >
+                <cdx-checkbox
+                  :model-value="group.all_selected"
+                  :indeterminate="group.some_selected && !group.all_selected"
+                  @update:model-value="toggle_article(group)"
+                  @click.stop
+                ></cdx-checkbox>
+                <div class="ainb-article-item-info">
+                  <div class="ainb-article-item-title">{{ group.title }}</div>
+                  <div class="ainb-article-item-meta">
+                    <span>{{ group.edits.length }} edit(s)</span>
+                    <span
+                      v-if="group.selected_count > 0"
+                      class="ainb-article-item-badge"
+                      >&middot; selected {{ group.selected_count }}/{{
+                        group.edits.length
+                      }}</span
+                    >
+                  </div>
+                </div>
+              </li>
+              <li
+                v-if="filtered_and_sorted_groups.length === 0"
+                class="ainb-article-empty"
+              >
+                No articles match "{{ article_search }}"
+              </li>
+            </ul>
+          </div>
+
+          <div class="ainb-revisions-panel">
+            <template v-if="selected_group">
+              <div class="ainb-revisions-header">
+                <div>
+                  <div class="ainb-revisions-title">
+                    <a
+                      :href="get_article_url(selected_group.title)"
+                      target="_blank"
+                      >{{ selected_group.title }}</a
+                    >
+                    <a
+                      :href="get_history_url(selected_group.title)"
+                      target="_blank"
+                      class="ainb-history-link"
+                      >(hist)</a
+                    >
+                  </div>
+
+                  <div class="ainb-revisions-subtitle">
+                    {{ selected_group.edits.length }} edit(s) by
+                    {{ get_group_users(selected_group) }}
+                  </div>
+                </div>
+              </div>
+
+              <table class="ainb-revisions-table">
+                <thead>
+                  <tr>
+                    <th class="ainb-col-cb"></th>
+                    <th class="ainb-col-actions">Diff</th>
+                    <th class="ainb-col-time">Date</th>
+                    <th class="ainb-col-size">Size</th>
+                    <th class="ainb-col-summary">Summary</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="edit in selected_group.edits"
+                    :key="edit.revid"
+                    class="ainb-diff-row"
+                    :class="{ 'ainb-diff-row-selected': edit.selected }"
+                  >
+                    <td class="ainb-col-cb">
+                      <cdx-checkbox
+                        v-model="edit.selected"
+                        @update:model-value="
+                          update_group_selection(selected_group)
+                        "
+                      ></cdx-checkbox>
+                    </td>
+                    <td class="ainb-col-actions">
+                      <button
+                        type="button"
+                        class="ainb-diff-toggle"
+                        @click="show_diff_popup(edit)"
+                      >
+                        View diff
+                      </button>
+                      <a
+                        :href="get_diff_url(edit.revid)"
+                        target="_blank"
+                        class="ainb-diff-extlink"
+                        title="Open in new tab"
+                        >&#8599;</a
+                      >
+                    </td>
+                    <td class="ainb-col-time" :title="edit.timestamp">
+                      {{ format_date(edit.timestamp) }}
+                    </td>
+                    <td
+                      :class="['ainb-col-size', get_size_class(edit.sizediff)]"
+                    >
+                      {{ format_bytes(edit.sizediff) }}
+                    </td>
+                    <td class="ainb-col-summary" :title="edit.comment">
+                      {{
+                        edit.comment
+                          ? truncate(edit.comment, 80)
+                          : "No edit summary"
+                      }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </template>
+            <div v-else class="ainb-revisions-empty">
+              Select an article on the left to view its revisions.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="current_step === 3" class="ainb-step">
+        <div v-if="creating_page" class="ainb-loading">
+          <p>Adding tracking table...</p>
+          <cdx-progress-bar inline></cdx-progress-bar>
+        </div>
+
+        <div v-else-if="create_error" class="ainb-error">
+          {{ create_error }}
+        </div>
+
+        <div v-else>
+          <p>{{ result_message }}</p>
+          <p>
+            <a :href="target_page_url" target="_blank">{{
+              target_page_title
+            }}</a>
+          </p>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="ainb-dialog-footer">
+          <div v-if="current_step === 1"></div>
+
+          <cdx-button
+            v-if="current_step === 1"
+            action="progressive"
+            weight="primary"
+            @click="fetch_contributions"
+            :disabled="
+              app_loading || !username || (!case_name_same && !case_name.trim())
+            "
+          >
+            {{
+              app_loading ? "Fetching..." : "Fetch contributions"
+            }}</cdx-button
+          >
+
+          <template v-if="current_step === 2">
+            <div class="ainb-subpage-info">
+              Target: <strong>{{ target_page_title }}</strong>
+            </div>
+            <div class="ainb-footer-buttons">
+              <cdx-button @click="current_step = 1">Back</cdx-button>
+              <cdx-button
+                @click="copy_wikitext"
+                :disabled="total_selected_edits === 0"
+                >Copy wikitext
+              </cdx-button>
+              <cdx-button
+                action="progressive"
+                weight="primary"
+                @click="generate_report"
+                :disabled="total_selected_edits === 0 || creating_page"
+                >Add tracking table
+              </cdx-button>
+            </div>
+          </template>
+
+          <template v-if="current_step === 3">
+            <div></div>
+            <div>
+              <cdx-button @click="close_app">Close</cdx-button>
+            </div>
+          </template>
+        </div>
+      </template>
+    </cdx-dialog>
+
+    <cdx-dialog
+      v-model:open="diff_dialog_open"
+      :title="viewing_diff_edit ? 'Diff for ' + viewing_diff_edit.title : ''"
+      :use-close-button="true"
+      class="ainb-diff-dialog"
+      @keyup.left="go_to_diff(-1)"
+      @keyup.right="go_to_diff(1)"
+    >
+      <div v-if="viewing_diff_edit" class="ainb-diff-dialog-body">
+        <div class="ainb-diff-meta">
+          <select
+            class="ainb-diff-select"
+            :value="viewing_diff_edit.revid"
+            @change="jump_to_diff($event.target.value)"
+            v-if="selected_group.edits.length > 1"
+          >
+            <option
+              v-for="(e, idx) in selected_group.edits"
+              :key="e.revid"
+              :value="e.revid"
+            >
+              {{ idx + 1 }} / {{ selected_group.edits.length }} —
+              {{ format_date(e.timestamp) }} ({{ format_bytes(e.sizediff) }})
+            </option>
+          </select>
+          <a
+            :href="get_diff_url(viewing_diff_edit.revid)"
+            target="_blank"
+            class="ainb-diff-meta-link"
+            >Open in new tab &#8599;</a
+          >
+        </div>
+        <div class="ainb-diff-meta-include">
+          <cdx-checkbox
+            v-model="viewing_diff_edit.selected"
+            @update:model-value="update_group_selection(selected_group)"
+            >Include</cdx-checkbox
+          >
+        </div>
+        <div class="ainb-diff-meta-comment" :title="viewing_diff_edit.comment">
+          <span
+            :class="[
+              'ainb-diff-meta-size',
+              get_size_class(viewing_diff_edit.sizediff),
+            ]"
+            >{{ format_bytes(viewing_diff_edit.sizediff) }} bytes</span
+          >
+          &middot; <span class="ainb-diff-meta-comment-label">Summary:</span>
+          {{ viewing_diff_edit.comment || "No edit summary" }}
+        </div>
+
+        <div v-if="viewing_diff_edit.diff_loading" class="ainb-diff-loading">
+          Loading diff...
+        </div>
+        <div
+          v-else-if="viewing_diff_edit.diff_content"
+          class="ainb-diff-content"
+          v-html="viewing_diff_edit.diff_content"
+        ></div>
+        <div v-else class="ainb-diff-loading">No content loaded.</div>
+      </div>
+      <template #footer>
+        <div class="ainb-dialog-footer">
+          <div class="ainb-diff-nav">
+            <cdx-button @click="go_to_diff(-1)" :disabled="!has_prev_diff"
+              >&larr; Prev</cdx-button
+            >
+            <cdx-button @click="go_to_diff(1)" :disabled="!has_next_diff"
+              >Next &rarr;</cdx-button
+            >
+          </div>
+          <cdx-button @click="close_diff_popup">Close</cdx-button>
+        </div>
+      </template>
+    </cdx-dialog>
+
+    <cdx-dialog
+      v-model:open="tag_dialog_open"
+      title="Unselect edits by tag"
+      :use-close-button="true"
+      class="ainb-tag-dialog"
+    >
+      <p v-if="tags_in_selection.length === 0">
+        No tags found on the selected edits.
+      </p>
+      <div v-else>
+        <cdx-checkbox
+          v-for="tag in tags_in_selection"
+          :key="tag"
+          v-model="selected_tags_map[tag]"
+        >
+          {{ tag }} ({{ tag_counts[tag] }} edit{{
+            tag_counts[tag] === 1 ? "" : "s"
+          }})
+        </cdx-checkbox>
+      </div>
+      <template #footer>
+        <div class="ainb-dialog-footer">
+          <div></div>
+          <div>
+            <cdx-button @click="tag_dialog_open = false">Cancel</cdx-button>
+            <cdx-button
+              action="progressive"
+              weight="primary"
+              @click="unselect_by_tag"
+              :disabled="selected_tag_list.length === 0"
+            >
+              Unselect
+            </cdx-button>
+          </div>
+        </div>
+      </template>
+    </cdx-dialog>
+
+    <cdx-dialog
+      v-model:open="existing_table_dialog_open"
+      title="Existing tracking table found"
+      :use-close-button="true"
+      class="ainb-existing-table-dialog"
+      @update:open="handle_existing_table_dialog"
+    >
+      <p>
+        The case page at "{{ target_page_title }}" already contains a tracking
+        table. What would you like to do with the new table?
+      </p>
+      <p class="ainb-subtitle">
+        Note: replacing will replace EVERYTHING that's inside the Tracking list
+        section with the new table.
+      </p>
+      <template #footer>
+        <div class="ainb-dialog-footer">
+          <cdx-button @click="resolve_existing_table('cancel')"
+            >Cancel</cdx-button
+          >
+          <div class="ainb-footer-buttons">
+            <cdx-button
+              action="destructive"
+              weight="primary"
+              @click="resolve_existing_table('replace')"
+            >
+              Replace existing section
+            </cdx-button>
+            <cdx-button
+              action="progressive"
+              weight="primary"
+              @click="resolve_existing_table('below')"
+            >
+              Add new table below
+            </cdx-button>
+          </div>
+        </div>
+      </template>
+    </cdx-dialog>
+  </div>
+</template>

@@ -14,6 +14,11 @@
   max-width: 92vw !important;
 }
 
+.ainb-existing-table-dialog.cdx-dialog {
+  width: 40rem;       
+  max-width: 80vw;   
+}
+
 .ainb-dialog-footer .cdx-button {
   margin: 0 4px;
 }
@@ -44,6 +49,16 @@
   text-align: center;
 }
 
+.ainb-username-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ainb-username-input {
+  width: 100%;
+}
+
 .ainb-date-field {
   margin-top: 1em;
 }
@@ -71,7 +86,7 @@
   padding: 0.75em 0;
 }
 
-.ainb-step2-subtitle {
+.ainb-subtitle, .ainb-step2-subtitle {
   font-size: 0.875em;
   color: #54595d;
   margin-bottom: 12px;
@@ -846,7 +861,6 @@
   font-size: 0.8em;
   color: var(--color-subtle, #54595d);
 }
-
 .ainb-thread-context {
   display: flex;
   align-items: center;
@@ -856,6 +870,18 @@
   background: #eaf3ff;
   border: 1px solid #c8e1ff;
   border-radius: 4px;
+}
+
+.ainb-thread-context-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ainb-restore-note {
+  margin-bottom: 8px;
+  font-size: 0.85em;
+  color: var(--color-subtle, #54595d);
 }
 
 .ainb-llm-top-options {
