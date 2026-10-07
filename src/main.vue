@@ -52,8 +52,6 @@ export default {
 
       // tracker
       username: mw.config.get("wgRelevantUserName") || "",
-      case_name: "",
-      case_name_same: true,
       normalized_username: "", // username from the API
       normalized_usernames: [], // ditto, but multiple
       anchor_date: "2022-12-01",
@@ -111,12 +109,6 @@ export default {
         return "Generate a tracking subpage for AINB";
       if (this.current_step === 2) return "Select diffs to include";
       return "Tracking table added";
-    },
-
-    effective_case_name() {
-      return this.case_name_same
-        ? this.normalized_username
-        : this.case_name.trim();
     },
 
     current_date() {
@@ -410,11 +402,6 @@ export default {
           return;
         }
 
-        if (!this.case_name_same && !this.case_name.trim()) {
-          this.app_error = "Please enter a case name.";
-          return;
-        }
-
         const ip_users = raw_users.filter(is_ip_address);
         const registered_raw = raw_users.filter((u) => !is_ip_address(u));
 
@@ -471,11 +458,10 @@ export default {
         this.normalized_usernames = normalized_users;
         this.normalized_username = normalized_users[0] || "";
 
-        // normalized_username is set, so the computed effective_case_name
-        // is valid from here on
+        // the case name is always the (first) normalized username
         const page_title = DEBUG_MODE
           ? DEBUG_PAGE
-          : `Wikipedia:AI noticeboard/${this.effective_case_name}`;
+          : `Wikipedia:AI noticeboard/${this.normalized_username}`;
         this.target_page_title = page_title;
         this.target_page_url = mw.util.getUrl(page_title);
 
@@ -483,7 +469,7 @@ export default {
         if (
           cur_page_content === null &&
           !confirm(
-            `Page ${page_title} doesn't exist. Make sure the case name isn't misspelled. Create the subpage anyway?`,
+            `Page ${page_title} doesn't exist. Make sure the username isn't misspelled. Create the subpage anyway?`,
           )
         ) {
           return;
@@ -754,7 +740,7 @@ export default {
         }
       } else {
         text = `${build_case_banner(
-          this.effective_case_name,
+          this.normalized_username,
         )}\n\n== Discussion ==\n\n\n== ${TRACKING_SECTION} ==\n${table}\n`;
       }
 
@@ -939,20 +925,6 @@ export default {
               data-lpignore="true"
               data-1p-ignore
               placeholder="User:ExampleUser or ExampleUser"
-              @keydown.enter="fetch_contributions"
-            />
-            <cdx-checkbox v-model="case_name_same"
-              >Case name is same as the username</cdx-checkbox
-            >
-          </div>
-
-          <div v-if="!case_name_same">
-            <label for="ainb-case-name">Case name</label>
-            <cdx-text-input
-              id="ainb-case-name"
-              v-model="case_name"
-              autocomplete="off"
-              placeholder="e.g. ExampleUser (2)"
               @keydown.enter="fetch_contributions"
             />
           </div>
@@ -1247,9 +1219,7 @@ export default {
             action="progressive"
             weight="primary"
             @click="fetch_contributions"
-            :disabled="
-              app_loading || !username || (!case_name_same && !case_name.trim())
-            "
+            :disabled="app_loading || !username"
           >
             {{
               app_loading ? "Fetching..." : "Fetch contributions"
