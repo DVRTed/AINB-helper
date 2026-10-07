@@ -22,7 +22,7 @@ import {
 const TRACKING_SECTION = "Tracking list";
 
 const build_case_banner = (case_name) =>
-  `{{AINB case banner|ongoing|review|undetermined|${case_name}|{{subst:#time:j F Y}}|user}}`;
+  `{{AINB case banner |cleanup=analysis |llmprod=undetermined |conduct=review |case_name=${case_name} |original_file_date={{subst:#time:j F Y}} |case_type=user}}`;
 
 const build_article_row = (article, notes) =>
   `{{AIC article row|article=${article}|status=requested|notes=${notes}}}`;
