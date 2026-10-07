@@ -20,6 +20,9 @@ import {
 } from "./shared.js";
 
 const TRACKING_SECTION = "Tracking list";
+// because things have been changed simply because they could be
+const TRACKING_SECTION_RE =
+  /^==[ \t]*(Tracking list|Tracking|Cleanup)[ \t]*==[ \t]*\r?$/im;
 
 const build_case_banner = (case_name) =>
   `{{AINB case banner |cleanup=analysis |llmprod=undetermined |conduct=review |case_name=${case_name} |original_file_date={{subst:#time:j F Y}} |case_type=user}}`;
@@ -654,12 +657,7 @@ export default {
     },
 
     async insert_into_tracking_section(cur_page_content, table) {
-      const heading_re = new RegExp(
-        String.raw`^==[ \t]*${TRACKING_SECTION}[ \t]*==[ \t]*$`,
-        "im",
-      );
-      const match = heading_re.exec(cur_page_content);
-
+      const match = TRACKING_SECTION_RE.exec(cur_page_content);
       // no tracking list section; create it at the bottom
       if (!match) {
         return `${cur_page_content.trimEnd()}\n\n== ${TRACKING_SECTION} ==\n${table}\n`;
@@ -677,16 +675,18 @@ export default {
         : cur_page_content.length;
       const section = cur_page_content.slice(section_start, section_end);
 
-      const list_match = /\{\{AIC article list\|/i.exec(section);
-      const has_row = /\{\{AIC article row/i.test(section);
+      // the preload inserts these templates by default;
+      // AIC article row is <!-- commented out -->, so match based on that.
+      const uncommented_section = section.replace(/<!--[\s\S]*?-->/g, "");
+
+      const list_match = /\{\{AIC article list\s*\|/i.exec(uncommented_section);
+      const has_row = /\{\{AIC article row/i.test(uncommented_section);
 
       // no list or row template, add the table below the heading
       if (!list_match || !has_row) {
-        return (
-          cur_page_content.slice(0, section_start) +
-          `\n${table}` +
-          cur_page_content.slice(section_start)
-        );
+        const before = cur_page_content.slice(0, section_start);
+        const after = cur_page_content.slice(section_end);
+        return before + `\n${table.trimEnd()}\n` + (after ? `\n${after}` : "");
       }
 
       // found list and row templates, ask
