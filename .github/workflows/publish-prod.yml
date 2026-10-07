@@ -32,7 +32,7 @@ jobs:
         run: |
           artifact_dir="$(mktemp -d)"
           commit_message="$(git log -1 --format=%B)"
-          cp dist/AINB-helper.js dist/AINB-helper.css "$artifact_dir/"
+          cp dist/AINB-helper.js "$artifact_dir/"
 
           if git ls-remote --exit-code --heads origin refs/heads/production >/dev/null 2>&1; then
             git fetch origin production
@@ -42,10 +42,10 @@ jobs:
             git rm -rf .
           fi
 
-          cp "$artifact_dir/AINB-helper.js" "$artifact_dir/AINB-helper.css" .
+          cp "$artifact_dir/AINB-helper.js" .
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- AINB-helper.js AINB-helper.css
+          git add -- AINB-helper.js
 
           if git diff --cached --quiet; then
             echo "Production files are unchanged."
