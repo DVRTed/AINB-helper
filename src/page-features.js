@@ -9,6 +9,7 @@ import {
 import AuthorHighlight from "./author-highlight.vue";
 import CategoryStats from "./category-stats.vue";
 import EditTable from "./edit-table.vue";
+import EditBanner from "./edit-banner.vue";
 import LlmTagProd from "./llm-tag-prod.vue";
 import Main from "./main.vue";
 import styles from "./AINB-helper.css?inline";
@@ -263,6 +264,21 @@ function init_highlight_author() {
   });
 }
 
+function init_banner_edit() {
+  const $banner = $(".ainb-b-top").first();
+  const $button = $(
+    '<button type="button" class="cdx-button cdx-button--action-progressive">',
+  )
+    .text("Edit case banner")
+    .on("click", (e) => {
+      e.preventDefault();
+      create_app(EditBanner);
+    });
+
+  if ($banner.length) $banner.after($button);
+  else $("#mw-content-text").prepend($button);
+}
+
 const wgPageName = mw.config.get("wgPageName");
 
 $(() => {
@@ -294,6 +310,7 @@ $(() => {
     init_progress_bar();
     init_row_editing();
     init_check_affected();
+    init_banner_edit();
   }
 
   if ([0, 118].includes(mw.config.get("wgNamespaceNumber")) || DEBUG_MODE) {
