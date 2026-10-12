@@ -19,10 +19,10 @@ import {
   get_page_info,
 } from "./shared.js";
 
-const TRACKING_SECTION = "Tracking list";
-// because things have been changed simply because they could be
+const TRACKING_SECTION = "Cleanup";
 const TRACKING_SECTION_RE =
   /^==[ \t]*(Tracking list|Tracking|Cleanup)[ \t]*==[ \t]*\r?$/im;
+const TRACKING_SUBSECTION = "Tracking list";
 
 const build_case_banner = (case_name) =>
   `{{AINB case banner |cleanup=analysis |llmprod=undetermined |conduct=review |case_name=${case_name} |original_file_date={{subst:#time:j F Y}} |case_type=user}}`;
@@ -31,6 +31,10 @@ const build_article_row = (article, notes) =>
   `{{AIC article row|article=${article}|status=requested|notes=${notes}}}`;
 
 export default {
+  props: {
+    initial_username: { type: String, default: "" },
+  },
+
   components: {
     CdxButton,
     CdxCheckbox,
@@ -51,7 +55,8 @@ export default {
       current_step: 1,
 
       // tracker
-      username: mw.config.get("wgRelevantUserName") || "",
+      username:
+        this.initial_username || mw.config.get("wgRelevantUserName") || "",
       normalized_username: "", // username from the API
       normalized_usernames: [], // ditto, but multiple
       anchor_date: "2022-12-01",
@@ -785,7 +790,7 @@ export default {
 
       const infocard_user = this.is_multiple_users
         ? "multiple users; see notes below."
-        : `{{Userlinks|1=${this.normalized_username}}}`;
+        : `{{User-ainb|1=${this.normalized_username}}}`;
 
       const infocard =
         `{{InfoCard|content='''Tracker detail'''\n` +
@@ -793,7 +798,7 @@ export default {
         `* Start date: ${this.anchor_date || "unset"}\n` +
         `* End date: ${this.end_date || this.current_date}}}\n`;
 
-      let wikitext = infocard;
+      let wikitext = infocard + `\n=== ${TRACKING_SUBSECTION} ===\n\n`;
 
       if (this.extra_notes.trim()) {
         wikitext += `{{Notice |heading=Notes |\n${this.extra_notes.trim()}\n}}\n\n`;
