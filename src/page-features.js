@@ -289,7 +289,6 @@ function init_banner_edit() {
     $tracking_button,
   );
   if ($banner.length) $banner.after($actions);
-  else $("#mw-content-text").prepend($tracking_button);
 }
 
 const wgPageName = mw.config.get("wgPageName");
