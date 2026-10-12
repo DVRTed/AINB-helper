@@ -266,7 +266,7 @@ function init_highlight_author() {
 
 function init_banner_edit() {
   const $banner = $(".ainb-b-top").first();
-  const $button = $(
+  const $case_button = $(
     '<button type="button" class="cdx-button cdx-button--action-progressive">',
   )
     .text("Edit case banner")
@@ -275,11 +275,25 @@ function init_banner_edit() {
       create_app(EditBanner);
     });
 
-  if ($banner.length) $banner.after($button);
-  else $("#mw-content-text").prepend($button);
+  const $tracking_button = $('<button type="button" class="cdx-button">')
+    .text("Add tracking table")
+    .on("click", (e) => {
+      e.preventDefault();
+      create_app(Main, {
+        initial_username: get_case_username(wgPageName),
+      });
+    });
+
+  const $actions = $('<div class="ainb-page-actions">').append(
+    $case_button,
+    $tracking_button,
+  );
+  if ($banner.length) $banner.after($actions);
+  else $("#mw-content-text").prepend($tracking_button);
 }
 
 const wgPageName = mw.config.get("wgPageName");
+const wgAction = mw.config.get("wgAction");
 
 $(() => {
   if (wgPageName === "Category:AI_noticeboard_open_cleanup_cases") {
@@ -304,8 +318,9 @@ $(() => {
   // if we're on an AINB tracking subpage, or the debug page,
   // enable editing rows
   if (
-    wgPageName.startsWith("Wikipedia:AI_noticeboard/") ||
-    wgPageName === DEBUG_PAGE
+    (wgPageName.startsWith("Wikipedia:AI_noticeboard/") ||
+      wgPageName === DEBUG_PAGE) &&
+    wgAction === "view"
   ) {
     init_progress_bar();
     init_row_editing();
