@@ -1,26 +1,126 @@
-const APP_ID = "ainb-helper";
-const APP_AD = "(using [[User:DVRTed/AINB-helper|AINB-helper]])";
-// BUILD:DEV
-const DEBUG_MODE = true;
-// END:BUILD
-// BUILD:PROD
-const DEBUG_MODE = false;
-// END:BUILD
-const DEBUG_PAGE = "User:DVRTed/sandbox2";
+import { createMwApp } from "vue";
 
-const require = mw.loader.require;
-await mw.loader.using([
-  "vue",
-  "@wikimedia/codex",
-  "mediawiki.api",
-  "mediawiki.util",
-]);
-const api = new mw.Api();
-const Vue = require("vue");
+export const APP_ID = "ainb-helper";
+export const APP_AD = "(using [[User:DVRTed/AINB-helper|AINB-helper]])";
+export const DEBUG_MODE = __DEV__;
+export const DEBUG_PAGE = "User:DVRTed/sandbox2";
+
+export const api = new mw.Api();
 
 let current_app = null;
 
-function close_app() {
+export const CASE_ORIGIN_KEY = "ainb-case-origin";
+const CASE_ORIGIN_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+const CASE_ORIGIN_MAX_CASES = 10;
+const CASE_ORIGIN_MAX_ARTICLES = 500;
+
+export function get_article_row_regex(article, global = false) {
+  const escaped_article = mw.util.escapeRegExp(article);
+  return new RegExp(
+    `\\{\\{AIC article row\\s*\\|\\s*(?:article=)?\\s*${escaped_article}\\s*(?:\\|\\s*(?:status=)?\\s*([^|}]*))?(?:\\|\\s*(?:notes=)?\\s*([^}]*))?\\s*\\}\\}`,
+    global ? "ig" : "i",
+  );
+}
+
+export const script_url = mw.util.getUrl("User:DVRTed/AINB-helper");
+
+export function rm_underscores(value) {
+  return value.replace(/_/g, " ");
+}
+
+export function format_number(number) {
+  return number.toLocaleString();
+}
+
+export function get_article_url(title) {
+  return mw.util.getUrl(title);
+}
+
+export function normalize_title(t) {
+  const title = new mw.Title(t);
+  return title.getPrefixedText();
+}
+
+export function get_case_username(page) {
+  return normalize_title(page)
+    .split("/")
+    .pop()
+    .replace(/^\d{4}-\d{2}-\d{2} /, "") // rm date prefix
+    .replace(/ \(\d+\)$/, "") // rm (1), (2) etc from title
+    .trim();
+}
+
+// called when an article link is clicked on a tracker page
+export function set_case_origin(article, tracker) {
+  const now = Date.now();
+  const map = mw.storage.getObject(CASE_ORIGIN_KEY) || {};
+  // remove expired cases
+  for (const k of Object.keys(map)) {
+    const time_diff = now - map[k].ts;
+
+    if (Number.isNaN(time_diff) || time_diff > CASE_ORIGIN_TTL_MS)
+      delete map[k];
+  }
+
+  const case_name = normalize_title(tracker);
+  const title = normalize_title(article);
+  const articles = map[case_name]?.articles || [];
+  if (!articles.includes(title)) articles.push(title);
+  map[case_name] = {
+    articles: articles.slice(-CASE_ORIGIN_MAX_ARTICLES),
+    ts: now,
+  };
+
+  Object.keys(map)
+    .sort((a, b) => map[b].ts - map[a].ts)
+    .slice(CASE_ORIGIN_MAX_CASES)
+    .forEach((k) => delete map[k]);
+
+  mw.storage.setObject(CASE_ORIGIN_KEY, map);
+}
+
+export function get_case_origin(article) {
+  const map = mw.storage.getObject(CASE_ORIGIN_KEY) || {};
+  const title = normalize_title(article);
+  const now = Date.now();
+
+  const rel_case = Object.entries(map)
+    .filter(([, e]) => {
+      return now - e.ts <= CASE_ORIGIN_TTL_MS && e.articles?.includes(title);
+    })
+    .sort((a, b) => b[1].ts - a[1].ts)[0]; // pick the most recent clicked case
+
+  const [case_name] = rel_case || [];
+  return case_name ?? null;
+}
+
+export async function get_page_info(title) {
+  const res = await api.get({
+    action: "query",
+    prop: "revisions",
+    titles: title,
+    rvprop: "ids|timestamp|content",
+    rvslots: "main",
+    formatversion: 2,
+    curtimestamp: true,
+  });
+  const page = res.query?.pages?.[0];
+  if (!page || page.missing) return null;
+  const rev = page.revisions?.[0];
+  return {
+    text: rev?.slots?.main?.content ?? "",
+    revid: rev?.revid,
+    timestamp: rev?.timestamp,
+    starttimestamp: res.curtimestamp,
+  };
+}
+
+export async function get_page_wikitext(title) {
+  const info = await get_page_info(title);
+  return info ? info.text : null;
+}
+
+export function close_app() {
   if (current_app) {
     current_app.unmount();
     current_app = null;
@@ -28,59 +128,27 @@ function close_app() {
   document.getElementById(APP_ID)?.remove();
 }
 
-// reuseable function to create and mount the app
-// that registers a bunch of components and handles dups
-function create_app(App) {
-  const { createMwApp } = Vue;
-  const codex = require("@wikimedia/codex");
-
-  close_app();
+// will yank out existing mounted apps
+export function create_app(App, props = {}) {
+  const { mount_target, ...app_props } = props;
+  if (!mount_target) {
+    close_app();
+  }
 
   const mount_point = document.createElement("div");
-  mount_point.id = APP_ID;
-  document.body.appendChild(mount_point);
+  if (!mount_target) {
+    mount_point.id = APP_ID;
+  }
+  if (mount_target) {
+    mount_target.prepend(mount_point);
+  } else {
+    document.body.appendChild(mount_point);
+  }
 
-  const app = createMwApp({
-    ...App,
-    mixins: [
-      {
-        methods: {
-          handle_dialog_close() {
-            close_app();
-          },
-        },
-      },
-      ...(App.mixins || []),
-    ],
-  });
-
-  const {
-    CdxButton,
-    CdxCheckbox,
-    CdxCombobox,
-    CdxDialog,
-    CdxField,
-    CdxMenuButton,
-    CdxProgressBar,
-    CdxRadio,
-    CdxSelect,
-    CdxTextArea,
-    CdxTextInput,
-  } = codex;
-  Object.entries({
-    CdxButton,
-    CdxCheckbox,
-    CdxCombobox,
-    CdxDialog,
-    CdxField,
-    CdxMenuButton,
-    CdxProgressBar,
-    CdxRadio,
-    CdxSelect,
-    CdxTextArea,
-    CdxTextInput,
-  }).forEach(([name, c]) => app.component(name, c));
+  const app = createMwApp(App, app_props);
 
   app.mount(mount_point);
-  current_app = app;
+  if (!mount_target) {
+    current_app = app;
+  }
 }
