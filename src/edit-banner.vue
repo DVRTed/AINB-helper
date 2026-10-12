@@ -3,7 +3,7 @@ import { CdxButton, CdxDialog, CdxSelect, CdxField } from "@wikimedia/codex";
 import { APP_AD, api, close_app } from "./shared.js";
 
 // todo: move to shared.js if anything else uses it
-const BANNER_RE = /\{\{\s*AINB case banner\s*\|([\s\S]*?)\}\}/;
+const BANNER_RE = /\{\{\s*AINB case banner\s*([\|\s\S]*?)\}\}/;
 
 /**
  * creates map_option object for a select field;
@@ -54,6 +54,7 @@ const FIELDS = [
       map_opt("review", "open", "AI editing behavior is under investigation."),
       map_opt("admin", "open", "Admin needed to deal with editing behavior."),
       map_opt("hold", "open", "Case ongoing but put on hold (e.g. SPI)."),
+      map_opt("inactive", "closed", "No active editing from user."),
       map_opt("pblock", "closed", "Partially blocked."),
       map_opt("siteblock", "closed", "Fully blocked."),
       map_opt("resolved", "closed", "No further action needed."),
