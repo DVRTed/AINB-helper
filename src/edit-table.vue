@@ -13,6 +13,7 @@ import {
   close_app,
   get_article_row_regex,
   get_article_url,
+  get_page_info,
 } from "./shared.js";
 
 export default {
@@ -60,7 +61,6 @@ export default {
         },
       ],
 
-      saving: false,
       hide_resolved: false,
       articles: Array.isArray(this.articles_input)
         ? this.articles_input
@@ -69,6 +69,8 @@ export default {
       original_rows: [],
 
       wikitext: "",
+      basetimestamp: null,
+      starttimestamp: null,
     };
   },
 
@@ -89,8 +91,7 @@ export default {
       return `This entry is duplicated, so it cannot be edited with the script; see ${link}.`;
     },
     can_save() {
-      if (this.saving || this.app_loading || this.rows.length === 0)
-        return false;
+      if (this.app_loading || this.rows.length === 0) return false;
       return this.rows.some(
         (row) => !row.multiple_matches && Boolean(row.status),
       );
@@ -140,14 +141,13 @@ export default {
 
       try {
         const page_name = mw.config.get("wgPageName");
-        const result = await api.get({
-          action: "parse",
-          page: page_name,
-          prop: "wikitext",
-        });
+        const page_info = await get_page_info(page_name);
+        if (!page_info) throw new Error("Page not found");
 
-        const wikitext = result.parse.wikitext["*"];
+        const wikitext = page_info.text;
         this.wikitext = wikitext;
+        this.basetimestamp = page_info.timestamp;
+        this.starttimestamp = page_info.starttimestamp;
 
         const loaded_rows = [];
         for (const { article, is_new } of this.articles) {
@@ -193,55 +193,87 @@ export default {
     },
 
     async save_changes() {
-      this.saving = true;
       this.app_error = "";
 
-      try {
-        const page_name = mw.config.get("wgPageName");
-        let new_wikitext = this.wikitext;
+      const page_name = mw.config.get("wgPageName");
+      let new_wikitext = this.wikitext;
 
-        for (const row of this.rows) {
-          if (!row.multiple_matches) {
-            const new_row = `{{AIC article row|article=${row.article}|status=${
-              row.status
-            }|notes=${row.notes || ""}}}`;
-            new_wikitext = new_wikitext.replace(
-              get_article_row_regex(row.article),
-              new_row,
-            );
-          }
-        }
-
-        const changed_rows = this.original_rows.filter((row) => {
-          const current_row = this.rows.find((e) => e.article === row.article);
-          if (!current_row || row.multiple_matches) return false;
-          return (
-            row.status !== current_row.status ||
-            (row.notes || "") !== (current_row.notes || "")
+      for (const row of this.rows) {
+        if (!row.multiple_matches) {
+          const new_row = `{{AIC article row|article=${row.article}|status=${
+            row.status
+          }|notes=${row.notes || ""}}}`;
+          new_wikitext = new_wikitext.replace(
+            get_article_row_regex(row.article),
+            new_row,
           );
+        }
+      }
+
+      const changed_rows = this.original_rows.filter((row) => {
+        const current_row = this.rows.find((e) => e.article === row.article);
+        if (!current_row || row.multiple_matches) return false;
+        return (
+          row.status !== current_row.status ||
+          (row.notes || "") !== (current_row.notes || "")
+        );
+      });
+
+      const summary =
+        this.rows.length === 1
+          ? `Updated row for [[${this.rows[0].article}]] ${APP_AD}`
+          : `Batch edited ${changed_rows.length} ${
+              changed_rows.length === 1 ? "row" : "rows"
+            } ${APP_AD}`;
+
+      const article_names = changed_rows.map((r) => r.article);
+      $('tr[class*="aic-row-"]')
+        .filter(function () {
+          return article_names.includes(
+            $(this).find("a").first().text().trim(),
+          );
+        })
+        .each(function () {
+          $(this).find("td").eq(2).text("updating...");
+          $(this).find("td").eq(3).text("updating...");
         });
+      this.close_app();
 
-        const summary =
-          this.rows.length === 1
-            ? `Updated row for [[${this.rows[0].article}]] ${APP_AD}`
-            : `Batch edited ${changed_rows.length} ${
-                changed_rows.length === 1 ? "row" : "rows"
-              } ${APP_AD}`;
-
+      // save and refresh w/out full reload
+      try {
         await api.postWithEditToken({
           action: "edit",
           title: page_name,
           text: new_wikitext,
           summary,
+          basetimestamp: this.basetimestamp,
+          starttimestamp: this.starttimestamp,
         });
 
-        location.reload();
-        this.close_app();
+        await this.refresh_page_content(page_name);
+        mw.notify("Row(s) saved successfully.", { type: "success" });
       } catch (e) {
-        this.app_error = "Error saving changes: " + e.message;
+        mw.notify("Error saving changes: " + e.message, {
+          type: "error",
+          autoHide: false,
+        });
         console.error(e);
-      } finally {
-        this.saving = false;
+      }
+    },
+    async refresh_page_content(page_name) {
+      // could re-use this for banners too
+      const result = await api.get({
+        action: "parse",
+        page: page_name,
+        prop: "text",
+      });
+      const content = document.querySelector(
+        "#mw-content-text .mw-parser-output",
+      );
+      if (content) {
+        $(content).removeData("ainb-init");
+        content.innerHTML = result.parse.text["*"];
+        mw.hook("wikipage.content").fire($(content));
       }
     },
   },
@@ -284,18 +316,13 @@ export default {
             <cdx-select
               v-model:selected="rows[0].status"
               :menu-items="status_options"
-              :disabled="saving"
             ></cdx-select>
           </div>
         </div>
 
         <div class="ainb-form-field">
           <div class="ainb-form-label">Notes:</div>
-          <cdx-text-area
-            v-model="rows[0].notes"
-            rows="4"
-            :disabled="saving"
-          ></cdx-text-area>
+          <cdx-text-area v-model="rows[0].notes" rows="4"></cdx-text-area>
         </div>
       </div>
 
@@ -337,15 +364,10 @@ export default {
                   <cdx-select
                     v-model:selected="row.status"
                     :menu-items="status_options"
-                    :disabled="saving"
                   ></cdx-select>
                 </td>
                 <td>
-                  <cdx-text-area
-                    v-model="row.notes"
-                    rows="2"
-                    :disabled="saving"
-                  ></cdx-text-area>
+                  <cdx-text-area v-model="row.notes" rows="2"></cdx-text-area>
                 </td>
               </template>
             </tr>
@@ -359,22 +381,19 @@ export default {
             <cdx-button
               v-if="!is_single && has_red_links"
               @click="mark_all_deleted_as_completed"
-              :disabled="saving"
             >
               Mark all deleted articles as completed
             </cdx-button>
           </div>
           <div>
-            <cdx-button @click="close_app" :disabled="saving"
-              >Cancel</cdx-button
-            >
+            <cdx-button @click="close_app">Cancel</cdx-button>
             <cdx-button
               action="progressive"
               weight="primary"
               @click="save_changes"
               :disabled="!can_save"
             >
-              {{ saving ? "Saving..." : "Save" }}
+              Save
             </cdx-button>
           </div>
         </div>
