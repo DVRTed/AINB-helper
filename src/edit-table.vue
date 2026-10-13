@@ -61,6 +61,7 @@ export default {
       ],
 
       saving: false,
+      hide_resolved: false,
       articles: Array.isArray(this.articles_input)
         ? this.articles_input
         : [this.articles_input],
@@ -101,6 +102,15 @@ export default {
           !row.multiple_matches &&
           row.status !== "completed" &&
           row.status !== "unnecessary",
+      );
+    },
+    filtered_rows() {
+      if (!this.hide_resolved) return this.rows;
+      return this.rows.filter(
+        (row) =>
+          row.status !== "completed" &&
+          row.status !== "unnecessary" &&
+          row.status !== "tagged",
       );
     },
   },
@@ -289,48 +299,59 @@ export default {
         </div>
       </div>
 
-      <table v-else class="ainb-batch-edit-table-grid">
-        <thead>
-          <tr>
-            <th>Article</th>
-            <th>Status</th>
-            <th>Notes</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in rows" :key="row.article">
-            <td>
-              <a
-                :href="get_article_url(row.article)"
-                :class="{ new: row.is_new }"
-                rel="mw:WikiLink"
-                target="_blank"
-              >
-                {{ row.article }}
-              </a>
-            </td>
-            <template v-if="row.multiple_matches">
-              <td colspan="2" class="ainb-error" v-html="duplicate_error"></td>
-            </template>
-            <template v-else>
+      <div v-else>
+        <label class="ainb-hide-resolved-label">
+          <input type="checkbox" v-model="hide_resolved" />
+          Hide resolved entries
+        </label>
+
+        <table class="ainb-batch-edit-table-grid">
+          <thead>
+            <tr>
+              <th>Article</th>
+              <th>Status</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in filtered_rows" :key="row.article">
               <td>
-                <cdx-select
-                  v-model:selected="row.status"
-                  :menu-items="status_options"
-                  :disabled="saving"
-                ></cdx-select>
+                <a
+                  :href="get_article_url(row.article)"
+                  :class="{ new: row.is_new }"
+                  rel="mw:WikiLink"
+                  target="_blank"
+                >
+                  {{ row.article }}
+                </a>
               </td>
-              <td>
-                <cdx-text-area
-                  v-model="row.notes"
-                  rows="2"
-                  :disabled="saving"
-                ></cdx-text-area>
-              </td>
-            </template>
-          </tr>
-        </tbody>
-      </table>
+              <template v-if="row.multiple_matches">
+                <td
+                  colspan="2"
+                  class="ainb-error"
+                  v-html="duplicate_error"
+                ></td>
+              </template>
+              <template v-else>
+                <td>
+                  <cdx-select
+                    v-model:selected="row.status"
+                    :menu-items="status_options"
+                    :disabled="saving"
+                  ></cdx-select>
+                </td>
+                <td>
+                  <cdx-text-area
+                    v-model="row.notes"
+                    rows="2"
+                    :disabled="saving"
+                  ></cdx-text-area>
+                </td>
+              </template>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <template #footer>
         <div class="ainb-dialog-footer">
