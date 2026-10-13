@@ -24,8 +24,8 @@ function init_row_editing() {
     .has('tr[class*="aic-row-"]')
     .each(function () {
       const $table = $(this);
-      const $thead = $table.find("thead");
-      $thead.find("tr").prepend('<th class="ainb-action-header">Action</th>');
+      const $header_tr = $table.find("tr").has("th").first();
+      $header_tr.prepend('<th class="ainb-action-header">Action</th>');
 
       // batch edit button; populate array of { article, is_new } objects.
       const articles = $table
