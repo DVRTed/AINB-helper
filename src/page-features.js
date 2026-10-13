@@ -321,7 +321,9 @@ $(() => {
       wgPageName === DEBUG_PAGE) &&
     wgAction === "view"
   ) {
-    mw.hook("wikipage.content").add(() => {
+    mw.hook("wikipage.content").add(($content) => {
+      if ($content.data("ainb-init")) return;
+      $content.data("ainb-init", true);
       init_progress_bar();
       init_row_editing();
       init_check_affected();
