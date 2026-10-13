@@ -1,25 +1,25 @@
 <template>
-  <cdx-card style="margin-bottom: 1em">
-    <template #title
-      ><a :href="script_url" target="_blank">AINB-helper</a></template
+  <div
+    class="ainb-menu"
+    style="
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+    "
+  >
+    <cdx-progress-indicator v-if="loading"></cdx-progress-indicator>
+    <span v-if="loading" style="font-size: 0.85em">Loading…</span>
+    <cdx-menu-button
+      v-model:selected="selection"
+      :menu-items="menuItems"
+      aria-label="AINB-helper actions"
+      @update:selected="onSelect"
+      :disabled="loading"
     >
-    <template #description>
-      <div style="margin: 0.5em 0">
-        Highlight content authored by <b>User:{{ username }}</b> (using WikiWho
-        API)
-      </div>
-      <div if="status" style="margin: 0.5em 0; font-size: 0.9em">
-        {{ status }}
-      </div>
-      <cdx-button action="progressive" :disabled="loading" @click="show">
-        Show highlighted wikitext
-      </cdx-button>
-    </template>
-    <template #supporting-text
-      >This feature is in beta; please report if you encounter any
-      issues.</template
-    >
-  </cdx-card>
+      AINB-helper ▾
+    </cdx-menu-button>
+  </div>
 
   <cdx-dialog
     v-model:open="open"
@@ -40,14 +40,18 @@
 </template>
 
 <script>
-import { CdxButton, CdxCard, CdxDialog } from "@wikimedia/codex";
-import { api, script_url } from "./shared.js";
+import {
+  CdxMenuButton,
+  CdxDialog,
+  CdxProgressIndicator,
+} from "@wikimedia/codex";
+import { api } from "./shared.js";
 
 const WIKIWHO =
   "https://wikiwho.wmcloud.org/en/api/v1.0.0-beta/latest_rev_content/";
 
 export default {
-  components: { CdxButton, CdxCard, CdxDialog },
+  components: { CdxMenuButton, CdxDialog, CdxProgressIndicator },
   props: {
     article: { type: String, required: true },
     username: { type: String, required: true },
@@ -58,10 +62,26 @@ export default {
       loading: false,
       status: "",
       segments: [],
-      script_url,
+      selection: null,
     };
   },
+  computed: {
+    menuItems() {
+      return [
+        {
+          value: "highlight",
+          label: "Highlight user's content",
+          disabled: this.loading,
+        },
+      ];
+    },
+  },
   methods: {
+    onSelect(value) {
+      this.selection = null;
+      if (value === "highlight") this.show();
+    },
+
     async show() {
       if (!this.segments.length) {
         this.loading = true;
