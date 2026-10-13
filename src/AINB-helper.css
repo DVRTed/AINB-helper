@@ -730,7 +730,7 @@
 }
 
 .ainb-seg-ongoing {
-  background: var(--background-color-progressive, #36c);
+  background: #eb2aa7;
 }
 
 .ainb-seg-todo {
@@ -738,7 +738,7 @@
 }
 
 .ainb-seg-tagged {
-  background: #eb2aa7;
+  background: var(--background-color-progressive, #36c);
 }
 
 .ainb-progress-legend {
