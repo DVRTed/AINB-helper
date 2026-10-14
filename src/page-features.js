@@ -294,6 +294,13 @@ function init_banner_edit() {
 const wgPageName = mw.config.get("wgPageName");
 const wgAction = mw.config.get("wgAction");
 
+export function init_page_features() {
+  init_progress_bar();
+  init_row_editing();
+  init_check_affected();
+  init_banner_edit();
+}
+
 $(() => {
   if (
     wgPageName === "Category:AI_noticeboard_open_cleanup_cases" &&
@@ -317,21 +324,12 @@ $(() => {
     create_app(Main);
   });
 
-  // if we're on an AINB tracking subpage, or the debug page,
-  // enable editing rows
   if (
     (wgPageName.startsWith("Wikipedia:AI_noticeboard/") ||
       wgPageName === DEBUG_PAGE) &&
     wgAction === "view"
   ) {
-    mw.hook("wikipage.content").add(($content) => {
-      if ($content.data("ainb-init")) return;
-      $content.data("ainb-init", true);
-      init_progress_bar();
-      init_row_editing();
-      init_check_affected();
-      init_banner_edit();
-    });
+    init_page_features();
   }
 
   if ([0, 118].includes(mw.config.get("wgNamespaceNumber")) || DEBUG_MODE) {

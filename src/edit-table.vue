@@ -15,6 +15,7 @@ import {
   get_article_url,
   get_page_info,
 } from "./shared.js";
+import { init_page_features } from "./page-features.js";
 
 export default {
   name: "EditRow",
@@ -271,9 +272,8 @@ export default {
         "#mw-content-text .mw-parser-output",
       );
       if (content) {
-        $(content).removeData("ainb-init");
         content.innerHTML = result.parse.text["*"];
-        mw.hook("wikipage.content").fire($(content));
+        init_page_features();
       }
     },
   },
