@@ -17,7 +17,7 @@ const CASE_ORIGIN_MAX_ARTICLES = 500;
 export function get_article_row_regex(article, global = false) {
   const escaped_article = mw.util.escapeRegExp(article);
   return new RegExp(
-    `\\{\\{AIC article row\\s*\\|\\s*(?:article=)?\\s*${escaped_article}\\s*(?:\\|\\s*(?:status=)?\\s*([^|}]*))?(?:\\|\\s*(?:notes=)?\\s*([^}]*))?\\s*\\}\\}`,
+    `\\{\\{[aA]IC article row\\s*\\|\\s*(?:article=)?\\s*${escaped_article}\\s*(?:\\|\\s*(?:status=)?\\s*([^|}]*))?(?:\\|\\s*(?:notes=)?\\s*([^}]*))?\\s*\\}\\}`,
     global ? "g" : "",
   );
 }
