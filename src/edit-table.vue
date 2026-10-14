@@ -238,6 +238,11 @@ export default {
           $(this).find("td").eq(2).text("updating...");
           $(this).find("td").eq(3).text("updating...");
         });
+      const before_unload = (event) => {
+        event.preventDefault();
+        event.returnValue = "";
+      };
+      window.addEventListener("beforeunload", before_unload);
       this.close_app();
 
       // save and refresh w/out full reload
@@ -259,6 +264,8 @@ export default {
           autoHide: false,
         });
         console.error(e);
+      } finally {
+        window.removeEventListener("beforeunload", before_unload);
       }
     },
     async refresh_page_content(page_name) {
