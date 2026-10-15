@@ -339,47 +339,49 @@ export default {
           Hide resolved entries
         </label>
 
-        <table class="ainb-batch-edit-table-grid">
-          <thead>
-            <tr>
-              <th>Article</th>
-              <th>Status</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in filtered_rows" :key="row.article">
-              <td>
-                <a
-                  :href="get_article_url(row.article)"
-                  :class="{ new: row.is_new }"
-                  rel="mw:WikiLink"
-                  target="_blank"
-                >
-                  {{ row.article }}
-                </a>
-              </td>
-              <template v-if="row.multiple_matches">
-                <td
-                  colspan="2"
-                  class="ainb-error"
-                  v-html="duplicate_error"
-                ></td>
-              </template>
-              <template v-else>
+        <div class="ainb-batch-edit-table-scroll">
+          <table class="ainb-batch-edit-table-grid">
+            <thead>
+              <tr>
+                <th>Article</th>
+                <th>Status</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in filtered_rows" :key="row.article">
                 <td>
-                  <cdx-select
-                    v-model:selected="row.status"
-                    :menu-items="status_options"
-                  ></cdx-select>
+                  <a
+                    :href="get_article_url(row.article)"
+                    :class="{ new: row.is_new }"
+                    rel="mw:WikiLink"
+                    target="_blank"
+                  >
+                    {{ row.article }}
+                  </a>
                 </td>
-                <td>
-                  <cdx-text-area v-model="row.notes" rows="2"></cdx-text-area>
-                </td>
-              </template>
-            </tr>
-          </tbody>
-        </table>
+                <template v-if="row.multiple_matches">
+                  <td
+                    colspan="2"
+                    class="ainb-error"
+                    v-html="duplicate_error"
+                  ></td>
+                </template>
+                <template v-else>
+                  <td>
+                    <cdx-select
+                      v-model:selected="row.status"
+                      :menu-items="status_options"
+                    ></cdx-select>
+                  </td>
+                  <td>
+                    <cdx-text-area v-model="row.notes" rows="1"></cdx-text-area>
+                  </td>
+                </template>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <template #footer>

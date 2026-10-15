@@ -779,46 +779,70 @@
   width: min(95vw, 1200px) !important;
 }
 
+.ainb-batch-edit-table-scroll {
+  max-height: 55vh;
+  overflow: auto;
+  border: 1px solid #eaecf0;
+  border-radius: 4px;
+}
+
 .ainb-batch-edit-table-grid {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  border: 1px solid #eaecf0;
-  border-radius: 8px;
-  overflow: hidden;
+  table-layout: fixed;
   background: #fff;
 }
 
 .ainb-batch-edit-table-grid th,
 .ainb-batch-edit-table-grid td {
-  padding: 10px 12px;
+  padding: 5px 8px;
   text-align: left;
-  vertical-align: top;
+  vertical-align: middle;
   border-bottom: 1px solid #eaecf0;
 }
 
 .ainb-batch-edit-table-grid th {
   background: #f8f9fa;
   font-weight: 700;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .ainb-batch-edit-table-grid tr:last-child td {
   border-bottom: none;
 }
 
+.ainb-batch-edit-table-grid th:first-child,
 .ainb-batch-edit-table-grid td:first-child {
-  width: 30%;
+  width: 32%;
   font-weight: 600;
 }
 
+.ainb-batch-edit-table-grid th:nth-child(2),
 .ainb-batch-edit-table-grid td:nth-child(2) {
-  width: 22%;
+  width: 20%;
 }
 
-.ainb-batch-edit-table-grid cdx-select,
-.ainb-batch-edit-table-grid cdx-text-area {
+.ainb-batch-edit-table-grid th:nth-child(3),
+.ainb-batch-edit-table-grid td:nth-child(3) {
+  padding-left: 18px;
+}
+
+.ainb-batch-edit-table-grid td:nth-child(2)>*,
+.ainb-batch-edit-table-grid td:nth-child(3)>* {
   display: block;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.ainb-batch-edit-table-grid .cdx-text-area textarea {
+  min-height: 2.25em;
+  padding: 4px 6px;
+  resize: vertical;
 }
 
 .ainb-llm-dialog.cdx-dialog__window,
