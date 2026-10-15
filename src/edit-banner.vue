@@ -1,6 +1,6 @@
 <script>
 import { CdxButton, CdxDialog, CdxSelect, CdxField } from "@wikimedia/codex";
-import { APP_AD, api, close_app } from "./shared.js";
+import { APP_AD, api, close_app, get_page_info } from "./shared.js";
 
 // todo: move to shared.js if anything else uses it
 const BANNER_RE = /\{\{\s*AINB case banner\s*([\|\s\S]*?)\}\}/;
@@ -97,9 +97,11 @@ export default {
       app_error: "",
 
       fields: FIELDS,
+      page_name: mw.config.get("wgPageName"),
       current_params: [],
       values: {},
       wikitext: "",
+      base_revid: null,
     };
   },
 
@@ -107,12 +109,9 @@ export default {
     this.app_loading = true;
 
     try {
-      const res = await api.get({
-        action: "parse",
-        page: mw.config.get("wgPageName"),
-        prop: "wikitext",
-      });
-      this.wikitext = res.parse.wikitext["*"];
+      const info = await get_page_info(this.page_name);
+      this.wikitext = info.text;
+      this.base_revid = info.revid;
       const match = this.wikitext.match(BANNER_RE);
       if (!match) {
         this.app_error = "No AINB case banner found on this page.";
@@ -140,9 +139,8 @@ export default {
       }
 
       this.values = Object.fromEntries(this.current_params);
-      console.log(this.values);
     } catch (e) {
-      this.app_error = "Error loading page: " + e.message;
+      this.app_error = "Error loading page: " + (e?.message ?? e);
     } finally {
       this.app_loading = false;
     }
@@ -168,13 +166,14 @@ export default {
 
         await api.postWithEditToken({
           action: "edit",
-          title: mw.config.get("wgPageName"),
+          title: this.page_name,
           text,
+          baserevid: this.base_revid,
           summary: `Updated case banner ${APP_AD}`,
         });
         location.reload();
       } catch (e) {
-        this.app_error = "Error saving: " + e.message;
+        this.app_error = "Error saving: " + (e?.message ?? e);
         this.app_saving = false;
       }
     },
