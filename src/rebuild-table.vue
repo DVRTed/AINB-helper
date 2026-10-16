@@ -120,22 +120,17 @@ export default {
           )
           .pop();
 
-        let new_text;
         if (!old_infocard_range) {
-          // insert infocard if it doesn't exist
-          new_text = splice(
-            page.text,
-            old_range,
-            build_article_list(rows).trimEnd(),
-          );
-        } else {
-          // otherwise replace
-          new_text = splice(
-            page.text,
-            { start: old_infocard_range.start, end: old_range.end },
-            build_table_text({ ...data, rows }).trimEnd(),
-          );
+          // this app doesn't run unless there's an infocard,
+          // so this shouldn't happen
+          throw new Error("InfoCard range not found.");
         }
+
+        const new_text = splice(
+          page.text,
+          { start: old_infocard_range.start, end: old_range.end },
+          build_table_text({ ...data, rows }).trimEnd(),
+        );
 
         await api.postWithEditToken({
           action: "edit",
