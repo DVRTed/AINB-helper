@@ -131,6 +131,10 @@ export function find_template_ranges(text, template_name) {
   return ranges;
 }
 
+export function splice(text, { start, end }, replacement) {
+  return text.slice(0, start) + replacement + text.slice(end);
+}
+
 export async function get_page_info(title) {
   const res = await api.get({
     action: "query",
