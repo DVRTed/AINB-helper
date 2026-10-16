@@ -211,11 +211,3 @@ export default {
     />
   </div>
 </template>
-
-<style lang="scss">
-.ainb-update-options {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-</style>

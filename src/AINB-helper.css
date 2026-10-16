@@ -1045,3 +1045,9 @@ a.ainb-check-pct.ainb-disabled {
   pointer-events: none;
   opacity: 0.5;
 }
+
+.ainb-update-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
