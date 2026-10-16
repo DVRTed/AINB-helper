@@ -27,8 +27,8 @@ const TRACKING_SUBSECTION = "Tracking list";
 const build_case_banner = (case_name) =>
   `{{AINB case banner |cleanup=analysis |llmprod=undetermined |conduct=review |case_name=${case_name} |original_file_date={{subst:#time:j F Y}} |case_type=user}}`;
 
-const build_article_row = (article, notes) =>
-  `{{AIC article row|article=${article}|status=requested|notes=${notes}}}`;
+export const build_article_row = (article, status, notes) =>
+  `{{AIC article row|article=${article}|status=${status}|notes=${notes}}}`;
 
 export default {
   props: {
@@ -850,7 +850,7 @@ export default {
         const edit_str = edit_count > 1 ? "edits" : "edit";
         const separator = this.is_multiple_users ? "\n" : " ";
         const notes = `${edit_count} ${edit_str}:${separator}${sized_diffs}`;
-        wikitext += build_article_row(group.title, notes) + "\n";
+        wikitext += build_article_row(group.title, "requested", notes) + "\n";
       });
 
       wikitext += `}}\n`;
