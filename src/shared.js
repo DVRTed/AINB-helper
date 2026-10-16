@@ -14,12 +14,21 @@ const CASE_ORIGIN_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 const CASE_ORIGIN_MAX_CASES = 10;
 const CASE_ORIGIN_MAX_ARTICLES = 500;
 
-export function get_article_row_regex(article, global = false) {
-  const escaped_article = mw.util.escapeRegExp(article);
+export function get_article_row_regex(
+  article,
+  global = false,
+  no_escape = false,
+) {
+  const escaped_article = no_escape ? article : mw.util.escapeRegExp(article);
   return new RegExp(
     `\\{\\{[aA]IC article row\\s*\\|\\s*(?:article=)?\\s*${escaped_article}\\s*(?:\\|\\s*(?:status=)?\\s*([^|}]*))?(?:\\|\\s*(?:notes=)?\\s*([^}]*))?\\s*\\}\\}`,
     global ? "g" : "",
   );
+}
+
+// [1] = article, [2] = status, [3] = notes
+export function get_all_article_row_regex() {
+  return get_article_row_regex("([^|}]+?)", true, true);
 }
 
 export const script_url = mw.util.getUrl("User:DVRTed/AINB-helper");
@@ -92,6 +101,34 @@ export function get_case_origin(article) {
 
   const [case_name] = rel_case || [];
   return case_name ?? null;
+}
+
+export function find_template_ranges(text, template_name) {
+  const opening = new RegExp(`\\{\\{\\s*${template_name}\\s*\\|`, "gi");
+  const ranges = [];
+  let match;
+
+  while ((match = opening.exec(text))) {
+    let depth = 0;
+    let cursor = match.index;
+    while (cursor < text.length) {
+      if (text.startsWith("{{", cursor)) {
+        depth++;
+        cursor += 2;
+      } else if (text.startsWith("}}", cursor)) {
+        depth--;
+        cursor += 2;
+        if (depth === 0) break;
+      } else {
+        cursor++;
+      }
+    }
+
+    if (depth === 0) ranges.push({ start: match.index, end: cursor });
+    opening.lastIndex = cursor;
+  }
+
+  return ranges;
 }
 
 export async function get_page_info(title) {
