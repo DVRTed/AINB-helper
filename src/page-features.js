@@ -20,6 +20,15 @@ const WIKIWHO_API =
 
 mw.util.addCSS(styles);
 
+function get_table_actions($table) {
+  let $actions = $table.prev(".ainb-table-actions");
+  if (!$actions.length) {
+    $actions = $('<div class="ainb-table-actions">');
+    $table.before($actions);
+  }
+  return $actions;
+}
+
 function init_row_editing() {
   $("table")
     .has('tr[class*="aic-row-"]')
@@ -54,7 +63,7 @@ function init_row_editing() {
             e.preventDefault();
             create_app(EditTable, { articles_input: articles });
           });
-        $table.before($button);
+        get_table_actions($table).append($button);
       }
 
       // single-row edit buttons
@@ -314,7 +323,9 @@ function init_infocard_updates() {
       text.match(/Start date:\s*(\d{4}-\d{2}-\d{2})/i)?.[1] ?? "";
     const end_date = text.match(/End date:\s*(\d{4}-\d{2}-\d{2})/i)?.[1] ?? "";
 
-    const $button = $('<button type="button" class="cdx-button">')
+    const $button = $(
+      '<button type="button" class="cdx-button cdx-button--action-destructive">',
+    )
       .text("Update this table")
       .on("click", (e) => {
         e.preventDefault();
@@ -327,7 +338,7 @@ function init_infocard_updates() {
         });
       });
 
-    $(infocard).after($button);
+    get_table_actions($(el)).append($button);
     infocard = null;
   });
 }
