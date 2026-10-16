@@ -5,7 +5,7 @@ import {
   CdxDialog,
   CdxMessage,
 } from "@wikimedia/codex";
-import Main, { build_article_row } from "./main.vue";
+import Main, { build_article_list, build_table_text } from "./main.vue";
 import {
   APP_AD,
   api,
@@ -14,6 +14,7 @@ import {
   get_page_info,
   find_template_ranges,
   normalize_title,
+  splice,
 } from "./shared.js";
 
 export default {
@@ -51,7 +52,8 @@ export default {
       if (!open && !this.app_started) close_app();
     },
 
-    async handle_wikitext_generated(new_generated_wikitext) {
+    // data = { infocard: { user, start_date, end_date }, notes, rows: [{ article, status, notes }] }
+    async handle_table_generated(data) {
       try {
         const page = await get_page_info(this.target_page_title);
         if (!page) throw new Error("The case page no longer exists.");
@@ -72,78 +74,68 @@ export default {
         const range_text = page.text
           .slice(old_range.start, old_range.end)
           .replace(/<!--[\s\S]*?-->/g, "");
-        const existing_rows = {};
-        const existing_statuses = {};
 
-        // collect all rows and statuses
-        const rows_match = range_text.matchAll(get_all_article_row_regex());
-        for (const match of rows_match) {
-          const entry = match[0];
+        // existing rows keyed by article
+        const existing_rows = {};
+        for (const match of range_text.matchAll(get_all_article_row_regex())) {
           const article = match[1].trim();
           const article_key = normalize_title(article);
-          const status = match[2]?.trim();
+          if (article_key in existing_rows) continue; // article is repeated in the same table... why?
 
-          if (article_key in existing_rows) {
-            // article is repeated in the same table... why?
-            continue;
-          }
-
-          existing_rows[article_key] = entry;
-          if (status) existing_statuses[article_key] = status;
+          existing_rows[article_key] = {
+            article,
+            status: match[2]?.trim() ?? "",
+            notes: match[3]?.trim() ?? "",
+          };
         }
 
-        // get ranges of the NEW {{AIC article list}} template
-        const new_template_range = find_template_ranges(
-          new_generated_wikitext,
-          "AIC article list",
-        )[0]; // doesn't generate more than one table/template
-
-        if (!new_template_range) throw new Error("Corrupted new wikitext.");
-        let replacement = new_generated_wikitext.slice(
-          new_template_range.start,
-          new_template_range.end,
-        );
-
-        const new_rows_match = replacement.matchAll(
-          get_all_article_row_regex(),
-        );
-
-        const generated_articles = new Set(
-          [...new_rows_match].map((m) => normalize_title(m[1].trim())), // that's article name, Set dedupes it
-        );
+        let rows = data.rows;
 
         // restore older statuses
         if (this.retain_existing_statuses) {
-          replacement = replacement.replace(
-            get_all_article_row_regex(),
-            (row, article, _status, notes) => {
-              const old_status =
-                existing_statuses[normalize_title(article.trim())];
-              if (!old_status) return row;
-              return build_article_row(article, old_status, notes);
-            },
-          );
+          rows = rows.map((row) => {
+            const old_status =
+              existing_rows[normalize_title(row.article)]?.status;
+            return old_status ? { ...row, status: old_status } : row;
+          });
         }
 
         // restore old rows that the new generation doesn't include
         if (!this.delete_missing_entries) {
+          const generated_articles = new Set(
+            rows.map((row) => normalize_title(row.article)),
+          );
           const missing_rows = Object.entries(existing_rows)
             .filter(([article_key]) => !generated_articles.has(article_key))
             .map(([, row]) => row);
-
-          if (missing_rows.length) {
-            const closing_braces = replacement.lastIndexOf("}}");
-            replacement =
-              replacement.slice(0, closing_braces) +
-              `\n${missing_rows.join("\n")}\n` +
-              replacement.slice(closing_braces);
-          }
+          rows = [...rows, ...missing_rows];
         }
 
-        const new_text =
-          page.text.slice(0, old_range.start) +
-          replacement +
-          page.text.slice(old_range.end);
+        // after the previous table (if any) and before this table
+        const previous_table_end =
+          template_ranges[this.target_table_index - 1]?.end ?? 0;
+        const old_infocard_range = find_template_ranges(page.text, "InfoCard")
+          .filter(
+            (r) => r.start >= previous_table_end && r.end <= old_range.start,
+          )
+          .pop();
+
+        let new_text;
+        if (!old_infocard_range) {
+          // insert infocard if it doesn't exist
+          new_text = splice(
+            page.text,
+            old_range,
+            build_article_list(rows).trimEnd(),
+          );
+        } else {
+          // otherwise replace
+          new_text = splice(
+            page.text,
+            { start: old_infocard_range.start, end: old_range.end },
+            build_table_text({ ...data, rows }).trimEnd(),
+          );
+        }
 
         await api.postWithEditToken({
           action: "edit",
@@ -220,7 +212,7 @@ export default {
       :initial_username="initial_username"
       :initial_anchor_date="initial_anchor_date"
       :initial_end_date="initial_end_date"
-      :on_wikitext_generated="handle_wikitext_generated"
+      :on_table_generated="handle_table_generated"
     />
   </div>
 </template>
