@@ -8,6 +8,7 @@ import {
   get_all_article_row_regex,
   get_page_info,
   find_template_ranges,
+  normalize_title,
 } from "./shared.js";
 
 export default {
@@ -74,15 +75,16 @@ export default {
         for (const match of rows_match) {
           const entry = match[0];
           const article = match[1].trim();
+          const article_key = normalize_title(article);
           const status = match[2]?.trim();
 
-          if (article in existing_rows) {
+          if (article_key in existing_rows) {
             // article is repeated in the same table... why?
             continue;
           }
 
-          existing_rows[article] = entry;
-          if (status) existing_statuses[article] = status;
+          existing_rows[article_key] = entry;
+          if (status) existing_statuses[article_key] = status;
         }
 
         // get ranges of the NEW {{AIC article list}} template
@@ -102,7 +104,7 @@ export default {
         );
 
         const generated_articles = new Set(
-          [...new_rows_match].map((m) => m[1]), // that's article name, Set dedupes it
+          [...new_rows_match].map((m) => normalize_title(m[1].trim())), // that's article name, Set dedupes it
         );
 
         // restore older statuses
@@ -110,7 +112,8 @@ export default {
           replacement = replacement.replace(
             get_all_article_row_regex(),
             (row, article, _status, notes) => {
-              const old_status = existing_statuses[article.trim()];
+              const old_status =
+                existing_statuses[normalize_title(article.trim())];
               if (!old_status) return row;
               return build_article_row(article, old_status, notes);
             },
@@ -120,7 +123,7 @@ export default {
         // restore old rows that the new generation doesn't include
         if (!this.delete_missing_entries) {
           const missing_rows = Object.entries(existing_rows)
-            .filter(([article]) => !generated_articles.has(article))
+            .filter(([article_key]) => !generated_articles.has(article_key))
             .map(([, row]) => row);
 
           if (missing_rows.length) {
