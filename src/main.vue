@@ -33,6 +33,9 @@ const build_article_row = (article, notes) =>
 export default {
   props: {
     initial_username: { type: String, default: "" },
+    initial_anchor_date: { type: String, default: "" },
+    initial_end_date: { type: String, default: "" },
+    on_wikitext_generated: { type: Function, default: null },
   },
 
   components: {
@@ -59,8 +62,8 @@ export default {
         this.initial_username || mw.config.get("wgRelevantUserName") || "",
       normalized_username: "", // username from the API
       normalized_usernames: [], // ditto, but multiple
-      anchor_date: "2022-12-01",
-      end_date: "",
+      anchor_date: this.initial_anchor_date || "2022-12-01",
+      end_date: this.initial_end_date,
       progress: 0,
       edit_count: 0,
 
@@ -706,8 +709,20 @@ export default {
     },
 
     async generate_report() {
-      const title = this.target_page_title;
+      // if external "app" has set the callback function,
+      // return data to that instead of creating a page
+      if (this.on_wikitext_generated) {
+        this.creating_page = true;
+        try {
+          await this.on_wikitext_generated(this.build_table_wikitext());
+        } finally {
+          this.creating_page = false;
+        }
+        return;
+      }
+
       const table = this.build_table_wikitext();
+      const title = this.target_page_title;
       this.app_error = "";
       this.create_error = "";
       this.creating_page = true;
@@ -1247,7 +1262,11 @@ export default {
                 weight="primary"
                 @click="generate_report"
                 :disabled="total_selected_edits === 0 || creating_page"
-                >Add tracking table
+                >{{
+                  on_wikitext_generated
+                    ? "Update tracking table"
+                    : "Add tracking table"
+                }}
               </cdx-button>
             </div>
           </template>
