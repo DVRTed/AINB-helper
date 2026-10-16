@@ -1,5 +1,10 @@
 <script>
-import { CdxButton, CdxCheckbox, CdxDialog } from "@wikimedia/codex";
+import {
+  CdxButton,
+  CdxCheckbox,
+  CdxDialog,
+  CdxMessage,
+} from "@wikimedia/codex";
 import Main, { build_article_row } from "./main.vue";
 import {
   APP_AD,
@@ -12,7 +17,7 @@ import {
 } from "./shared.js";
 
 export default {
-  components: { CdxButton, CdxCheckbox, CdxDialog, Main },
+  components: { CdxButton, CdxCheckbox, CdxDialog, CdxMessage, Main },
 
   props: {
     initial_username: { type: String, default: "" },
@@ -174,12 +179,15 @@ export default {
       @update:open="handle_options_dialog"
     >
       <div class="ainb-update-options">
+        <cdx-message type="warning">
+          Disclaimer: Updating a tracking list can remove entries or reset their
+          statuses. Review the options carefully before continuing.
+        </cdx-message>
         <cdx-checkbox v-model="retain_existing_statuses">
           Retain statuses of existing entries
           <template #description>
             Keep the statuses (e.g., Completed, Ongoing) of existing entries
-            unchanged. If unchecked, all entries' statuses will be set to
-            "requested" (default).
+            unchanged.
           </template>
         </cdx-checkbox>
 
