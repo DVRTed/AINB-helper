@@ -1264,7 +1264,7 @@ export default {
                 :disabled="total_selected_edits === 0 || creating_page"
                 >{{
                   on_wikitext_generated
-                    ? "Update tracking table"
+                    ? "Rebuild tracking table"
                     : "Add tracking table"
                 }}
               </cdx-button>

@@ -62,7 +62,7 @@ export default {
           "AIC article list",
         );
 
-        // find the relevant one, i.e., the table we're updating, if multiple
+        // find the relevant one, i.e., the table we're rebuilding, if multiple
         const old_range = template_ranges[this.target_table_index];
         if (!old_range) {
           throw new Error("The selected tracking table could not be found.");
@@ -149,19 +149,20 @@ export default {
           action: "edit",
           title: this.target_page_title,
           text: new_text,
-          summary: `Updating tracking table ${APP_AD}`,
+          summary: `Rebuilding tracking table ${APP_AD}`,
           baserevid: page.revid,
           starttimestamp: page.starttimestamp,
           nocreate: true,
         });
 
-        mw.notify("Tracking table updated.", { type: "success" });
+        mw.notify("Tracking table rebuilt.", { type: "success" });
         close_app();
         location.reload();
       } catch (error) {
         console.error(error);
         mw.notify(
-          "Error updating tracking table: " + (error?.message ?? String(error)),
+          "Error rebuilding tracking table: " +
+            (error?.message ?? String(error)),
           { type: "error" },
         );
       }
@@ -174,14 +175,14 @@ export default {
   <div>
     <cdx-dialog
       v-model:open="options_open"
-      title="Update tracking table"
+      title="Rebuild tracking table"
       :use-close-button="true"
       @update:open="handle_options_dialog"
     >
       <div class="ainb-update-options">
         <cdx-message type="warning">
-          Disclaimer: Updating a tracking list can remove entries or reset their
-          statuses. Review the options carefully before continuing.
+          Disclaimer: Rebuilding a tracking list can remove entries or reset
+          their statuses. Review the options carefully before continuing.
         </cdx-message>
         <cdx-checkbox v-model="retain_existing_statuses">
           Retain statuses of existing entries

@@ -12,7 +12,7 @@ import EditTable from "./edit-table.vue";
 import EditBanner from "./edit-banner.vue";
 import LlmTagProd from "./llm-tag-prod.vue";
 import Main from "./main.vue";
-import UpdateTable from "./update-table.vue";
+import UpdateTable from "./rebuild-table.vue";
 import styles from "./AINB-helper.css?inline";
 
 const WIKIWHO_API =
@@ -326,7 +326,7 @@ function init_infocard_updates() {
     const $button = $(
       '<button type="button" class="cdx-button cdx-button--action-destructive">',
     )
-      .text("Update this table")
+      .text("Rebuild table")
       .on("click", (e) => {
         e.preventDefault();
         create_app(UpdateTable, {
