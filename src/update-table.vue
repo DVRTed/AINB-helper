@@ -37,12 +37,12 @@ export default {
     },
 
     continue_to_main() {
-      this.started = true;
+      this.app_started = true;
       this.options_open = false;
     },
 
     handle_options_dialog(open) {
-      if (!open && !this.started) close_app();
+      if (!open && !this.app_started) close_app();
     },
 
     async handle_wikitext_generated(new_generated_wikitext) {
@@ -204,7 +204,7 @@ export default {
     </cdx-dialog>
 
     <Main
-      v-if="started"
+      v-if="app_started"
       :initial_username="initial_username"
       :initial_anchor_date="initial_anchor_date"
       :initial_end_date="initial_end_date"
