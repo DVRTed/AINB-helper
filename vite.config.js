@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
+import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js";
 import fs from "node:fs";
 
 const HEADER =
@@ -27,7 +28,11 @@ export default defineConfig(({ mode }) => {
   const prod = mode === "production";
 
   return {
-    plugins: [vue(), wiki_wrap(process.env.USYNC === "1")],
+    plugins: [
+      vue(),
+      cssInjectedByJsPlugin(),
+      wiki_wrap(process.env.USYNC === "1"),
+    ],
     define: { __DEV__: JSON.stringify(!prod) },
     build: {
       outDir: "dist",
@@ -36,6 +41,7 @@ export default defineConfig(({ mode }) => {
         entry: "src/index.js",
         formats: ["cjs"],
         fileName: () => "AINB-helper.js",
+        cssFileName: "AINB-helper.css",
       },
       rollupOptions: {
         external: ["vue", "@wikimedia/codex"],

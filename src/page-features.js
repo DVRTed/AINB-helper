@@ -12,12 +12,22 @@ import EditTable from "./edit-table.vue";
 import EditBanner from "./edit-banner.vue";
 import LlmTagProd from "./llm-tag-prod.vue";
 import Main from "./main.vue";
+import UpdateTable from "./rebuild-table.vue";
 import styles from "./AINB-helper.css?inline";
 
 const WIKIWHO_API =
   "https://wikiwho.wmcloud.org/en/api/v1.0.0-beta/latest_rev_content/";
 
 mw.util.addCSS(styles);
+
+function get_table_actions($table) {
+  let $actions = $table.prev(".ainb-table-actions");
+  if (!$actions.length) {
+    $actions = $('<div class="ainb-table-actions">');
+    $table.before($actions);
+  }
+  return $actions;
+}
 
 function init_row_editing() {
   $("table")
@@ -53,7 +63,7 @@ function init_row_editing() {
             e.preventDefault();
             create_app(EditTable, { articles_input: articles });
           });
-        $table.before($button);
+        get_table_actions($table).append($button);
       }
 
       // single-row edit buttons
@@ -291,6 +301,48 @@ function init_banner_edit() {
   if ($banner.length) $banner.after($actions);
 }
 
+function init_infocard_updates() {
+  const $items = $('.wiki-template-infocard, table:has(tr[class*="aic-row-"])');
+
+  let infocard = null;
+  let table_index = 0;
+
+  $items.each((_, el) => {
+    if (el.matches(".wiki-template-infocard")) {
+      // set the most recent infocard;
+      // replacing cards that don't have a table after them.
+      infocard = el;
+      return; // goes back to the loop until we find table
+    }
+
+    const index = table_index++; // count unpaird tables in the index too
+    if (!infocard) return;
+
+    const text = $(infocard).text();
+    const start_date =
+      text.match(/Start date:\s*(\d{4}-\d{2}-\d{2})/i)?.[1] ?? "";
+    const end_date = text.match(/End date:\s*(\d{4}-\d{2}-\d{2})/i)?.[1] ?? "";
+
+    const $button = $(
+      '<button type="button" class="cdx-button cdx-button--action-destructive">',
+    )
+      .text("Rebuild table")
+      .on("click", (e) => {
+        e.preventDefault();
+        create_app(UpdateTable, {
+          initial_username: get_case_username(wgPageName),
+          initial_anchor_date: start_date,
+          initial_end_date: end_date,
+          target_page_title: wgPageName,
+          target_table_index: index,
+        });
+      });
+
+    get_table_actions($(el)).append($button);
+    infocard = null;
+  });
+}
+
 const wgPageName = mw.config.get("wgPageName");
 const wgAction = mw.config.get("wgAction");
 
@@ -299,6 +351,7 @@ export function init_page_features() {
   init_row_editing();
   init_check_affected();
   init_banner_edit();
+  init_infocard_updates();
 }
 
 $(() => {

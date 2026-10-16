@@ -25,12 +25,17 @@
 
 /* end overrides */
 
-.ainb-page-actions {
+.ainb-page-actions,
+.ainb-table-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   margin: 0.5em 0;
+}
+
+.ainb-table-actions {
+  justify-content: space-between;
 }
 
 .ainb-dialog-footer {

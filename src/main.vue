@@ -27,12 +27,31 @@ const TRACKING_SUBSECTION = "Tracking list";
 const build_case_banner = (case_name) =>
   `{{AINB case banner |cleanup=analysis |llmprod=undetermined |conduct=review |case_name=${case_name} |original_file_date={{subst:#time:j F Y}} |case_type=user}}`;
 
-const build_article_row = (article, notes) =>
-  `{{AIC article row|article=${article}|status=requested|notes=${notes}}}`;
+export const build_article_row = (article, status, notes) =>
+  `{{AIC article row|article=${article}|status=${status}|notes=${notes}}}`;
+
+export const build_article_list = (rows) =>
+  `{{AIC article list|\n${rows
+    .map((r) => build_article_row(r.article, r.status, r.notes))
+    .join("\n")}\n}}\n`;
+
+// builds just the article list but with infocard, section, notes...
+// data = { infocard: { user, start_date, end_date }, notes, rows }
+export const build_table_text = ({ infocard, notes, rows }) =>
+  `{{InfoCard|content='''Tracker detail'''\n` +
+  `* User: ${infocard.user}\n` +
+  `* Start date: ${infocard.start_date}\n` +
+  `* End date: ${infocard.end_date}}}\n\n` +
+  `=== ${TRACKING_SUBSECTION} ===\n\n` +
+  (notes ? `{{Notice |heading=Notes |\n${notes}\n}}\n\n` : "") +
+  build_article_list(rows);
 
 export default {
   props: {
     initial_username: { type: String, default: "" },
+    initial_anchor_date: { type: String, default: "" },
+    initial_end_date: { type: String, default: "" },
+    on_table_generated: { type: Function, default: null },
   },
 
   components: {
@@ -59,8 +78,8 @@ export default {
         this.initial_username || mw.config.get("wgRelevantUserName") || "",
       normalized_username: "", // username from the API
       normalized_usernames: [], // ditto, but multiple
-      anchor_date: "2022-12-01",
-      end_date: "",
+      anchor_date: this.initial_anchor_date || "2022-12-01",
+      end_date: this.initial_end_date,
       progress: 0,
       edit_count: 0,
 
@@ -706,8 +725,20 @@ export default {
     },
 
     async generate_report() {
+      // if external "app" has set the callback function,
+      // return the data objects to that instead of creating a page
+      if (this.on_table_generated) {
+        this.creating_page = true;
+        try {
+          await this.on_table_generated(this.build_table_data());
+        } finally {
+          this.creating_page = false;
+        }
+        return;
+      }
+
+      const table = build_table_text(this.build_table_data());
       const title = this.target_page_title;
-      const table = this.build_table_wikitext();
       this.app_error = "";
       this.create_error = "";
       this.creating_page = true;
@@ -780,7 +811,7 @@ export default {
       }
     },
 
-    build_table_wikitext() {
+    build_table_data() {
       const selected_groups = this.article_groups
         .map((group) => ({
           ...group,
@@ -788,24 +819,15 @@ export default {
         }))
         .filter((group) => group.edits.length > 0);
 
-      const infocard_user = this.is_multiple_users
-        ? "multiple users; see notes below."
-        : `{{User-ainb|1=${this.normalized_username}}}`;
+      const infocard = {
+        user: this.is_multiple_users
+          ? "multiple users; see notes below."
+          : `{{User-ainb|1=${this.normalized_username}}}`,
+        start_date: this.anchor_date || "unset",
+        end_date: this.end_date || this.current_date,
+      };
 
-      const infocard =
-        `{{InfoCard|content='''Tracker detail'''\n` +
-        `* User: ${infocard_user}\n` +
-        `* Start date: ${this.anchor_date || "unset"}\n` +
-        `* End date: ${this.end_date || this.current_date}}}\n`;
-
-      let wikitext = infocard + `\n=== ${TRACKING_SUBSECTION} ===\n\n`;
-
-      if (this.extra_notes.trim()) {
-        wikitext += `{{Notice |heading=Notes |\n${this.extra_notes.trim()}\n}}\n\n`;
-      }
-      wikitext += `{{AIC article list|\n`;
-
-      selected_groups.forEach((group) => {
+      const rows = selected_groups.map((group) => {
         const format_edit = (edit) => {
           const edit_size = this.format_bytes(edit.sizediff);
           const edit_link = `[[Special:Diff/${edit.revid}|(${edit_size})]]`;
@@ -834,17 +856,21 @@ export default {
         const edit_count = group.edits.length;
         const edit_str = edit_count > 1 ? "edits" : "edit";
         const separator = this.is_multiple_users ? "\n" : " ";
-        const notes = `${edit_count} ${edit_str}:${separator}${sized_diffs}`;
-        wikitext += build_article_row(group.title, notes) + "\n";
+        return {
+          article: group.title,
+          status: "requested",
+          notes: `${edit_count} ${edit_str}:${separator}${sized_diffs}`,
+        };
       });
 
-      wikitext += `}}\n`;
-      return wikitext;
+      return { infocard, notes: this.extra_notes.trim(), rows };
     },
 
     async copy_wikitext() {
       try {
-        await navigator.clipboard.writeText(this.build_table_wikitext());
+        await navigator.clipboard.writeText(
+          build_table_text(this.build_table_data()),
+        );
         mw.notify("Wikitext copied to clipboard.", { type: "success" });
       } catch (err) {
         mw.notify("Failed to copy to clipboard.", { type: "error" });
@@ -1247,7 +1273,11 @@ export default {
                 weight="primary"
                 @click="generate_report"
                 :disabled="total_selected_edits === 0 || creating_page"
-                >Add tracking table
+                >{{
+                  on_table_generated
+                    ? "Rebuild tracking table"
+                    : "Add tracking table"
+                }}
               </cdx-button>
             </div>
           </template>
