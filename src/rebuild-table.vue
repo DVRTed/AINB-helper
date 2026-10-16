@@ -168,9 +168,10 @@ export default {
     >
       <div class="ainb-update-options">
         <cdx-message type="warning">
-          Disclaimer: Rebuilding a tracking list can remove entries or reset
-          their statuses. Review the options carefully before continuing.
+          This will replace the notes parameter of each entry with the latest
+          edits, removing any existing custom notes.
         </cdx-message>
+
         <cdx-checkbox v-model="retain_existing_statuses">
           Retain statuses of existing entries
           <template #description>
@@ -180,12 +181,17 @@ export default {
         </cdx-checkbox>
 
         <cdx-checkbox v-model="delete_missing_entries">
-          Delete entries not found in the new generation
+          Delete entries not found in the rebuilt list
           <template #description>
-            Delete rows that are in the current table but weren't produced by
-            the new generation.
+            Delete entries that are in the current table but weren't produced by
+            the rebuild.
           </template>
         </cdx-checkbox>
+        <cdx-message type="warning">
+          Rebuilding a tracking list can remove entries or reset their statuses,
+          which may not be desirable in every situation; review the options
+          carefully before continuing.
+        </cdx-message>
       </div>
 
       <template #footer>
