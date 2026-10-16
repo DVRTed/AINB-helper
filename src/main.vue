@@ -35,6 +35,7 @@ export const build_article_list = (rows) =>
     .map((r) => build_article_row(r.article, r.status, r.notes))
     .join("\n")}\n}}\n`;
 
+// builds just the article list but with infocard, section, notes...
 // data = { infocard: { user, start_date, end_date }, notes, rows }
 export const build_table_text = ({ infocard, notes, rows }) =>
   `{{InfoCard|content='''Tracker detail'''\n` +
