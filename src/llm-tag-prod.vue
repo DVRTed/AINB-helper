@@ -19,6 +19,7 @@ import {
   normalize_title,
   rm_underscores,
 } from "./shared.js";
+import { build_article_row } from "./main.vue";
 
 const LAST_CASE_KEY = "ainb-llm-tag-last-case";
 const LAST_CASE_TTL_MS = 3 * 60 * 60 * 1000;
@@ -304,7 +305,7 @@ export default {
               this.selected_option === "llm_prod" ? "prodded" : "AI tagged";
             const diff_link = `[[special:diff/${revid}|${note_text}]]`;
             const new_notes = `${notes} ${diff_link}`;
-            return `{{AIC article row|article=${this.page_name}|status=${new_status}|notes=${new_notes}}}`;
+            return build_article_row(this.page_name, new_status, new_notes);
           },
         );
 

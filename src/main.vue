@@ -28,7 +28,9 @@ const build_case_banner = (case_name) =>
   `{{AINB case banner |cleanup=analysis |llmprod=undetermined |conduct=review |case_name=${case_name} |original_file_date={{subst:#time:j F Y}} |case_type=user}}`;
 
 export const build_article_row = (article, status, notes) =>
-  `{{AIC article row|article=${article}|status=${status}|notes=${notes}}}`;
+  `{{AIC article row|article=${article}|status=${status}|notes=${
+    notes ?? ""
+  }}}`;
 
 export const build_article_list = (rows) =>
   `{{AIC article list|\n${rows

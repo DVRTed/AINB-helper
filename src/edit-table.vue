@@ -17,6 +17,7 @@ import {
   get_page_info,
 } from "./shared.js";
 import { init_page_features } from "./page-features.js";
+import { build_article_row } from "./main.vue";
 
 export default {
   name: "EditRow",
@@ -204,9 +205,7 @@ export default {
 
       for (const row of this.rows) {
         if (!row.multiple_matches) {
-          const new_row = `{{AIC article row|article=${row.article}|status=${
-            row.status
-          }|notes=${row.notes || ""}}}`;
+          const new_row = build_article_row(row.article, row.status, row.notes);
           new_wikitext = new_wikitext.replace(
             get_article_row_regex(row.article),
             () => new_row,
