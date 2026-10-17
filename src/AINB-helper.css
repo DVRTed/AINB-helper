@@ -554,6 +554,10 @@
   min-width: 200px;
 }
 
+.ainb-dialog-edit-summary {
+  margin-bottom: 12px;
+}
+
 .ainb-edit-table .cdx-dialog__window {
   width: 700px !important;
   max-width: 90vw !important;

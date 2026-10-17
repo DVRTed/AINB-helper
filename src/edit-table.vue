@@ -5,6 +5,7 @@ import {
   CdxProgressBar,
   CdxSelect,
   CdxTextArea,
+  CdxTextInput,
 } from "@wikimedia/codex";
 
 import {
@@ -26,6 +27,7 @@ export default {
     CdxProgressBar,
     CdxSelect,
     CdxTextArea,
+    CdxTextInput,
   },
 
   props: {
@@ -69,6 +71,7 @@ export default {
       rows: [],
       original_rows: [],
 
+      custom_summary: "",
       wikitext: "",
       basetimestamp: null,
       starttimestamp: null,
@@ -220,12 +223,23 @@ export default {
         );
       });
 
-      const summary =
+      // rm one or more ./,/; punctuation marks at the end
+      const custom = this.custom_summary.trim().replace(/[.,;]+$/, "");
+      let auto_summary =
         this.rows.length === 1
-          ? `Updated row for [[${this.rows[0].article}]] ${APP_AD}`
+          ? `Updated row for [[${this.rows[0].article}]]`
           : `Batch edited ${changed_rows.length} ${
               changed_rows.length === 1 ? "row" : "rows"
-            } ${APP_AD}`;
+            }`;
+
+      if (custom) {
+        // if there's custom summary, lowercase the first letter
+        auto_summary = auto_summary.replace(/^./, (c) => c.toLowerCase());
+      }
+
+      const summary = custom
+        ? `${custom}; ${auto_summary} ${APP_AD}`
+        : `${auto_summary} ${APP_AD}`;
 
       const article_names = changed_rows.map((r) => r.article);
       $('tr[class*="aic-row-"]')
@@ -385,6 +399,17 @@ export default {
       </div>
 
       <template #footer>
+        <div class="ainb-dialog-edit-summary">
+          <cdx-text-input
+            name="ainb_custom_summary"
+            id="ainb_custom_summary"
+            v-model="custom_summary"
+            placeholder="Edit summary (optional)"
+            maxlength="200"
+            aria-label="Custom edit summary"
+            v-if="!app_loading"
+          ></cdx-text-input>
+        </div>
         <div class="ainb-dialog-footer">
           <div>
             <cdx-button
