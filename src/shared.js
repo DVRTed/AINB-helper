@@ -56,7 +56,6 @@ export function get_case_username(page) {
   // select the first subpage
   // e.g., "DVRTed"
   const subpage = normalize_title(page).split("/")[1];
-
   if (!subpage) return null;
 
   const username = subpage
