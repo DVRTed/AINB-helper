@@ -51,12 +51,20 @@ export function normalize_title(t) {
 }
 
 export function get_case_username(page) {
-  return normalize_title(page)
-    .split("/")
-    .pop()
+  // e.g., "Wikipedia:AI noticeboard/DVRTed/1"
+
+  // select the first subpage
+  // e.g., "DVRTed"
+  const subpage = normalize_title(page).split("/")[1];
+
+  if (!subpage) return null;
+
+  const username = subpage
     .replace(/^\d{4}-\d{2}-\d{2} /, "") // rm date prefix
     .replace(/ \(\d+\)$/, "") // rm (1), (2) etc from title
     .trim();
+
+  return username;
 }
 
 // called when an article link is clicked on a tracker page
