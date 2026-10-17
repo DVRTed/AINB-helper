@@ -209,7 +209,7 @@ export default {
           }|notes=${row.notes || ""}}}`;
           new_wikitext = new_wikitext.replace(
             get_article_row_regex(row.article),
-            new_row,
+            () => new_row,
           );
         }
       }
