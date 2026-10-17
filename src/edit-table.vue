@@ -95,11 +95,18 @@ export default {
       )}" target="_blank" rel="noopener noreferrer">User:DVRTed/AINB-helper#Known_issues</a>`;
       return `This entry is duplicated, so it cannot be edited with the script; see ${link}.`;
     },
+    changed_rows() {
+      return this.original_rows.filter((row) => {
+        const current_row = this.rows.find((e) => e.article === row.article);
+        if (!current_row || row.multiple_matches) return false;
+        return (
+          row.status !== current_row.status ||
+          (row.notes || "") !== (current_row.notes || "")
+        );
+      });
+    },
     can_save() {
-      if (this.app_loading || this.rows.length === 0) return false;
-      return this.rows.some(
-        (row) => !row.multiple_matches && Boolean(row.status),
-      );
+      return !this.app_loading && this.changed_rows.length > 0;
     },
     has_red_links() {
       return this.rows.some(
@@ -213,22 +220,13 @@ export default {
         }
       }
 
-      const changed_rows = this.original_rows.filter((row) => {
-        const current_row = this.rows.find((e) => e.article === row.article);
-        if (!current_row || row.multiple_matches) return false;
-        return (
-          row.status !== current_row.status ||
-          (row.notes || "") !== (current_row.notes || "")
-        );
-      });
-
       // rm one or more ./,/; punctuation marks at the end
       const custom = this.custom_summary.trim().replace(/[.,;]+$/, "");
       let auto_summary =
         this.rows.length === 1
           ? `Updated row for [[${this.rows[0].article}]]`
-          : `Batch edited ${changed_rows.length} ${
-              changed_rows.length === 1 ? "row" : "rows"
+          : `Batch edited ${this.changed_rows.length} ${
+              this.changed_rows.length === 1 ? "row" : "rows"
             }`;
 
       if (custom) {
@@ -240,7 +238,7 @@ export default {
         ? `${custom}; ${auto_summary} ${APP_AD}`
         : `${auto_summary} ${APP_AD}`;
 
-      const article_names = changed_rows.map((r) => r.article);
+      const article_names = this.changed_rows.map((r) => r.article);
       $('tr[class*="aic-row-"]')
         .filter(function () {
           return article_names.includes(
