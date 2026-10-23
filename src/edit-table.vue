@@ -46,21 +46,35 @@ export default {
       app_error: "",
 
       status_options: [
-        { value: "completed", label: "Completed", aliases: ["c"] },
-        { value: "ongoing", label: "Ongoing", aliases: ["o"] },
+        {
+          value: "completed",
+          label: "Completed",
+          description: "Cleanup completed.",
+          aliases: ["c"],
+        },
+        {
+          value: "ongoing",
+          label: "Ongoing",
+          description:
+            "Cleanup is ongoing, or the article is tagged with {{LLMprod}}.",
+          aliases: ["o"],
+        },
         {
           value: "unnecessary",
           label: "Unnecessary",
+          description: "Cleanup is not necessary.",
           aliases: ["u", "unneeded"],
         },
         {
           value: "tagged",
           label: "Tagged",
+          description: "The article is tagged with {{AI-generated}}.",
           aliases: ["tg", "tag"],
         },
         {
           value: "requested",
           label: "Requested/To-do",
+          description: "Cleanup requested.",
           aliases: ["r", "td", "todo", "to do", "t"],
         },
       ],
