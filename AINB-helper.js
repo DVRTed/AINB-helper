@@ -1,6 +1,6 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=AINB-helper.js}}
 
-// Userscript to manage AI noticeboard cases and tracking tables
+// Userscript to manage the AI noticeboard's cases and tracking tables
 // For readable source code, see: https://github.com/DVRTed/AINB-helper
 // <nowiki>
 
