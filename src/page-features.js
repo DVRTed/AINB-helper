@@ -362,7 +362,7 @@ const wgAction = mw.config.get("wgAction");
 export function init_page_features() {
   init_progress_bar();
   init_row_editing();
-  //init_check_affected();
+  init_check_affected();
   init_banner_edit();
   init_infocard_updates();
 }
@@ -415,6 +415,6 @@ $(() => {
       e.preventDefault();
       create_app(LlmTagProd);
     });
-    //init_highlight_author();
+    init_highlight_author();
   }
 });
