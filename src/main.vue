@@ -131,8 +131,7 @@ export default {
 
   computed: {
     dialog_title() {
-      if (this.current_step === 1)
-        return "Generate a tracking subpage for AINB";
+      if (this.current_step === 1) return "Generate a tracking table";
       if (this.current_step === 2) return "Select diffs to include";
       return "Tracking table added";
     },

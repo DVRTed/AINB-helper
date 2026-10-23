@@ -3,7 +3,7 @@ import vue from "@vitejs/plugin-vue";
 import fs from "node:fs";
 
 const HEADER =
-  "// Userscript to help generating tracking subpages at [[WP:AINB]]\n" +
+  "// Userscript to manage the AI noticeboard's cases and tracking tables\n" +
   "// For readable source code, see: https://github.com/DVRTed/AINB-helper\n" +
   "// <nowiki>\n\n";
 const USYNC_HEADER =
