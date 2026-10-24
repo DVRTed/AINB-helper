@@ -1,26 +1,4 @@
 <template>
-  <div
-    class="ainb-menu"
-    style="
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 8px;
-    "
-  >
-    <cdx-progress-indicator v-if="loading"></cdx-progress-indicator>
-    <span v-if="loading" style="font-size: 0.85em">Loading…</span>
-    <cdx-menu-button
-      v-model:selected="selection"
-      :menu-items="menuItems"
-      aria-label="AINB-helper actions"
-      @update:selected="onSelect"
-      :disabled="loading"
-    >
-      AINB-helper: Highlight ▾
-    </cdx-menu-button>
-  </div>
-
   <cdx-dialog
     v-model:open="open"
     :title="`Highlighting content authored by User:${selected_username}`"
@@ -53,12 +31,7 @@
 </template>
 
 <script>
-import {
-  CdxButton,
-  CdxMenuButton,
-  CdxDialog,
-  CdxProgressIndicator,
-} from "@wikimedia/codex";
+import { CdxButton, CdxDialog, CdxProgressIndicator } from "@wikimedia/codex";
 import { api } from "./shared.js";
 
 const WIKIWHO =
@@ -66,10 +39,13 @@ const WIKIWHO =
 const EDIT_TEXT_KEY = "ainb-author-highlight-edit-text";
 
 export default {
-  components: { CdxButton, CdxMenuButton, CdxDialog, CdxProgressIndicator },
+  components: { CdxButton, CdxDialog, CdxProgressIndicator },
   props: {
     article: { type: String, required: true },
-    username: { type: String, default: "" },
+    username: { type: String, required: true },
+  },
+  mounted() {
+    this.show(this.username);
   },
   data() {
     return {
@@ -78,7 +54,6 @@ export default {
       status: "",
       status_error: false,
       segments: [],
-      selection: null,
       selected_username: "",
       loaded_username: "",
     };
@@ -87,37 +62,8 @@ export default {
     has_highlighted_text() {
       return this.segments.some((segment) => segment.mine && segment.text);
     },
-
-    menuItems() {
-      const items = [];
-      if (this.username) {
-        items.push({
-          value: "case-user",
-          label: `Use case username (User:${this.username})`,
-          disabled: this.loading,
-        });
-      }
-      items.push({
-        value: "prompt",
-        label: "Enter a username...",
-        disabled: this.loading,
-      });
-      return items;
-    },
   },
   methods: {
-    onSelect(value) {
-      this.selection = null;
-      if (value === "prompt") {
-        const username = window.prompt(
-          "Enter a username to highlight the content of:",
-        );
-        if (username?.trim()) this.show(username.trim());
-      } else if (value === "case-user") {
-        this.show(this.username);
-      }
-    },
-
     open_edit() {
       const updated_wikitext = this.segments
         .filter((segment) => !segment.mine)

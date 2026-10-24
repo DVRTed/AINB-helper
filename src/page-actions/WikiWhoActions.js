@@ -103,15 +103,27 @@ export function init_check_affected() {
 
 export function init_highlight_author() {
   const origin = get_case_origin(wgPageName);
-  const target = document.querySelector("#mw-content-text");
-  if (!target) return;
+  const initial_username = origin ? get_case_username(origin) : "";
+  const portlet_link = mw.util.addPortletLink(
+    "p-cactions",
+    "#",
+    "Highlight author",
+    "t-ainb-author-highlight",
+    "Highlight content by an author",
+  );
 
-  const username = origin ? get_case_username(origin) : "";
+  $(portlet_link).on("click", function (e) {
+    e.preventDefault();
+    const username = window.prompt(
+      "Enter a username to highlight the content of:",
+      initial_username || "",
+    );
+    if (!username?.trim()) return;
 
-  create_app(AuthorHighlight, {
-    mount_target: target,
-    article: wgPageName,
-    username,
+    create_app(AuthorHighlight, {
+      article: wgPageName,
+      username: username.trim(),
+    });
   });
 }
 
