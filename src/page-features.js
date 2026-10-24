@@ -2,11 +2,14 @@ import {
   DEBUG_MODE,
   DEBUG_PAGE,
   create_app,
-  get_case_origin,
   get_case_username,
   set_case_origin,
 } from "./shared.js";
-import AuthorHighlight from "./author-highlight.vue";
+import {
+  apply_author_highlight_edit_text,
+  init_check_affected,
+  init_highlight_author,
+} from "./page-actions/WikiWhoActions.js";
 import CategoryStats from "./category-stats.vue";
 import EditTable from "./edit-table.vue";
 import EditBanner from "./edit-banner.vue";
@@ -14,11 +17,6 @@ import LlmTagProd from "./llm-tag-prod.vue";
 import Main from "./main.vue";
 import UpdateTable from "./rebuild-table.vue";
 import styles from "./AINB-helper.css?inline";
-
-const WIKIWHO_API =
-  "https://wikiwho.wmcloud.org/en/api/v1.0.0-beta/latest_rev_content/";
-const MAX_AFFECTED_LOOKUPS = 5;
-let active_affected_lookups = 0;
 
 mw.util.addCSS(styles);
 
@@ -103,96 +101,6 @@ function get_row_status($row) {
   return match ? match[1] : "unknown";
 }
 
-function init_check_affected() {
-  const username = get_case_username(wgPageName);
-
-  $('tr[class*="aic-row-"]')
-    .not(".ainb-check-affected-done")
-    .each(function () {
-      $(this).addClass("ainb-check-affected-done");
-      const $row = $(this);
-      const $a = $row.find("a").first();
-      if ($a.hasClass("new")) return;
-      const article = $a.text();
-      const $notes = $row.find("td").last();
-
-      const $link = $("<a>")
-        .addClass("ainb-check-pct")
-        .attr("href", "#")
-        .text("check affected % (beta)")
-        .on("click", async function (e) {
-          e.preventDefault();
-          if (active_affected_lookups >= MAX_AFFECTED_LOOKUPS) return;
-          active_affected_lookups++;
-          if (active_affected_lookups >= MAX_AFFECTED_LOOKUPS) {
-            $("a.ainb-check-pct").addClass("ainb-disabled");
-          }
-
-          const $span = $("<span>")
-            .addClass("ainb-check-pct")
-            .text("checking...");
-          $link.replaceWith($span);
-
-          try {
-            const uq = new URLSearchParams({
-              action: "query",
-              list: "users",
-              ususers: username,
-              format: "json",
-              origin: "*",
-            });
-            const udata = await (await fetch(`/w/api.php?${uq}`)).json();
-            const userid = String(udata.query.users[0]?.userid || "");
-            if (!userid) {
-              $span.text(`user "${username}" not found`);
-              return;
-            }
-
-            const wq = new URLSearchParams({
-              o_rev_id: false,
-              editor: true,
-              token_id: false,
-              out: false,
-              in: false,
-            });
-            const wdata = await (
-              await fetch(`${WIKIWHO_API}${encodeURIComponent(article)}/?${wq}`)
-            ).json();
-            if (!wdata.success) {
-              $span.text("WikiWho API error");
-              return;
-            }
-
-            const rev_obj = wdata.revisions[0];
-            const tokens = rev_obj[Object.keys(rev_obj)[0]].tokens;
-            const rel_user_tokens = tokens.filter(
-              (t) => t.editor === userid,
-            ).length;
-
-            const pct = tokens.length
-              ? ((rel_user_tokens / tokens.length) * 100).toFixed(1)
-              : "0";
-            $span
-              .html(
-                `<b>${pct}%</b> (${rel_user_tokens}/${tokens.length} tokens) of the current revision's content was authored by <b class="ww-ainb-uname"></b>` +
-                  ` (using WikiWho API)`,
-              )
-              .find(".ww-ainb-uname")
-              .text(username); // to prevent (impossible) xss through username
-          } catch (err) {
-            $span.text("lookup failed");
-          } finally {
-            active_affected_lookups--;
-            if (active_affected_lookups < MAX_AFFECTED_LOOKUPS) {
-              $("a.ainb-check-pct").removeClass("ainb-disabled");
-            }
-          }
-        });
-
-      $notes.append($("<div>").addClass("ainb-check-pct-wrap").append($link));
-    });
-}
-
 function init_progress_bar() {
   const STATUS_KEYS = [
     "completed",
@@ -270,20 +178,6 @@ function init_progress_bar() {
       $table.before($bar);
     });
 }
-function init_highlight_author() {
-  const origin = get_case_origin(wgPageName);
-  const target = document.querySelector("#mw-content-text");
-  if (!target) return;
-
-  const username = origin ? get_case_username(origin) : "";
-
-  create_app(AuthorHighlight, {
-    mount_target: target,
-    article: wgPageName,
-    username,
-  });
-}
-
 function init_banner_edit() {
   if ($(".ainb-page-actions").length) return;
   const $banner = $(".ainb-b-top").first();
@@ -373,6 +267,8 @@ export function init_page_features() {
 }
 
 $(() => {
+  apply_author_highlight_edit_text();
+
   if (
     wgPageName === "Category:AI_noticeboard_open_cleanup_cases" &&
     wgAction === "view"
