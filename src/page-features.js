@@ -419,6 +419,9 @@ $(() => {
       e.preventDefault();
       create_app(LlmTagProd);
     });
+  }
+
+  if (mw.config.get("wgNamespaceNumber") === 0) {
     init_highlight_author();
   }
 });
