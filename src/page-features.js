@@ -17,6 +17,8 @@ import styles from "./AINB-helper.css?inline";
 
 const WIKIWHO_API =
   "https://wikiwho.wmcloud.org/en/api/v1.0.0-beta/latest_rev_content/";
+const MAX_AFFECTED_LOOKUPS = 5;
+let active_affected_lookups = 0;
 
 mw.util.addCSS(styles);
 
@@ -103,7 +105,6 @@ function get_row_status($row) {
 
 function init_check_affected() {
   const username = get_case_username(wgPageName);
-  let checking = false;
 
   $('tr[class*="aic-row-"]')
     .not(".ainb-check-affected-done")
@@ -121,9 +122,11 @@ function init_check_affected() {
         .text("check affected % (beta)")
         .on("click", async function (e) {
           e.preventDefault();
-          if (checking) return;
-          checking = true;
-          $("a.ainb-check-pct").addClass("ainb-disabled");
+          if (active_affected_lookups >= MAX_AFFECTED_LOOKUPS) return;
+          active_affected_lookups++;
+          if (active_affected_lookups >= MAX_AFFECTED_LOOKUPS) {
+            $("a.ainb-check-pct").addClass("ainb-disabled");
+          }
 
           const $span = $("<span>")
             .addClass("ainb-check-pct")
@@ -179,8 +182,10 @@ function init_check_affected() {
           } catch (err) {
             $span.text("lookup failed");
           } finally {
-            checking = false;
-            $("a.ainb-check-pct").removeClass("ainb-disabled");
+            active_affected_lookups--;
+            if (active_affected_lookups < MAX_AFFECTED_LOOKUPS) {
+              $("a.ainb-check-pct").removeClass("ainb-disabled");
+            }
           }
         });
 
