@@ -20,7 +20,7 @@
     </div>
     <template #footer>
       <cdx-button
-        action="progressive"
+        action="destructive"
         :disabled="!has_highlighted_text"
         @click="open_edit"
       >
