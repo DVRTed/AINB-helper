@@ -45,6 +45,10 @@ export function get_article_url(title) {
   return mw.util.getUrl(title);
 }
 
+export function get_history_url(title) {
+  return mw.util.getUrl(title, { action: "history" });
+}
+
 export function normalize_title(t) {
   const title = new mw.Title(t);
   return title.getPrefixedText();

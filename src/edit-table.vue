@@ -14,6 +14,7 @@ import {
   close_app,
   get_article_row_regex,
   get_article_url,
+  get_history_url,
   get_page_info,
 } from "./shared.js";
 import { init_page_features } from "./page-features.js";
@@ -148,6 +149,7 @@ export default {
 
   methods: {
     get_article_url,
+    get_history_url,
     close_app() {
       close_app();
     },
@@ -331,14 +333,21 @@ export default {
       <div v-else-if="is_single && rows.length === 1" class="ainb-edit-step">
         <div class="ainb-form-field">
           Article:
-          <strong
-            ><a
+          <strong>
+            <a
               :href="get_article_url(rows[0].article)"
               :class="{ new: rows[0].is_new }"
               rel="mw:WikiLink"
               target="_blank"
               >{{ rows[0].article }}</a
-            ></strong
+            >
+          </strong>
+          <a
+            :href="get_history_url(rows[0].article)"
+            class="ainb-history-link"
+            target="_blank"
+            rel="noopener noreferrer"
+            >(hist)</a
           >
         </div>
 
@@ -384,6 +393,13 @@ export default {
                   >
                     {{ row.article }}
                   </a>
+                  <a
+                    :href="get_history_url(row.article)"
+                    class="ainb-history-link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >(hist)</a
+                  >
                 </td>
                 <template v-if="row.multiple_matches">
                   <td
