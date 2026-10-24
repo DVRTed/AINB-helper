@@ -150,7 +150,7 @@ export function apply_author_highlight_edit_text() {
     $("#wpDiff").trigger("click");
 
     const message_mount = document.createElement("div");
-    $("#mw-content-text").prepend(message_mount);
+    $("#editpage-copywarn").append(message_mount);
     createMwApp({
       render() {
         return h(
