@@ -134,7 +134,7 @@ export function apply_author_highlight_edit_text() {
   if (!pending) return;
 
   try {
-    const { title, text, username } = JSON.parse(pending);
+    const { title, text, username, summary } = JSON.parse(pending);
     if (title !== wgPageName) return;
 
     const $textarea = $("#wpTextbox1");
@@ -146,6 +146,8 @@ export function apply_author_highlight_edit_text() {
     } else {
       $textarea.val(text).trigger("input").trigger("change");
     }
+
+    if (summary) $("#wpSummary").val(summary);
 
     $("#wpDiff").trigger("click");
 

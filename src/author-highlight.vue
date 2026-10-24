@@ -32,7 +32,7 @@
 
 <script>
 import { CdxButton, CdxDialog, CdxProgressIndicator } from "@wikimedia/codex";
-import { api } from "./shared.js";
+import { api, get_case_origin } from "./shared.js";
 
 const WIKIWHO =
   "https://wikiwho.wmcloud.org/en/api/v1.0.0-beta/latest_rev_content/";
@@ -69,12 +69,18 @@ export default {
         .filter((segment) => !segment.mine)
         .map((segment) => segment.text)
         .join("");
+      const case_name = get_case_origin(this.article);
+      const summary = `[[WP:LLMPRV|Presumptive removal of LLM-generated content]]${
+        case_name ? `, see [[${case_name}]]` : ""
+      }`;
+
       sessionStorage.setItem(
         EDIT_TEXT_KEY,
         JSON.stringify({
           title: this.article,
           text: updated_wikitext,
           username: this.selected_username,
+          summary,
         }),
       );
       window.location.assign(mw.util.getUrl(this.article, { action: "edit" }));
