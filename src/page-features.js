@@ -273,10 +273,9 @@ function init_progress_bar() {
 function init_highlight_author() {
   const origin = get_case_origin(wgPageName);
   const target = document.querySelector("#mw-content-text");
-  if (!origin || !target) return;
+  if (!target) return;
 
-  const username = get_case_username(origin);
-  if (!username) return;
+  const username = origin ? get_case_username(origin) : "";
 
   create_app(AuthorHighlight, {
     mount_target: target,

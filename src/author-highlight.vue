@@ -17,13 +17,13 @@
       @update:selected="onSelect"
       :disabled="loading"
     >
-      AINB-helper ▾
+      AINB-helper: Highlight ▾
     </cdx-menu-button>
   </div>
 
   <cdx-dialog
     v-model:open="open"
-    :title="`Highlighting content authored by User:${username}`"
+    :title="`Highlighting content authored by User:${selected_username}`"
     :subtitle="status"
     close-button-label="Close"
     style="max-width: none"
@@ -54,7 +54,7 @@ export default {
   components: { CdxMenuButton, CdxDialog, CdxProgressIndicator },
   props: {
     article: { type: String, required: true },
-    username: { type: String, required: true },
+    username: { type: String, default: "" },
   },
   data() {
     return {
@@ -63,31 +63,50 @@ export default {
       status: "",
       segments: [],
       selection: null,
+      selected_username: "",
+      loaded_username: "",
     };
   },
   computed: {
     menuItems() {
-      return [
-        {
-          value: "highlight",
-          label: "Highlight user's content",
+      const items = [];
+      if (this.username) {
+        items.push({
+          value: "case-user",
+          label: `Use case username (User:${this.username})`,
           disabled: this.loading,
-        },
-      ];
+        });
+      }
+      items.push({
+        value: "prompt",
+        label: "Enter a username...",
+        disabled: this.loading,
+      });
+      return items;
     },
   },
   methods: {
     onSelect(value) {
       this.selection = null;
-      if (value === "highlight") this.show();
+      if (value === "prompt") {
+        const username = window.prompt(
+          "Enter a username to highlight the content of:",
+        );
+        if (username?.trim()) this.show(username.trim());
+      } else if (value === "case-user") {
+        this.show(this.username);
+      }
     },
 
-    async show() {
-      if (!this.segments.length) {
+    async show(username) {
+      this.selected_username = username;
+      if (this.loaded_username !== username) {
+        this.segments = [];
         this.loading = true;
         this.status = "loading...";
         try {
           await this.load();
+          this.loaded_username = username;
         } catch (err) {
           this.status = err.message || "lookup failed";
           return;
@@ -103,7 +122,7 @@ export default {
       const u = await api.get({
         action: "query",
         list: "users",
-        ususers: this.username,
+        ususers: this.selected_username,
         formatversion: 2,
       });
       const userid = String(u.query.users[0]?.userid || "");
