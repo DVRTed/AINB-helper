@@ -28,7 +28,11 @@
     close-button-label="Close"
     style="max-width: none"
   >
+    <div v-if="loading || status_error" class="ainb-loading">
+      {{ status }}
+    </div>
     <div
+      v-else
       style="white-space: pre-wrap; font-family: monospace; font-size: 0.8em"
     >
       <template v-for="(seg, i) in segments" :key="i">
@@ -36,11 +40,21 @@
         <template v-else>{{ seg.text }}</template>
       </template>
     </div>
+    <template #footer>
+      <cdx-button
+        action="progressive"
+        :disabled="!has_highlighted_text"
+        @click="open_edit"
+      >
+        Remove all content authored by this user
+      </cdx-button>
+    </template>
   </cdx-dialog>
 </template>
 
 <script>
 import {
+  CdxButton,
   CdxMenuButton,
   CdxDialog,
   CdxProgressIndicator,
@@ -49,9 +63,10 @@ import { api } from "./shared.js";
 
 const WIKIWHO =
   "https://wikiwho.wmcloud.org/en/api/v1.0.0-beta/latest_rev_content/";
+const EDIT_TEXT_KEY = "ainb-author-highlight-edit-text";
 
 export default {
-  components: { CdxMenuButton, CdxDialog, CdxProgressIndicator },
+  components: { CdxButton, CdxMenuButton, CdxDialog, CdxProgressIndicator },
   props: {
     article: { type: String, required: true },
     username: { type: String, default: "" },
@@ -61,6 +76,7 @@ export default {
       open: false,
       loading: false,
       status: "",
+      status_error: false,
       segments: [],
       selection: null,
       selected_username: "",
@@ -68,6 +84,10 @@ export default {
     };
   },
   computed: {
+    has_highlighted_text() {
+      return this.segments.some((segment) => segment.mine && segment.text);
+    },
+
     menuItems() {
       const items = [];
       if (this.username) {
@@ -98,8 +118,26 @@ export default {
       }
     },
 
+    open_edit() {
+      const updated_wikitext = this.segments
+        .filter((segment) => !segment.mine)
+        .map((segment) => segment.text)
+        .join("");
+      sessionStorage.setItem(
+        EDIT_TEXT_KEY,
+        JSON.stringify({
+          title: this.article,
+          text: updated_wikitext,
+          username: this.selected_username,
+        }),
+      );
+      window.location.assign(mw.util.getUrl(this.article, { action: "edit" }));
+    },
+
     async show(username) {
       this.selected_username = username;
+      this.open = true;
+      this.status_error = false;
       if (this.loaded_username !== username) {
         this.segments = [];
         this.loading = true;
@@ -109,12 +147,11 @@ export default {
           this.loaded_username = username;
         } catch (err) {
           this.status = err.message || "lookup failed";
-          return;
+          this.status_error = true;
         } finally {
           this.loading = false;
         }
       }
-      this.open = true;
     },
 
     async load() {
