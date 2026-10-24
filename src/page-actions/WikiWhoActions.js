@@ -147,10 +147,10 @@ export function apply_author_highlight_edit_text() {
       $textarea.val(text).trigger("input").trigger("change");
     }
 
+    $("#wpDiff").trigger("click");
+
     const message_mount = document.createElement("div");
-    const $content = $("#mw-content-text");
-    if ($content.length) $content.prepend(message_mount);
-    else $textarea.before(message_mount);
+    $("#mw-content-text").prepend(message_mount);
     createMwApp({
       render() {
         return h(
@@ -166,8 +166,6 @@ export function apply_author_highlight_edit_text() {
         );
       },
     }).mount(message_mount);
-
-    $("#wpDiff").trigger("click");
   } catch (error) {
     sessionStorage.removeItem(EDIT_TEXT_KEY);
     console.error("Could not prefill article edit text:", error);
