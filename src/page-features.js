@@ -361,6 +361,7 @@ function init_infocard_updates() {
 }
 
 const wgPageName = mw.config.get("wgPageName");
+const wgNamespaceNumber = mw.config.get("wgNamespaceNumber");
 const wgAction = mw.config.get("wgAction");
 
 export function init_page_features() {
@@ -406,7 +407,7 @@ $(() => {
     });
   }
 
-  if ([0, 118].includes(mw.config.get("wgNamespaceNumber")) || DEBUG_MODE) {
+  if ([0, 118].includes(wgNamespaceNumber) || DEBUG_MODE) {
     const llm_portlet_link = mw.util.addPortletLink(
       "p-cactions",
       "#",
@@ -421,7 +422,5 @@ $(() => {
     });
   }
 
-  if (mw.config.get("wgNamespaceNumber") === 0) {
-    init_highlight_author();
-  }
+  if (wgNamespaceNumber === 0) init_highlight_author();
 });
