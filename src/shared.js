@@ -2,12 +2,17 @@ import { createMwApp } from "vue";
 
 export const APP_ID = "ainb-helper";
 export const APP_AD = "(using [[User:DVRTed/AINB-helper|AINB-helper]])";
+// eslint-disable-next-line no-undef
 export const DEBUG_MODE = __DEV__;
 export const DEBUG_PAGE = "User:DVRTed/sandbox2";
 
 export const api = new mw.Api();
 
 let current_app = null;
+
+export const wgPageName = mw.config.get("wgPageName");
+export const wgNamespaceNumber = mw.config.get("wgNamespaceNumber");
+export const wgAction = mw.config.get("wgAction");
 
 export const CASE_ORIGIN_KEY = "ainb-case-origin";
 const CASE_ORIGIN_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours

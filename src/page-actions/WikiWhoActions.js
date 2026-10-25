@@ -1,14 +1,8 @@
-import { create_app, get_case_origin, get_case_username } from "../shared.js";
-import { createMwApp, h } from "vue";
-import { CdxMessage } from "@wikimedia/codex";
-import AuthorHighlight from "../author-highlight.vue";
+import { get_case_username, wgPageName } from "../shared.js";
 
 const WIKIWHO_API =
   "https://wikiwho.wmcloud.org/en/api/v1.0.0-beta/latest_rev_content/";
 const MAX_AFFECTED_LOOKUPS = 5;
-const EDIT_TEXT_KEY = "ainb-author-highlight-edit-text";
-const wgPageName = mw.config.get("wgPageName");
-const wgAction = mw.config.get("wgAction");
 let active_affected_lookups = 0;
 
 export function init_check_affected() {
@@ -89,6 +83,7 @@ export function init_check_affected() {
               .text(username);
           } catch (err) {
             $span.text("lookup failed");
+            console.log(err);
           } finally {
             active_affected_lookups--;
             if (active_affected_lookups < MAX_AFFECTED_LOOKUPS) {
@@ -99,77 +94,4 @@ export function init_check_affected() {
 
       $notes.append($("<div>").addClass("ainb-check-pct-wrap").append($link));
     });
-}
-
-export function init_highlight_author() {
-  const origin = get_case_origin(wgPageName);
-  const initial_username = origin ? get_case_username(origin) : "";
-  const portlet_link = mw.util.addPortletLink(
-    "p-cactions",
-    "#",
-    "Highlight author",
-    "t-ainb-author-highlight",
-    "Highlight content by an author",
-  );
-
-  $(portlet_link).on("click", function (e) {
-    e.preventDefault();
-    const username = window.prompt(
-      "Enter a username to highlight the content of:",
-      initial_username || "",
-    );
-    if (!username?.trim()) return;
-
-    create_app(AuthorHighlight, {
-      article: wgPageName,
-      username: username.trim(),
-    });
-  });
-}
-
-export function apply_author_highlight_edit_text() {
-  if (wgAction !== "edit") return;
-
-  const pending = sessionStorage.getItem(EDIT_TEXT_KEY);
-  if (!pending) return;
-
-  try {
-    const { title, text, username, summary } = JSON.parse(pending);
-    if (title !== wgPageName) return;
-
-    const $textarea = $("#wpTextbox1");
-    if (!$textarea.length) return;
-
-    sessionStorage.removeItem(EDIT_TEXT_KEY);
-    if (typeof $textarea.textSelection === "function") {
-      $textarea.textSelection("setContents", text);
-    } else {
-      $textarea.val(text).trigger("input").trigger("change");
-    }
-
-    if (summary) $("#wpSummary").val(summary);
-
-    $("#wpDiff").trigger("click");
-
-    const message_mount = document.createElement("div");
-    $("#editpage-copywarn").append(message_mount);
-    createMwApp({
-      render() {
-        return h(
-          CdxMessage,
-          { type: "warning" },
-          {
-            default: () => [
-              "ALL content authored by ",
-              h("strong", `User:${username}`),
-              " has been removed; please review the changes carefully if you decide to save this page.",
-            ],
-          },
-        );
-      },
-    }).mount(message_mount);
-  } catch (error) {
-    sessionStorage.removeItem(EDIT_TEXT_KEY);
-    console.error("Could not prefill article edit text:", error);
-  }
 }

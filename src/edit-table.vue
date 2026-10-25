@@ -17,7 +17,7 @@ import {
   get_history_url,
   get_page_info,
 } from "./shared.js";
-import { init_page_features } from "./page-features.js";
+import { add_page_buttons } from "./register-actions.js";
 import { build_article_row } from "./main.vue";
 
 export default {
@@ -307,7 +307,7 @@ export default {
       );
       if (content) {
         content.innerHTML = result.parse.text["*"];
-        init_page_features();
+        add_page_buttons();
       }
     },
   },
