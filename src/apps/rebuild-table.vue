@@ -22,6 +22,9 @@ export default {
 
   props: {
     initial_username: { type: String, default: "" },
+    initial_case_page: { type: String, default: "" },
+    initial_is_custom_case_page: { type: Boolean, default: false },
+
     initial_anchor_date: { type: String, default: "" },
     initial_end_date: { type: String, default: "" },
     target_page_title: { type: String, required: true },
@@ -211,6 +214,8 @@ export default {
     <MainApp
       v-if="app_started"
       :initial_username="initial_username"
+      :initial_case_page="initial_case_page"
+      :initial_is_custom_case_page="initial_is_custom_case_page"
       :initial_anchor_date="initial_anchor_date"
       :initial_end_date="initial_end_date"
       :on_table_generated="handle_table_generated"

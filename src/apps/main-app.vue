@@ -63,6 +63,7 @@ export default {
     initial_username: { type: String, default: "" },
     initial_case_page: { type: String, default: "" },
     initial_is_custom_case_page: { type: Boolean, default: false },
+
     initial_anchor_date: { type: String, default: "" },
     initial_end_date: { type: String, default: "" },
     on_table_generated: { type: Function, default: null },
@@ -985,7 +986,6 @@ export default {
             />
           </div>
           <cdx-checkbox
-            v-if="!on_table_generated"
             v-model="custom_case_page"
             class="ainb-custom-case-page-checkbox"
           >
@@ -1307,9 +1307,7 @@ export default {
 
           <template v-if="current_step === 2">
             <div class="ainb-subpage-info">
-              <template v-if="!on_table_generated">
-                Target: <strong>{{ target_page_title }}</strong>
-              </template>
+              Target: <strong>{{ target_page_title }}</strong>
             </div>
             <div class="ainb-footer-buttons">
               <cdx-button @click="current_step = 1">Back</cdx-button>

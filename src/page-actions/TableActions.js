@@ -1,4 +1,9 @@
-import { create_app, get_case_username, set_case_origin } from "../shared.js";
+import {
+  create_app,
+  get_case_page_name,
+  get_case_username,
+  set_case_origin,
+} from "../shared.js";
 import EditTable from "../apps/edit-table.vue";
 import UpdateTable from "../apps/rebuild-table.vue";
 
@@ -228,8 +233,17 @@ export function init_infocard_updates() {
       .text("Rebuild table")
       .on("click", (e) => {
         e.preventDefault();
+
+        const initial_username = get_case_username(wgPageName);
+        const initial_case_page = get_case_page_name(wgPageName);
+        const initial_is_custom_case_page =
+          initial_case_page !== initial_username;
+
         create_app(UpdateTable, {
-          initial_username: get_case_username(wgPageName),
+          initial_username,
+          initial_case_page,
+          initial_is_custom_case_page,
+
           initial_anchor_date: start_date,
           initial_end_date: end_date,
           target_page_title: wgPageName,
