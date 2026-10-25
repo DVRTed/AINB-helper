@@ -315,7 +315,7 @@ export default {
     },
 
     unselect_smaller_edits() {
-      const input = prompt("Unselect edits smaller than (bytes):", "35");
+      const input = prompt("Unselect edits smaller than (bytes):", "50");
       if (input === null) return;
       const threshold = parseInt(input, 10);
       if (isNaN(threshold)) return;
