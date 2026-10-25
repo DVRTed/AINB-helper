@@ -5,7 +5,10 @@
         "build:usync": "USYNC=1 vite build --mode production"
     },
     "devDependencies": {
+        "@eslint/js": "^10.0.1",
         "@vitejs/plugin-vue": "^6.0.9",
+        "eslint": "^10.13.0",
+        "globals": "^17.13.0",
         "prettier": "^2.8.8",
         "terser": "^5.51.2",
         "vite": "^8.3.1"
