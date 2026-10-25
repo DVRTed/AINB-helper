@@ -52,12 +52,12 @@ if (wgAction === "view") {
   }
 }
 
+// article or draft
+if (wgNamespaceNumber === 0 || wgNamespaceNumber === 118)
+  init_llm_tag_prod_portlet();
+
 if (wgNamespaceNumber === 0) {
   if (wgAction === "edit") replace_edittext_with_session();
 
   init_highlight_author_portlet();
 }
-
-// article or draft
-if (wgNamespaceNumber === 0 || wgNamespaceNumber === 118)
-  init_llm_tag_prod_portlet();
