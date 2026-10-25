@@ -19,7 +19,7 @@ import {
   normalize_title,
   rm_underscores,
 } from "./shared.js";
-import { build_article_row } from "./main.vue";
+import { build_article_row } from "./main-app.vue";
 
 const LAST_CASE_KEY = "ainb-llm-tag-last-case";
 const LAST_CASE_TTL_MS = 3 * 60 * 60 * 1000;
@@ -417,8 +417,8 @@ export default {
 <template>
   <div>
     <cdx-dialog
-      class="ainb-llm-dialog"
       v-model:open="app_open"
+      class="ainb-llm-dialog"
       title="LLM tag / prod"
       :use-close-button="true"
       @update:open="close_app"
@@ -451,10 +451,10 @@ export default {
         </cdx-field>
 
         <cdx-field>
-          <template #description
-            >Tip: Start typing to autocomplete from subpages of Wikipedia:AI
-            noticeboard. You can leave this blank to proceed anyway.</template
-          >
+          <template #description>
+            Tip: Start typing to autocomplete from subpages of Wikipedia:AI
+            noticeboard. You can leave this blank to proceed anyway.
+          </template>
           <cdx-combobox
             v-model:selected="case_name"
             :menu-items="filtered_case_options"
@@ -480,8 +480,10 @@ export default {
                 href="https://en.wikipedia.org/wiki/Template:Prod_llm#Usage"
                 target="_blank"
                 rel="noopener"
-                >docs</a
-              >)
+              >
+                docs
+              </a>
+              )
             </cdx-checkbox>
             <cdx-checkbox v-model="watch_page"> Watch this page </cdx-checkbox>
           </cdx-field>
@@ -495,17 +497,17 @@ export default {
         </div>
 
         <div v-if="!saving" class="ainb-thread-context">
-          <span
-            >Case: <strong>{{ case_name || "none" }}</strong></span
-          >
+          <span>
+            Case: <strong>{{ case_name || "none" }}</strong>
+          </span>
           <a href="#" @click.prevent="go_back_to_step1">Change</a>
         </div>
 
         <div v-if="!saving" class="ainb-tracker-row">
           <cdx-checkbox
+            :disabled="saving || !(case_name || '').trim()"
             :model-value="update_tracker && !!(case_name || '').trim()"
             @update:model-value="update_tracker = $event"
-            :disabled="saving || !(case_name || '').trim()"
           >
             Mark as
             {{ selected_option === "llm_prod" ? "ongoing" : "tagged" }} on the
@@ -525,13 +527,14 @@ export default {
               <template v-else-if="s.status === 'success'">&#10003;</template>
               <template v-else>&#10007;</template>
             </span>
-            <span
-              >{{ s.label
-              }}<template v-if="s.status === 'success'">... succeeded</template
-              ><template v-else-if="s.status === 'error'"
-                >... failed: {{ s.detail }}</template
-              ><template v-else>...</template></span
-            >
+            <span>
+              {{ s.label }}
+              <template v-if="s.status === 'success'">... succeeded </template>
+              <template v-else-if="s.status === 'error'">
+                ... failed: {{ s.detail }}
+              </template>
+              <template v-else>...</template>
+            </span>
           </div>
         </div>
 
@@ -554,6 +557,7 @@ export default {
           <div v-if="preview_loading" class="ainb-loading">
             Loading preview...
           </div>
+          <!-- eslint-disable-next-line vue/no-v-html -->
           <div v-else class="ainb-preview-content" v-html="preview_html"></div>
         </div>
 
@@ -579,9 +583,9 @@ export default {
           </div>
 
           <div v-if="current_step === 2">
-            <cdx-button @click="go_back_to_step1" :disabled="saving"
-              >Back</cdx-button
-            >
+            <cdx-button :disabled="saving" @click="go_back_to_step1">
+              Back
+            </cdx-button>
           </div>
           <div v-if="current_step === 2">
             <cdx-button
@@ -594,10 +598,10 @@ export default {
             </cdx-button>
             <cdx-button
               v-else
+              :disabled="saving || !editable_wikitext"
               action="progressive"
               weight="primary"
               @click="save_edit"
-              :disabled="saving || !editable_wikitext"
             >
               {{ saving ? "Saving..." : "Submit edit" }}
             </cdx-button>

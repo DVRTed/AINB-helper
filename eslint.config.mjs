@@ -17,4 +17,12 @@ export default defineConfig([
     },
   },
   pluginVue.configs["flat/recommended"],
+  {
+    rules: {
+      "vue/max-attributes-per-line": "off",
+      "vue/singleline-html-element-content-newline": "off",
+      "vue/html-self-closing": "off",
+      "vue/prop-name-casing": "off",
+    },
+  },
 ]);

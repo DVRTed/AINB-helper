@@ -1,6 +1,6 @@
 import { create_app, get_case_username } from "../shared.js";
 import EditBanner from "../edit-banner.vue";
-import Main from "../main.vue";
+import Main from "../main-app.vue";
 
 const wgPageName = mw.config.get("wgPageName");
 

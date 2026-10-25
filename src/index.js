@@ -17,7 +17,7 @@ import {
 } from "./page-actions/ArticleActions.js";
 
 import CategoryStats from "./category-stats.vue";
-import Main from "./main.vue";
+import Main from "./main-app.vue";
 
 mw.util.addCSS(styles);
 

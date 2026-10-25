@@ -5,7 +5,7 @@ import {
   CdxDialog,
   CdxMessage,
 } from "@wikimedia/codex";
-import Main, { build_article_list, build_table_text } from "./main.vue";
+import { build_table_text } from "./main-app.vue";
 import {
   APP_AD,
   api,
@@ -18,7 +18,7 @@ import {
 } from "./shared.js";
 
 export default {
-  components: { CdxButton, CdxCheckbox, CdxDialog, CdxMessage, Main },
+  components: { CdxButton, CdxCheckbox, CdxDialog, CdxMessage },
 
   props: {
     initial_username: { type: String, default: "" },

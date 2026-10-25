@@ -31,7 +31,7 @@
 </template>
 
 <script>
-import { CdxButton, CdxDialog, CdxProgressIndicator } from "@wikimedia/codex";
+import { CdxButton, CdxDialog } from "@wikimedia/codex";
 import { api, get_case_origin } from "./shared.js";
 
 const WIKIWHO =
@@ -39,13 +39,10 @@ const WIKIWHO =
 const EDIT_TEXT_KEY = "ainb-author-highlight-edit-text";
 
 export default {
-  components: { CdxButton, CdxDialog, CdxProgressIndicator },
+  components: { CdxButton, CdxDialog },
   props: {
     article: { type: String, required: true },
     username: { type: String, required: true },
-  },
-  mounted() {
-    this.show(this.username);
   },
   data() {
     return {
@@ -63,6 +60,11 @@ export default {
       return this.segments.some((segment) => segment.mine && segment.text);
     },
   },
+
+  mounted() {
+    this.show(this.username);
+  },
+
   methods: {
     open_edit() {
       const updated_wikitext = this.segments

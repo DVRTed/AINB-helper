@@ -18,7 +18,7 @@ import {
   get_page_info,
 } from "./shared.js";
 import { add_page_buttons } from "./register-actions.js";
-import { build_article_row } from "./main.vue";
+import { build_article_row } from "./main-app.vue";
 
 export default {
   name: "EditRow",
@@ -317,18 +317,19 @@ export default {
 <template>
   <div>
     <cdx-dialog
-      :class="dialog_class"
       v-model:open="app_open"
+      :class="dialog_class"
       :title="dialog_title"
       :use-close-button="true"
       @update:open="close_app"
     >
       <div v-if="app_loading" class="ainb-loading">
         <p>Loading row data...</p>
-        <cdx-progress-bar inline></cdx-progress-bar>
+        <cdx-progress-bar inline />
       </div>
 
-      <div v-else-if="app_error" class="ainb-error" v-html="app_error"></div>
+      <!-- eslint-disable-next-line vue/no-v-html -->
+      <div v-else-if="app_error" class="ainb-error" v-html="app_error" />
 
       <div v-else-if="is_single && rows.length === 1" class="ainb-edit-step">
         <div class="ainb-form-field">
@@ -339,16 +340,18 @@ export default {
               :class="{ new: rows[0].is_new }"
               rel="mw:WikiLink"
               target="_blank"
-              >{{ rows[0].article }}</a
             >
+              {{ rows[0].article }}
+            </a>
           </strong>
           <a
             :href="get_history_url(rows[0].article)"
             class="ainb-history-link"
             target="_blank"
             rel="noopener noreferrer"
-            >(hist)</a
           >
+            (hist)
+          </a>
         </div>
 
         <div class="ainb-form-field">
@@ -357,19 +360,19 @@ export default {
             <cdx-select
               v-model:selected="rows[0].status"
               :menu-items="status_options"
-            ></cdx-select>
+            />
           </div>
         </div>
 
         <div class="ainb-form-field">
           <div class="ainb-form-label">Notes:</div>
-          <cdx-text-area v-model="rows[0].notes" rows="4"></cdx-text-area>
+          <cdx-text-area v-model="rows[0].notes" rows="4" />
         </div>
       </div>
 
       <div v-else>
         <label class="ainb-hide-resolved-label">
-          <input type="checkbox" v-model="hide_resolved" />
+          <input v-model="hide_resolved" type="checkbox" />
           Hide resolved entries
         </label>
 
@@ -398,15 +401,18 @@ export default {
                     class="ainb-history-link"
                     target="_blank"
                     rel="noopener noreferrer"
-                    >(hist)</a
                   >
+                    (hist)
+                  </a>
                 </td>
                 <template v-if="row.multiple_matches">
+                  <!-- eslint-disable vue/no-v-html -->
                   <td
                     colspan="2"
                     class="ainb-error"
                     v-html="duplicate_error"
                   ></td>
+                  <!-- eslint-enable vue/no-v-html -->
                 </template>
                 <template v-else>
                   <td>
@@ -428,13 +434,13 @@ export default {
       <template #footer>
         <div class="ainb-dialog-edit-summary">
           <cdx-text-input
-            name="ainb_custom_summary"
+            v-if="!app_loading"
             id="ainb_custom_summary"
             v-model="custom_summary"
+            name="ainb_custom_summary"
             placeholder="Edit summary (optional)"
             maxlength="200"
             aria-label="Custom edit summary"
-            v-if="!app_loading"
           ></cdx-text-input>
         </div>
         <div class="ainb-dialog-footer">
@@ -449,10 +455,10 @@ export default {
           <div>
             <cdx-button @click="close_app">Cancel</cdx-button>
             <cdx-button
+              :disabled="!can_save"
               action="progressive"
               weight="primary"
               @click="save_changes"
-              :disabled="!can_save"
             >
               Save
             </cdx-button>
