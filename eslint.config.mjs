@@ -1,10 +1,11 @@
 import js from "@eslint/js";
 import globals from "globals";
 import { defineConfig } from "eslint/config";
+import pluginVue from "eslint-plugin-vue";
 
 export default defineConfig([
   {
-    files: ["**/*.{js,mjs,cjs}"],
+    files: ["**/*.{js,mjs,cjs,vue}"],
     plugins: { js },
     extends: ["js/recommended"],
     languageOptions: {
@@ -15,4 +16,5 @@ export default defineConfig([
       },
     },
   },
+  pluginVue.configs["flat/recommended"],
 ]);

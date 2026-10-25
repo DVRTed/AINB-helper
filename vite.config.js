@@ -29,7 +29,7 @@ const eslint_watch = () => {
     name: "eslint-watch",
     async buildStart() {
       try {
-        const results = await eslint.lintFiles(["src/**/*.{js,mjs,cjs}"]);
+        const results = await eslint.lintFiles(["src/**/*.{js,mjs,cjs,vue}"]);
         const formatter = await eslint.loadFormatter("stylish");
         const result_text = await formatter.format(results);
         if (result_text.trim()) {
