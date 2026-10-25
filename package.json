@@ -1,8 +1,9 @@
 {
     "scripts": {
         "dev": "vite build --mode development --watch",
-        "build": "vite build --mode production",
-        "build:usync": "USYNC=1 vite build --mode production"
+        "lint": "eslint .",
+        "build": "eslint . && vite build --mode production",
+        "build:usync": "eslint . && USYNC=1 vite build --mode production"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
