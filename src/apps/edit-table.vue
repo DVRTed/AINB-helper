@@ -317,8 +317,11 @@ export default {
           );
         })
         .each(function () {
-          $(this).find("td").eq(2).text("updating...");
-          $(this).find("td").eq(3).text("updating...");
+          const $cells = $(this).find("td");
+          $(this).addClass("ainb-row-updating");
+          $cells.eq(2).addClass("ainb-updating-cell ainb-updating-label");
+          $cells.eq(3).addClass("ainb-updating-cell");
+          $(this).find(".ainb-edit-btn").prop("disabled", true);
         });
       const before_unload = (event) => {
         event.preventDefault();

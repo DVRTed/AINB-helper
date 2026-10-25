@@ -95,6 +95,34 @@
   margin: 4px 0 0 0;
 }
 
+.ainb-row-updating>td {
+  background-color: #eaf3ff !important;
+}
+
+.ainb-updating-cell {
+  color: transparent !important;
+}
+
+.ainb-updating-cell>* {
+  visibility: hidden !important;
+}
+
+.ainb-updating-label {
+  position: relative;
+}
+
+.ainb-updating-label::after {
+  content: "Updating...";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding: 5px 8px;
+  color: #202122;
+  font-weight: 600;
+  visibility: visible;
+}
+
 .ainb-step2 {
   padding: 0.75em 0;
 }
