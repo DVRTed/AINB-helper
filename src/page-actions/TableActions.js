@@ -22,15 +22,25 @@ export function init_row_editing() {
       const $header_tr = $table.find("tr").has("th").first();
       $header_tr.prepend('<th class="ainb-action-header">Action</th>');
 
-      // batch edit button; populate array of { article, is_new } objects.
+      // elements in the row to trigger set_case_origin
+      const origin_trigger_selector = [
+        "a:first",
+        'a[href*="Special:Diff"]',
+        'a[href*="Special:History"]',
+        'a[href*="diff="]',
+        'a[href*="oldid="]',
+      ].join(", ");
+
+      // populate array of { article, is_new } objects.
       const articles = $table
         .find('tr[class*="aic-row-"]')
         .map(function () {
-          const $link = $(this).find("a").first();
+          const $row = $(this);
+          const $link = $row.find("a").first();
           const title = $link.text().trim();
           if (!title) return null;
 
-          $link.on("click auxclick contextmenu", () =>
+          $row.on("click auxclick contextmenu", origin_trigger_selector, () =>
             set_case_origin(title, wgPageName),
           );
 
