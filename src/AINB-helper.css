@@ -773,7 +773,18 @@
   text-align: right;
 }
 
+.ainb-table-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em 1em;
+  margin-top: 4px;
+}
+
 .ainb-hide-resolved .ainb-row-resolved {
+  display: none;
+}
+
+.ainb-only-created .ainb-row:not(.ainb-row-created) {
   display: none;
 }
 
