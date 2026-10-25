@@ -31,9 +31,11 @@ const eslint_watch = () => {
       try {
         const results = await eslint.lintFiles(["src/**/*.{js,mjs,cjs}"]);
         const formatter = await eslint.loadFormatter("stylish");
-        const resultText = await formatter.format(results);
-        if (resultText.trim()) {
-          console.log(resultText);
+        const result_text = await formatter.format(results);
+        if (result_text.trim()) {
+          console.log(result_text);
+        } else {
+          console.log("\x1b[1m\x1b[32m\nESLint checks passed\n\x1b[0m");
         }
       } catch (err) {
         console.error("ESLint watch error:", err);
