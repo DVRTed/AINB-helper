@@ -17,7 +17,7 @@ import {
   api,
   get_page_wikitext,
   get_page_info,
-} from "./shared.js";
+} from "../shared.js";
 
 const TRACKING_SECTION = "Cleanup";
 const TRACKING_SECTION_RE =

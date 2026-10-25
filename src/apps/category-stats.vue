@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, reactive } from "vue";
-import { api, format_number, script_url } from "./shared.js";
+import { api, format_number, script_url } from "../shared.js";
 
 const CATEGORY_STATS_PAGE = "User:DVRTed bot/AINB-stats.json";
 

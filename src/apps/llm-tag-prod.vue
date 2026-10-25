@@ -18,7 +18,7 @@ import {
   get_case_origin,
   normalize_title,
   rm_underscores,
-} from "./shared.js";
+} from "../shared.js";
 import { build_article_row } from "./main-app.vue";
 
 const LAST_CASE_KEY = "ainb-llm-tag-last-case";

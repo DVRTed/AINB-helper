@@ -1,6 +1,6 @@
 import { create_app, get_case_username, set_case_origin } from "../shared.js";
-import EditTable from "../edit-table.vue";
-import UpdateTable from "../rebuild-table.vue";
+import EditTable from "../apps/edit-table.vue";
+import UpdateTable from "../apps/rebuild-table.vue";
 
 const wgPageName = mw.config.get("wgPageName");
 

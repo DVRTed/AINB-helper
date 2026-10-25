@@ -15,7 +15,7 @@ import {
   find_template_ranges,
   normalize_title,
   splice,
-} from "./shared.js";
+} from "../shared.js";
 
 export default {
   components: { CdxButton, CdxCheckbox, CdxDialog, CdxMessage },

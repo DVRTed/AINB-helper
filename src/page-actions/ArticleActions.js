@@ -1,5 +1,5 @@
-import LlmTagProd from "../llm-tag-prod.vue";
-import AuthorHighlight from "../author-highlight.vue";
+import LlmTagProd from "../apps/llm-tag-prod.vue";
+import AuthorHighlight from "../apps/author-highlight.vue";
 
 import {
   create_app,

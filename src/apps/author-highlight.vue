@@ -32,7 +32,7 @@
 
 <script>
 import { CdxButton, CdxDialog } from "@wikimedia/codex";
-import { api, get_case_origin } from "./shared.js";
+import { api, get_case_origin } from "../shared.js";
 
 const WIKIWHO =
   "https://wikiwho.wmcloud.org/en/api/v1.0.0-beta/latest_rev_content/";

@@ -16,8 +16,8 @@ import {
   replace_edittext_with_session,
 } from "./page-actions/ArticleActions.js";
 
-import CategoryStats from "./category-stats.vue";
-import Main from "./main-app.vue";
+import CategoryStats from "./apps/category-stats.vue";
+import Main from "./apps/main-app.vue";
 
 mw.util.addCSS(styles);
 

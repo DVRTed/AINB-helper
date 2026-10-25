@@ -16,8 +16,8 @@ import {
   get_article_url,
   get_history_url,
   get_page_info,
-} from "./shared.js";
-import { add_page_buttons } from "./register-actions.js";
+} from "../shared.js";
+import { add_page_buttons } from "../register-actions.js";
 import { build_article_row } from "./main-app.vue";
 
 export default {
