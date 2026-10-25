@@ -846,12 +846,10 @@ export default {
             user_groups[u].push(format_edit(edit));
           });
 
-          // TODO: come back to this
           sized_diffs = Object.entries(user_groups)
-            .map(
-              ([user, links]) =>
-                `[[Special:Contributions/${user}|${user}]]: ${links.join(" ")}`,
-            )
+            .map(([user, links]) => {
+              return `[[Special:Contributions/${user}|${user}]]: ${links.join(" ")}`;
+            })
             .join("\n");
         } else {
           sized_diffs = group.edits.map(format_edit).join(" ");
@@ -1361,7 +1359,6 @@ export default {
         <div v-if="viewing_diff_edit.diff_loading" class="ainb-diff-loading">
           Loading diff...
         </div>
-        <!-- TODO: come back here too -->
         <!-- eslint-disable vue/no-v-html -->
         <div
           v-else-if="viewing_diff_edit.diff_content"
