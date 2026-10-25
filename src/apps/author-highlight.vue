@@ -13,9 +13,11 @@
       v-else
       style="white-space: pre-wrap; font-family: monospace; font-size: 0.8em"
     >
-      <template v-for="(seg, i) in segments" :key="i">
-        <mark v-if="seg.mine" style="background: #ffe066">{{ seg.text }}</mark>
-        <template v-else>{{ seg.text }}</template>
+      <template v-for="(seg, i) in segments">
+        <mark v-if="seg.mine" :key="i" style="background: #ffe066">{{
+          seg.text
+        }}</mark>
+        <span v-else :key="'else' + i">{{ seg.text }}</span>
       </template>
     </div>
     <template #footer>
