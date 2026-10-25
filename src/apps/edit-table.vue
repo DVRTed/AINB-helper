@@ -110,7 +110,7 @@ export default {
       )}" target="_blank" rel="noopener noreferrer">User:DVRTed/AINB-helper#Known_issues</a>`;
       return `This entry is duplicated, so it cannot be edited with the script; see ${link}.`;
     },
-    changed_rows() {
+    changed_rows_original_data() {
       return this.original_rows.filter((row) => {
         const current_row = this.rows.find((e) => e.article === row.article);
         if (!current_row || row.multiple_matches) return false;
@@ -121,7 +121,7 @@ export default {
       });
     },
     can_save() {
-      return !this.app_loading && this.changed_rows.length > 0;
+      return !this.app_loading && this.changed_rows_original_data.length > 0;
     },
     has_red_links() {
       return this.rows.some(
@@ -238,23 +238,78 @@ export default {
 
       // rm one or more ./,/; punctuation marks at the end
       const custom = this.custom_summary.trim().replace(/[.,;]+$/, "");
-      let auto_summary =
-        this.rows.length === 1
-          ? `Updated row for [[${this.rows[0].article}]]`
-          : `Batch edited ${this.changed_rows.length} ${
-              this.changed_rows.length === 1 ? "row" : "rows"
-            }`;
+      const is_batch_edit = this.changed_rows_original_data.length > 1;
+
+      let auto_summary = "";
+
+      if (is_batch_edit) {
+        auto_summary = `Batch edited ${this.changed_rows_original_data.length} rows`;
+
+        // group and count new statuses
+        const status_counts = this.changed_rows_original_data.reduce(
+          (counts, before) => {
+            const after = this.rows.find((r) => r.article === before.article);
+            if (after.status !== before.status) {
+              counts[after.status] = (counts[after.status] || 0) + 1;
+            }
+            return counts;
+          },
+          {},
+        );
+
+        const status_parts = Object.entries(status_counts).map(
+          ([status, count]) => `${count} ${status}`,
+        );
+        if (status_parts.length) {
+          // e.g., this would give
+          // "Batch edited 10 rows: 5 completed, 5 ongoing"
+          auto_summary += `: ${status_parts.join(", ")}`;
+        } else {
+          // "Batch edited 3 rows: only notes changed"
+          auto_summary += `: only notes changed`;
+        }
+      } else {
+        const before = this.changed_rows_original_data[0];
+        const after = this.rows.find((r) => r.article === before.article);
+
+        const status_changed = after.status !== before.status;
+        const notes_changed = (after.notes || "") !== (before.notes || "");
+
+        // e.g., this would be
+        // if status is changed
+        // "Updated status for [[TestArticle]] to completed"
+        //
+        // if status and notes changed
+        // "Updated status for [[TestArticle]] to completed, notes changed"
+        //
+        // if only notes changed
+        // "Updated notes for [[TestArticle]]"
+
+        if (status_changed) {
+          auto_summary = `Updated status for [[${after.article}]] to ${after.status}`;
+        }
+
+        if (notes_changed) {
+          if (auto_summary) auto_summary += ", notes changed";
+          else {
+            auto_summary = `Updated notes for [[${after.article}]]`;
+          }
+        }
+      }
 
       if (custom) {
         // if there's custom summary, lowercase the first letter
         auto_summary = auto_summary.replace(/^./, (c) => c.toLowerCase());
       }
 
+      // e.g., "Custom note; updated status for [[TestArticle]] to completed"
       const summary = custom
         ? `${custom}; ${auto_summary} ${APP_AD}`
         : `${auto_summary} ${APP_AD}`;
 
-      const article_names = this.changed_rows.map((r) => r.article);
+      const article_names = this.changed_rows_original_data.map(
+        (r) => r.article,
+      );
       $('tr[class*="aic-row-"]')
         .filter(function () {
           return article_names.includes(
