@@ -75,6 +75,14 @@ export function get_case_username(page) {
   return username;
 }
 
+export function get_case_page_name(page) {
+  // e.g., "Wikipedia:AI noticeboard/DVRTed/1"
+  // turns to "DVRTed/1"
+  const page_name = page.split("/").slice(1).join("/");
+
+  return page_name;
+}
+
 // called when an article link is clicked on a tracker page
 export function set_case_origin(article, tracker) {
   const now = Date.now();

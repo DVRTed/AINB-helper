@@ -19,6 +19,7 @@ import {
   get_page_info,
 } from "../shared.js";
 
+const NOTICEBOARD_PREFIX = "Wikipedia:AI noticeboard/";
 const TRACKING_SECTION = "Cleanup";
 const TRACKING_SECTION_RE =
   /^==[ \t]*(Tracking list|Tracking|Cleanup)[ \t]*==[ \t]*\r?$/im;
@@ -60,6 +61,8 @@ export default {
 
   props: {
     initial_username: { type: String, default: "" },
+    initial_case_page: { type: String, default: "" },
+    initial_is_custom_case_page: { type: Boolean, default: false },
     initial_anchor_date: { type: String, default: "" },
     initial_end_date: { type: String, default: "" },
     on_table_generated: { type: Function, default: null },
@@ -67,6 +70,8 @@ export default {
 
   data() {
     return {
+      NOTICEBOARD_PREFIX,
+
       // meta
       app_open: true,
       app_loading: false,
@@ -78,6 +83,12 @@ export default {
       // tracker
       username:
         this.initial_username || mw.config.get("wgRelevantUserName") || "",
+      case_page_title:
+        this.initial_case_page ||
+        this.initial_username ||
+        mw.config.get("wgRelevantUserName") ||
+        "",
+      custom_case_page: this.initial_is_custom_case_page,
       normalized_username: "", // username from the API
       normalized_usernames: [], // ditto, but multiple
       anchor_date: this.initial_anchor_date || "2022-12-01",
@@ -259,6 +270,14 @@ export default {
     is_multiple_users() {
       return this.normalized_usernames.length > 1;
     },
+
+    case_page_target_title() {
+      if (DEBUG_MODE) return DEBUG_PAGE;
+      if (this.custom_case_page) {
+        return NOTICEBOARD_PREFIX + this.case_page_title.trim();
+      }
+      return NOTICEBOARD_PREFIX + this.normalized_username;
+    },
   },
 
   methods: {
@@ -409,6 +428,12 @@ export default {
       this.extra_notes = "";
       this.notes_visible = false;
 
+      if (this.custom_case_page && !this.case_page_title.trim()) {
+        this.app_error = "Please enter the case page title.";
+        this.app_loading = false;
+        return;
+      }
+
       try {
         const edits = [];
         let continuation = null;
@@ -483,10 +508,7 @@ export default {
         this.normalized_usernames = normalized_users;
         this.normalized_username = normalized_users[0] || "";
 
-        // the case name is always the (first) normalized username
-        const page_title = DEBUG_MODE
-          ? DEBUG_PAGE
-          : `Wikipedia:AI noticeboard/${this.normalized_username}`;
+        const page_title = this.case_page_target_title;
         this.target_page_title = page_title;
         this.target_page_url = mw.util.getUrl(page_title);
 
@@ -962,6 +984,24 @@ export default {
               @keydown.enter="fetch_contributions"
             />
           </div>
+          <cdx-checkbox
+            v-if="!on_table_generated"
+            v-model="custom_case_page"
+            class="ainb-custom-case-page-checkbox"
+          >
+            Case page name differs from username
+          </cdx-checkbox>
+          <div v-if="custom_case_page" class="ainb-custom-case-page-row">
+            <span class="ainb-custom-case-page-prefix">
+              {{ NOTICEBOARD_PREFIX }}
+            </span>
+            <cdx-text-input
+              v-model="case_page_title"
+              class="ainb-custom-case-page-input"
+              aria-label="Case page name"
+              placeholder="Case page name"
+            />
+          </div>
 
           <div class="ainb-date-field">
             <label for="ainb-anchor-date">Only fetch edits made after:</label>
@@ -1267,7 +1307,9 @@ export default {
 
           <template v-if="current_step === 2">
             <div class="ainb-subpage-info">
-              Target: <strong>{{ target_page_title }}</strong>
+              <template v-if="!on_table_generated">
+                Target: <strong>{{ target_page_title }}</strong>
+              </template>
             </div>
             <div class="ainb-footer-buttons">
               <cdx-button @click="current_step = 1">Back</cdx-button>

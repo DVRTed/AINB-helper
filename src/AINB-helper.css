@@ -72,6 +72,41 @@
   width: 100%;
 }
 
+.ainb-custom-case-page-row {
+  display: flex;
+  align-items: stretch;
+  margin-top: 8px !important;
+}
+
+.ainb-helper .ainb-custom-case-page-checkbox {
+  /* I've forgotten what up there is setting it to 0, and I care very little about it */
+  margin: 8px 0 !important;
+}
+
+.ainb-custom-case-page-prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 0.9em;
+  white-space: nowrap;
+  color: var(--color-subtle, #54595d);
+  background-color: var(--background-color-interactive-subtle, #f8f9fa);
+  border: 1px solid var(--border-color-base, #a2a9b1);
+  border-right: 0;
+  border-radius: 2px 0 0 2px;
+}
+
+.ainb-custom-case-page-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.ainb-custom-case-page-input .cdx-text-input__input {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+
 .ainb-date-field {
   margin-top: 1em;
 }
@@ -606,109 +641,6 @@
   border-color: #999;
 }
 
-.skin-theme-clientpref-night .ainb-edit-btn {
-  border-color: #4a4a4a;
-  background: #363636;
-  color: #fff;
-}
-
-.skin-theme-clientpref-night .ainb-edit-btn:hover {
-  background: #4a4a4a;
-  border-color: #7aa7f0;
-}
-
-.ainb-form-field {
-  margin: 5px 0;
-}
-
-.skin-theme-clientpref-night .ainb-date-input,
-.skin-theme-clientpref-night .ainb-step2-toolbar,
-.skin-theme-clientpref-night .ainb-article-list,
-.skin-theme-clientpref-night .ainb-article-list-controls,
-.skin-theme-clientpref-night .ainb-revisions-header,
-.skin-theme-clientpref-night .ainb-revisions-table thead,
-.skin-theme-clientpref-night .ainb-subpage-info,
-.skin-theme-clientpref-night .ainb-notes-field textarea,
-.skin-theme-clientpref-night .ainb-diff-select,
-.skin-theme-clientpref-night .ainb-diff-content,
-.skin-theme-clientpref-night .ainb-diff-toggle {
-  background: #2a2a2a;
-  border-color: #4a4a4a;
-}
-
-.skin-theme-clientpref-night .ainb-date-input,
-.skin-theme-clientpref-night .ainb-total-badge,
-.skin-theme-clientpref-night .ainb-total-badge b,
-.skin-theme-clientpref-night .ainb-article-item-title,
-.skin-theme-clientpref-night .ainb-revisions-title,
-.skin-theme-clientpref-night .ainb-col-summary,
-.skin-theme-clientpref-night .ainb-notes-field textarea,
-.skin-theme-clientpref-night .ainb-notes-field label,
-.skin-theme-clientpref-night .ainb-diff-select,
-.skin-theme-clientpref-night .ainb-diff-toggle {
-  color: #fff;
-}
-
-.skin-theme-clientpref-night .ainb-step2-subtitle,
-.skin-theme-clientpref-night .ainb-article-empty,
-.skin-theme-clientpref-night .ainb-revisions-empty,
-.skin-theme-clientpref-night .ainb-revisions-subtitle,
-.skin-theme-clientpref-night .ainb-revisions-table thead th,
-.skin-theme-clientpref-night .ainb-diff-meta-comment,
-.skin-theme-clientpref-night .ainb-col-time {
-  color: #ccc;
-}
-
-.skin-theme-clientpref-night .ainb-step2-layout,
-.skin-theme-clientpref-night .ainb-diff-row {
-  border-color: #4a4a4a;
-}
-
-.skin-theme-clientpref-night .ainb-article-item {
-  border-bottom-color: #3a3a3a;
-}
-
-.skin-theme-clientpref-night .ainb-sort-toggle button {
-  background: #363636;
-  border-color: #4a4a4a;
-  color: #ddd;
-}
-
-.skin-theme-clientpref-night .ainb-sort-toggle button.active {
-  background: #36c;
-  border-color: #36c;
-  color: #fff;
-}
-
-.skin-theme-clientpref-night .ainb-article-item:hover,
-.skin-theme-clientpref-night .ainb-diff-row:hover,
-.skin-theme-clientpref-night .ainb-diff-toggle:hover {
-  background: #363636;
-}
-
-.skin-theme-clientpref-night .ainb-article-item-active,
-.skin-theme-clientpref-night .ainb-diff-row-selected {
-  background: #1a2635;
-}
-
-.skin-theme-clientpref-night .ainb-article-item-active {
-  border-left-color: #7aa7f0;
-}
-
-.skin-theme-clientpref-night .ainb-diff-content .diff-context {
-  background: #363636;
-  color: #fff;
-}
-
-.skin-theme-clientpref-night .ainb-diff-content .diff-deletedline {
-  background: #a51729;
-  color: #fff;
-}
-
-.skin-theme-clientpref-night .ainb-diff-content .diff-addedline {
-  background: #087c26;
-  color: #fff;
-}
 
 .ainb-progress-wrap {
   margin-bottom: 1em;
@@ -1093,4 +1025,116 @@ a.ainb-check-pct.ainb-disabled {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/* night mode tedium */
+
+.skin-theme-clientpref-night .ainb-edit-btn {
+  border-color: #4a4a4a;
+  background: #363636;
+  color: #fff;
+}
+
+.skin-theme-clientpref-night .ainb-edit-btn:hover {
+  background: #4a4a4a;
+  border-color: #7aa7f0;
+}
+
+.ainb-form-field {
+  margin: 5px 0;
+}
+
+.skin-theme-clientpref-night .ainb-date-input,
+.skin-theme-clientpref-night .ainb-step2-toolbar,
+.skin-theme-clientpref-night .ainb-article-list,
+.skin-theme-clientpref-night .ainb-article-list-controls,
+.skin-theme-clientpref-night .ainb-revisions-header,
+.skin-theme-clientpref-night .ainb-revisions-table thead,
+.skin-theme-clientpref-night .ainb-subpage-info,
+.skin-theme-clientpref-night .ainb-notes-field textarea,
+.skin-theme-clientpref-night .ainb-diff-select,
+.skin-theme-clientpref-night .ainb-diff-content,
+.skin-theme-clientpref-night .ainb-diff-toggle {
+  background: #2a2a2a;
+  border-color: #4a4a4a;
+}
+
+.skin-theme-clientpref-night .ainb-date-input,
+.skin-theme-clientpref-night .ainb-total-badge,
+.skin-theme-clientpref-night .ainb-total-badge b,
+.skin-theme-clientpref-night .ainb-article-item-title,
+.skin-theme-clientpref-night .ainb-revisions-title,
+.skin-theme-clientpref-night .ainb-col-summary,
+.skin-theme-clientpref-night .ainb-notes-field textarea,
+.skin-theme-clientpref-night .ainb-notes-field label,
+.skin-theme-clientpref-night .ainb-diff-select,
+.skin-theme-clientpref-night .ainb-diff-toggle {
+  color: #fff;
+}
+
+.skin-theme-clientpref-night .ainb-step2-subtitle,
+.skin-theme-clientpref-night .ainb-article-empty,
+.skin-theme-clientpref-night .ainb-revisions-empty,
+.skin-theme-clientpref-night .ainb-revisions-subtitle,
+.skin-theme-clientpref-night .ainb-revisions-table thead th,
+.skin-theme-clientpref-night .ainb-diff-meta-comment,
+.skin-theme-clientpref-night .ainb-col-time {
+  color: #ccc;
+}
+
+.skin-theme-clientpref-night .ainb-step2-layout,
+.skin-theme-clientpref-night .ainb-diff-row {
+  border-color: #4a4a4a;
+}
+
+.skin-theme-clientpref-night .ainb-article-item {
+  border-bottom-color: #3a3a3a;
+}
+
+.skin-theme-clientpref-night .ainb-sort-toggle button {
+  background: #363636;
+  border-color: #4a4a4a;
+  color: #ddd;
+}
+
+.skin-theme-clientpref-night .ainb-sort-toggle button.active {
+  background: #36c;
+  border-color: #36c;
+  color: #fff;
+}
+
+.skin-theme-clientpref-night .ainb-article-item:hover,
+.skin-theme-clientpref-night .ainb-diff-row:hover,
+.skin-theme-clientpref-night .ainb-diff-toggle:hover {
+  background: #363636;
+}
+
+.skin-theme-clientpref-night .ainb-article-item-active,
+.skin-theme-clientpref-night .ainb-diff-row-selected {
+  background: #1a2635;
+}
+
+.skin-theme-clientpref-night .ainb-article-item-active {
+  border-left-color: #7aa7f0;
+}
+
+.skin-theme-clientpref-night .ainb-diff-content .diff-context {
+  background: #363636;
+  color: #fff;
+}
+
+.skin-theme-clientpref-night .ainb-diff-content .diff-deletedline {
+  background: #a51729;
+  color: #fff;
+}
+
+.skin-theme-clientpref-night .ainb-diff-content .diff-addedline {
+  background: #087c26;
+  color: #fff;
+}
+
+.skin-theme-clientpref-night .ainb-custom-case-page-prefix {
+  background-color: #2a2a2a;
+  border-color: #4a4a4a;
+  color: #ccc;
 }
