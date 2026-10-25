@@ -5,7 +5,7 @@ import {
   CdxDialog,
   CdxMessage,
 } from "@wikimedia/codex";
-import { build_table_text } from "./main-app.vue";
+import MainApp, { build_table_text } from "./main-app.vue";
 import {
   APP_AD,
   api,
@@ -18,7 +18,7 @@ import {
 } from "../shared.js";
 
 export default {
-  components: { CdxButton, CdxCheckbox, CdxDialog, CdxMessage },
+  components: { CdxButton, CdxCheckbox, CdxDialog, CdxMessage, MainApp },
 
   props: {
     initial_username: { type: String, default: "" },
@@ -208,7 +208,7 @@ export default {
       </template>
     </cdx-dialog>
 
-    <Main
+    <MainApp
       v-if="app_started"
       :initial_username="initial_username"
       :initial_anchor_date="initial_anchor_date"

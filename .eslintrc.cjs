@@ -15,6 +15,11 @@ module.exports = {
     mw: "readonly",
   },
   rules: {
+    "vue/no-undef-properties": "error",
+    "vue/no-unused-vars": "error",
+    "vue/no-undef-components": "error",
+    "vue/require-v-for-key": "error",
+    "vue/no-mutating-props": "error",
     "vue/max-attributes-per-line": "off",
     "vue/singleline-html-element-content-newline": "off",
     "vue/html-self-closing": "off",
