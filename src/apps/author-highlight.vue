@@ -13,9 +13,11 @@
       v-else
       style="white-space: pre-wrap; font-family: monospace; font-size: 0.8em"
     >
-      <template v-for="(seg, i) in segments" :key="i">
-        <mark v-if="seg.mine" style="background: #ffe066">{{ seg.text }}</mark>
-        <template v-else>{{ seg.text }}</template>
+      <template v-for="(seg, i) in segments">
+        <mark v-if="seg.mine" :key="i" style="background: #ffe066">{{
+          seg.text
+        }}</mark>
+        <span v-else :key="'else' + i">{{ seg.text }}</span>
       </template>
     </div>
     <template #footer>
@@ -31,21 +33,18 @@
 </template>
 
 <script>
-import { CdxButton, CdxDialog, CdxProgressIndicator } from "@wikimedia/codex";
-import { api, get_case_origin } from "./shared.js";
+import { CdxButton, CdxDialog } from "@wikimedia/codex";
+import { api, get_case_origin } from "../shared.js";
 
 const WIKIWHO =
   "https://wikiwho.wmcloud.org/en/api/v1.0.0-beta/latest_rev_content/";
 const EDIT_TEXT_KEY = "ainb-author-highlight-edit-text";
 
 export default {
-  components: { CdxButton, CdxDialog, CdxProgressIndicator },
+  components: { CdxButton, CdxDialog },
   props: {
     article: { type: String, required: true },
     username: { type: String, required: true },
-  },
-  mounted() {
-    this.show(this.username);
   },
   data() {
     return {
@@ -63,6 +62,11 @@ export default {
       return this.segments.some((segment) => segment.mine && segment.text);
     },
   },
+
+  mounted() {
+    this.show(this.username);
+  },
+
   methods: {
     open_edit() {
       const updated_wikitext = this.segments

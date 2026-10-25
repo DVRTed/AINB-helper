@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import fs from "node:fs";
+import { ESLint } from "eslint";
 
 const HEADER =
   "// Userscript to manage the AI noticeboard's cases and tracking tables\n" +
@@ -22,12 +23,34 @@ const wiki_wrap = (with_usync) => ({
   },
 });
 
+const eslint_watch = () => {
+  const eslint = new ESLint();
+  return {
+    name: "eslint-watch",
+    async buildStart() {
+      try {
+        const results = await eslint.lintFiles(["src/**/*.{js,mjs,cjs,vue}"]);
+        const formatter = await eslint.loadFormatter("stylish");
+        const result_text = await formatter.format(results);
+        if (result_text.trim()) {
+          console.log(result_text);
+        } else {
+          console.log("\x1b[1m\x1b[32m\nESLint checks passed\n\x1b[0m");
+        }
+      } catch (err) {
+        console.error("ESLint watch error:", err);
+      }
+    },
+  };
+};
+
 export default defineConfig(({ mode }) => {
   // const prod = true;
   const prod = mode === "production";
 
   return {
-    plugins: [vue(), wiki_wrap(process.env.USYNC === "1")],
+    // eslint-disable-next-line no-undef
+    plugins: [vue(), eslint_watch(), wiki_wrap(process.env.USYNC === "1")],
     define: { __DEV__: JSON.stringify(!prod) },
     build: {
       outDir: "dist",

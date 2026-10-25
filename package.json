@@ -1,16 +1,20 @@
 {
     "scripts": {
         "dev": "vite build --mode development --watch",
-        "build": "vite build --mode production",
-        "build:usync": "USYNC=1 vite build --mode production"
+        "lint": "eslint .",
+        "build": "eslint . && vite build --mode production",
+        "build:usync": "eslint . && USYNC=1 vite build --mode production"
     },
     "devDependencies": {
-        "@eslint/js": "^10.0.1",
+        "@eslint/js": "^8.57.1",
         "@vitejs/plugin-vue": "^6.0.9",
-        "eslint": "^10.13.0",
+        "eslint": "^8.57.1",
+        "eslint-plugin-vue": "^9.33.0",
         "globals": "^17.13.0",
-        "prettier": "^2.8.8",
+        "prettier": "^3.9.10",
+        "prettier-eslint": "^16.4.2",
         "terser": "^5.51.2",
-        "vite": "^8.3.1"
+        "vite": "^8.3.1",
+        "vue-eslint-parser": "^9.4.3"
     }
 }

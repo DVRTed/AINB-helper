@@ -1,26 +1,10 @@
-import {
-  DEBUG_MODE,
-  DEBUG_PAGE,
-  create_app,
-  get_case_username,
-  set_case_origin,
-} from "./shared.js";
-import {
-  apply_author_highlight_edit_text,
-  init_check_affected,
-  init_highlight_author,
-} from "./page-actions/WikiWhoActions.js";
-import CategoryStats from "./category-stats.vue";
-import EditTable from "./edit-table.vue";
-import EditBanner from "./edit-banner.vue";
-import LlmTagProd from "./llm-tag-prod.vue";
-import Main from "./main.vue";
-import UpdateTable from "./rebuild-table.vue";
-import styles from "./AINB-helper.css?inline";
+import { create_app, get_case_username, set_case_origin } from "../shared.js";
+import EditTable from "../apps/edit-table.vue";
+import UpdateTable from "../apps/rebuild-table.vue";
 
-mw.util.addCSS(styles);
+const wgPageName = mw.config.get("wgPageName");
 
-function get_table_actions($table) {
+export function get_table_actions($table) {
   let $actions = $table.prev(".ainb-table-actions");
   if (!$actions.length) {
     $actions = $('<div class="ainb-table-actions">');
@@ -29,7 +13,7 @@ function get_table_actions($table) {
   return $actions;
 }
 
-function init_row_editing() {
+export function init_row_editing() {
   $("table")
     .has('tr[class*="aic-row-"]')
     .not(".ainb-row-editing-done")
@@ -96,12 +80,12 @@ function init_row_editing() {
     });
 }
 
-function get_row_status($row) {
+export function get_row_status($row) {
   const match = $row.attr("class")?.match(/\baic-row-(\S+)/);
   return match ? match[1] : "unknown";
 }
 
-function init_progress_bar() {
+export function init_progress_bar() {
   const STATUS_KEYS = [
     "completed",
     "unnecessary",
@@ -178,35 +162,8 @@ function init_progress_bar() {
       $table.before($bar);
     });
 }
-function init_banner_edit() {
-  if ($(".ainb-page-actions").length) return;
-  const $banner = $(".ainb-b-top").first();
-  const $case_button = $(
-    '<button type="button" class="cdx-button cdx-button--action-progressive">',
-  )
-    .text("Edit case banner")
-    .on("click", (e) => {
-      e.preventDefault();
-      create_app(EditBanner);
-    });
 
-  const $tracking_button = $('<button type="button" class="cdx-button">')
-    .text("Add tracking table")
-    .on("click", (e) => {
-      e.preventDefault();
-      create_app(Main, {
-        initial_username: get_case_username(wgPageName),
-      });
-    });
-
-  const $actions = $('<div class="ainb-page-actions">').append(
-    $case_button,
-    $tracking_button,
-  );
-  if ($banner.length) $banner.after($actions);
-}
-
-function init_infocard_updates() {
+export function init_infocard_updates() {
   const $items = $('.wiki-template-infocard, table:has(tr[class*="aic-row-"])');
 
   let infocard = null;
@@ -253,70 +210,3 @@ function init_infocard_updates() {
     infocard = null;
   });
 }
-
-const wgPageName = mw.config.get("wgPageName");
-const wgNamespaceNumber = mw.config.get("wgNamespaceNumber");
-const wgAction = mw.config.get("wgAction");
-
-export function init_page_features() {
-  init_progress_bar();
-  init_row_editing();
-  init_check_affected();
-  init_banner_edit();
-  init_infocard_updates();
-}
-
-$(() => {
-  apply_author_highlight_edit_text();
-
-  if (
-    wgPageName === "Category:AI_noticeboard_open_cleanup_cases" &&
-    wgAction === "view"
-  ) {
-    const target = document.querySelector("#mw-content-text");
-    if (target) {
-      create_app(CategoryStats, { mount_target: target });
-    }
-  }
-
-  const portlet_link = mw.util.addPortletLink(
-    "p-tb",
-    "#",
-    "New AINB tracking",
-    "t-ainb-tracking",
-    "Generate tracking subpage for AINB",
-  );
-  $(portlet_link).on("click", function (e) {
-    e.preventDefault();
-    create_app(Main);
-  });
-
-  if (
-    (wgPageName.startsWith("Wikipedia:AI_noticeboard/") ||
-      wgPageName === DEBUG_PAGE) &&
-    wgAction === "view"
-  ) {
-    init_page_features();
-    mw.hook("wikipage.content").add(($content) => {
-      if (!$content.is("#mw-content-text")) return;
-      init_page_features();
-    });
-  }
-
-  if ([0, 118].includes(wgNamespaceNumber) || DEBUG_MODE) {
-    const llm_portlet_link = mw.util.addPortletLink(
-      "p-cactions",
-      "#",
-      "LLM tag/prod",
-      "t-llm-tag-prod",
-      "LLM tag/prod helper",
-    );
-
-    $(llm_portlet_link).on("click", function (e) {
-      e.preventDefault();
-      create_app(LlmTagProd);
-    });
-  }
-
-  if (wgNamespaceNumber === 0) init_highlight_author();
-});

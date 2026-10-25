@@ -1,9 +1,9 @@
 <script>
 import { CdxButton, CdxDialog, CdxSelect, CdxField } from "@wikimedia/codex";
-import { APP_AD, api, close_app, get_page_info } from "./shared.js";
+import { APP_AD, api, close_app, get_page_info } from "../shared.js";
 
 // todo: move to shared.js if anything else uses it
-const BANNER_RE = /\{\{\s*AINB case banner\s*([\|\s\S]*?)\}\}/;
+const BANNER_RE = /\{\{\s*AINB case banner\s*([|\s\S]*?)\}\}/;
 
 /**
  * creates map_option object for a select field;
@@ -204,14 +204,14 @@ export default {
 
     <template #footer>
       <div class="ainb-dialog-footer">
-        <cdx-button @click="close_app" :disabled="app_saving"
-          >Cancel</cdx-button
-        >
+        <cdx-button :disabled="app_saving" @click="close_app">
+          Cancel
+        </cdx-button>
         <cdx-button
+          :disabled="app_saving || !current_params.length"
           action="progressive"
           weight="primary"
           @click="save"
-          :disabled="app_saving || !current_params.length"
         >
           {{ app_saving ? "Saving..." : "Save" }}
         </cdx-button>
