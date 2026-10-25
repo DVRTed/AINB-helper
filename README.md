@@ -4,7 +4,7 @@ For further information, see the **[AINB-helper script page](https://en.wikipedi
 
 ## Quick overview
 
-This project uses Vite to build Codex-based Vue components (referred to as "apps" throughout the codebase) into a single file. The style file, along with all the `.vue` files inside the `/src/` directory, gets built into the **`dist/AINB-helper.js`** file.
+This project uses Vite to build Codex-based Vue components (referred to as "apps" throughout the codebase) into a single file. The style file, along with all the `.vue` components inside the `/src/apps/` directory, gets built into the **`dist/AINB-helper.js`** file.
 
 ## Building
 
@@ -36,22 +36,22 @@ There's a `build:usync` script that sets the `USYNC=1` environment variable befo
 
 ## Screenshots
 
-- The main app (`main-app.vue`)
+- The main app (`apps/main-app.vue`)
 
   <img alt="main app" width="70%" src="https://github.com/user-attachments/assets/275ef99c-1e6d-4936-b625-6245b9d2fcac" />
   <img alt="main app 2" width="70%" src="https://github.com/user-attachments/assets/b649b08c-19b1-404d-a985-49e601e68f51" />
 
-- The LLM tag/prod app (`llm-tag-prod.vue`)
+- The LLM tag/prod app (`apps/llm-tag-prod.vue`)
 
   <img alt="llm-tag-prod" width="70%" src="https://github.com/user-attachments/assets/40e0fb24-cfa7-43ec-9030-07e08a0bc75d" />
   <img alt="llm-tag-prod_2" width="70%" src="https://github.com/user-attachments/assets/78ecf21c-f63c-4594-88c6-38bd8b8f1cba" />
 
-- The edit table app (`edit-table.vue`)
+- The edit table app (`apps/edit-table.vue`)
 
   <img alt="edit-table" width="70%" src="https://github.com/user-attachments/assets/c1913640-0bd0-4a7d-bdc2-64d892eac783" />
   <img alt="edit-table_2" width="70%" src="https://github.com/user-attachments/assets/485f99bf-841c-4614-8dea-6e25e5932ec3" />
 
-- Progress bars (`TableActions.js` and `category-stats.vue`)
+- Progress bars (`page-actions/TableActions.js` and `apps/category-stats.vue`)
 
   <img alt="progress_2" width="70%" src="https://github.com/user-attachments/assets/872a6fa8-c566-4360-b133-364458201a13" />
   <img alt="progress" width="70%" src="https://github.com/user-attachments/assets/ba60e6a3-a98b-4227-8dc4-d9b2c999d8c7" />
