@@ -41,7 +41,7 @@ if (wgAction === "view") {
   if (wgPageName in cases_categories) create_app(CategoryStats);
 
   if (
-    wgPageName.startsWith("Wikipedia:AI noticeboard/") ||
+    wgPageName.startsWith("Wikipedia:AI_noticeboard/") ||
     wgPageName == DEBUG_PAGE
   ) {
     add_page_buttons();
