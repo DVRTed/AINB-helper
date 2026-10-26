@@ -78,7 +78,7 @@ export function get_case_username(page) {
 export function get_case_page_name(page) {
   // e.g., "Wikipedia:AI noticeboard/DVRTed/1"
   // turns to "DVRTed/1"
-  const page_name = page.split("/").slice(1).join("/");
+  const page_name = normalize_title(page).split("/").slice(1).join("/");
 
   return page_name;
 }
