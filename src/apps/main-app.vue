@@ -19,7 +19,7 @@ import {
   get_page_info,
 } from "../shared.js";
 
-const NOTICEBOARD_PREFIX = "Wikipedia:AI noticeboard/";
+export const NOTICEBOARD_PREFIX = "Wikipedia:AI noticeboard/";
 const TRACKING_SECTION = "Cleanup";
 const TRACKING_SECTION_RE =
   /^==[ \t]*(Tracking list|Tracking|Cleanup)[ \t]*==[ \t]*\r?$/im;
