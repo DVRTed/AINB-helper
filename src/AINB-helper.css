@@ -1065,13 +1065,15 @@
 }
 
 .ainb-check-pct {
-  color: var(--color-subtle, #54595d);
+  /* visited url seems to override it... */
+  color: var(--color-subtle, #54595d) !important;
   font-size: 0.85em;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .ainb-check-pct:hover {
-  color: var(--color-base, #202122);
+  color: var(--color-base, #202122) !important;
 }
 
 a.ainb-check-pct.ainb-disabled {

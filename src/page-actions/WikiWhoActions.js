@@ -12,8 +12,6 @@ const MAX_AFFECTED_LOOKUPS = 5;
 let active_affected_lookups = 0;
 
 export function init_check_affected() {
-  const username = get_case_username(wgPageName);
-
   $('tr[class*="aic-row-"]')
     .not(".ainb-check-affected-done")
     .each(function () {
@@ -26,7 +24,6 @@ export function init_check_affected() {
 
       const $link = $("<a>")
         .addClass("ainb-check-pct")
-        .attr("href", "#")
         .text("check affected %")
         .on("click", async function (e) {
           e.preventDefault();
@@ -39,9 +36,18 @@ export function init_check_affected() {
           const $span = $("<span>")
             .addClass("ainb-check-pct")
             .text("checking...");
-          $link.replaceWith($span);
+          // rm existing result
+          $link.next("span.ainb-check-pct").remove();
+          $link.hide().after($span);
 
           try {
+            const username = await get_case_username();
+            if (!username) {
+              $span.remove();
+              $link.show();
+              return;
+            }
+
             const uq = new URLSearchParams({
               action: "query",
               list: "users",
@@ -95,15 +101,18 @@ export function init_check_affected() {
             if (active_affected_lookups < MAX_AFFECTED_LOOKUPS) {
               $("a.ainb-check-pct").removeClass("ainb-disabled");
             }
+            if ($span.parent().length) $link.text("[recheck] ").show();
           }
         });
 
       const $highlight_link = $("<a>")
         .addClass("ainb-check-pct")
-        .attr("href", "#")
         .text("highlight")
-        .on("click", (e) => {
+        .on("click", async (e) => {
           e.preventDefault();
+          const username = await get_case_username();
+          if (!username) return;
+
           set_case_origin(article, wgPageName);
           create_app(AuthorHighlight, { article, username });
         });

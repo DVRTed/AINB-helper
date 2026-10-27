@@ -22,13 +22,16 @@ export function init_banner_edit() {
     });
 
   const initial_case_page = get_case_page_name(wgPageName);
-  const initial_username = get_case_username(wgPageName);
-  const initial_is_custom_case_page = initial_case_page !== initial_username;
-
   const $tracking_button = $('<button type="button" class="cdx-button">')
     .text("Add tracking table")
-    .on("click", (e) => {
+    .on("click", async (e) => {
       e.preventDefault();
+      const initial_username = await get_case_username();
+      if (!initial_username) return;
+
+      const initial_is_custom_case_page =
+        initial_case_page !== initial_username;
+
       create_app(Main, {
         initial_username,
         initial_is_custom_case_page,

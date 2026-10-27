@@ -29,7 +29,6 @@ export function init_llm_tag_prod_portlet() {
 
 export function init_highlight_author_portlet() {
   const origin = get_case_origin(wgPageName);
-  const initial_username = origin ? get_case_username(origin) : "";
   const portlet_link = mw.util.addPortletLink(
     "p-cactions",
     "#",
@@ -38,8 +37,9 @@ export function init_highlight_author_portlet() {
     "Highlight content by an author",
   );
 
-  $(portlet_link).on("click", function (e) {
+  $(portlet_link).on("click", async function (e) {
     e.preventDefault();
+    const initial_username = origin ? await get_case_username(origin) : "";
     const username = window.prompt(
       "Enter a username to highlight the content of:",
       initial_username || "",

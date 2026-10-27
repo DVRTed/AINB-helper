@@ -1,10 +1,12 @@
 import { createMwApp } from "vue";
+import Option_picker from "./apps/components/option_picker.vue";
 
 export const APP_ID = "ainb-helper";
 export const APP_AD = "(using [[User:DVRTed/AINB-helper|AINB-helper]])";
 // eslint-disable-next-line no-undef
 export const DEBUG_MODE = __DEV__;
 export const DEBUG_PAGE = "User:DVRTed/sandbox2";
+if (DEBUG_MODE) console.clear();
 
 export const api = new mw.Api();
 
@@ -59,20 +61,75 @@ export function normalize_title(t) {
   return title.getPrefixedText();
 }
 
-export function get_case_username(page) {
-  // e.g., "Wikipedia:AI noticeboard/DVRTed/1"
+// async to await the select component when there are multiple usernames
+export async function get_case_username(page) {
+  // ".ainb-userlinks" is added by {{User-ainb}}, [[special:diff/1382279612]]
+  const ainb_userlinks = $(".ainb-userlinks");
 
-  // select the first subpage
-  // e.g., "DVRTed"
-  const subpage = normalize_title(page).split("/")[1];
-  if (!subpage) return null;
+  const legacy = () => {
+    // no ainb userlinks or a page name is given, fallback to legacy
 
-  const username = subpage
-    .replace(/^\d{4}-\d{2}-\d{2} /, "") // rm date prefix
-    .replace(/ \(\d+\)$/, "") // rm (1), (2) etc from title
-    .trim();
+    // e.g., "Wikipedia:AI noticeboard/DVRTed/1"
+    // select the first subpage
+    // e.g., "DVRTed"
+    const subpage = normalize_title(page || wgPageName).split("/")[1];
+    if (!subpage) return null;
 
-  return username;
+    const username = subpage
+      .replace(/^\d{4}-\d{2}-\d{2} /, "") // rm date prefix
+      .replace(/ \(\d+\)$/, "") // rm (1), (2) etc from title
+      .trim();
+    return username;
+  };
+
+  if (page || !ainb_userlinks.length) return legacy();
+
+  // page has ainb userlinks
+  const all_usernames = ainb_userlinks
+    .map((_, el) => {
+      const href = $(el).find('a[href*="/wiki/User:"]').first().attr("href");
+      if (!href) return null;
+
+      try {
+        // "/wiki/User:DVRTed_bot#top" -> "User:DVRTed bot"
+        const title = normalize_title(
+          decodeURIComponent(href.split("/wiki/")[1].split("#")[0]),
+        );
+        // drop "User:" prefix and any subpage
+        return title.split("/")[0].replace(/^user:/i, "");
+      } catch (e) {
+        console.error(e);
+        return null;
+      }
+    })
+    .get();
+
+  const unique_usernames = new Set(all_usernames);
+  const usernames = [...unique_usernames];
+
+  // something went wrong while selecting/parsing ainb userlinks, fallback to legacy
+  if (!usernames.length) return legacy();
+
+  // only one unique userlink, return it
+  if (usernames.length <= 1) return usernames[0];
+
+  // multiple usernames, prompt user to pick one
+  const options = usernames.map((name) => {
+    return { label: `User:${name}`, value: name };
+  });
+
+  const choice = await open_component(
+    Option_picker,
+    {
+      title: "Pick a username",
+      description:
+        "There are multiple user-ainb links on this case page. Select one:",
+      options,
+    },
+    ["select", "cancel"],
+  );
+
+  return choice?.value ?? null;
 }
 
 export function get_case_page_name(page) {
@@ -219,4 +276,38 @@ export function create_app(App, props = {}) {
   if (!mount_target) {
     current_app = app;
   }
+}
+
+// mounts a component, returns the function to remove it
+export function mount_component(Component, props = {}) {
+  const mount_point = document.createElement("div");
+  document.body.appendChild(mount_point);
+
+  const app = createMwApp(Component, props);
+  app.mount(mount_point);
+
+  return function unmount() {
+    app.unmount();
+    mount_point.remove();
+  };
+}
+
+// returns a promise that resolves when the component emits
+// one of the given events.
+// resolves with the event's payload (or null).
+export function open_component(Component, props = {}, close_events = []) {
+  return new Promise((resolve) => {
+    const handlers = {};
+
+    for (const event of close_events) {
+      // "select" -> "onSelect"
+      const handler_name = "on" + event[0].toUpperCase() + event.slice(1);
+      handlers[handler_name] = (payload) => {
+        unmount();
+        resolve(payload ?? null);
+      };
+    }
+
+    const unmount = mount_component(Component, { ...props, ...handlers });
+  });
 }
