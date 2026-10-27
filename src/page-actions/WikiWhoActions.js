@@ -1,4 +1,5 @@
-import { get_case_username, wgPageName } from "../shared.js";
+import { create_app, get_case_username, wgPageName } from "../shared.js";
+import AuthorHighlight from "../apps/author-highlight.vue";
 
 const WIKIWHO_API =
   "https://wikiwho.wmcloud.org/en/api/v1.0.0-beta/latest_rev_content/";
@@ -21,7 +22,7 @@ export function init_check_affected() {
       const $link = $("<a>")
         .addClass("ainb-check-pct")
         .attr("href", "#")
-        .text("check affected % (beta)")
+        .text("check affected %")
         .on("click", async function (e) {
           e.preventDefault();
           if (active_affected_lookups >= MAX_AFFECTED_LOOKUPS) return;
@@ -92,6 +93,19 @@ export function init_check_affected() {
           }
         });
 
-      $notes.append($("<div>").addClass("ainb-check-pct-wrap").append($link));
+      const $highlight_link = $("<a>")
+        .addClass("ainb-check-pct")
+        .attr("href", "#")
+        .text("highlight")
+        .on("click", (e) => {
+          e.preventDefault();
+          create_app(AuthorHighlight, { article, username });
+        });
+
+      $notes.append(
+        $("<div>")
+          .addClass("ainb-check-pct-wrap")
+          .append($link, $("<span>").text(" · "), $highlight_link),
+      );
     });
 }
