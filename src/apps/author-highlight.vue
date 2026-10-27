@@ -1,8 +1,8 @@
 <template>
   <cdx-dialog
     v-model:open="open"
-    :title="`Highlighting content authored by User:${selected_username}`"
-    :subtitle="status"
+    :title="article"
+    :subtitle="`Highlighting content authored by User:${selected_username} · ${status}`"
     close-button-label="Close"
     style="max-width: none"
   >
