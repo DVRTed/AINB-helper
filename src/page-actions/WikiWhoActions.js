@@ -1,4 +1,9 @@
-import { create_app, get_case_username, wgPageName } from "../shared.js";
+import {
+  create_app,
+  get_case_username,
+  set_case_origin,
+  wgPageName,
+} from "../shared.js";
 import AuthorHighlight from "../apps/author-highlight.vue";
 
 const WIKIWHO_API =
@@ -99,6 +104,7 @@ export function init_check_affected() {
         .text("highlight")
         .on("click", (e) => {
           e.preventDefault();
+          set_case_origin(article, wgPageName);
           create_app(AuthorHighlight, { article, username });
         });
 

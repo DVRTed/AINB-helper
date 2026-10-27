@@ -5,6 +5,7 @@ import {
   create_app,
   get_case_origin,
   get_case_username,
+  normalize_title,
   wgPageName,
 } from "../shared.js";
 import { createMwApp, h } from "vue";
@@ -58,7 +59,7 @@ export function replace_edittext_with_session() {
 
   try {
     const { title, text, username, summary } = JSON.parse(pending);
-    if (title !== wgPageName) return;
+    if (normalize_title(title) !== normalize_title(wgPageName)) return;
 
     const $textarea = $("#wpTextbox1");
     if (!$textarea.length) return;
