@@ -319,7 +319,7 @@ export default {
     </div>
 
     <div v-if="current_step === 3" class="ainb-step ainb-new-case-step">
-      <cdx-message v-if="case_already_exists" type="information">
+      <cdx-message v-if="case_already_exists" type="notice">
         The following will be added to the Discussion section of the existing
         case page for
         <b>
