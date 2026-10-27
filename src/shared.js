@@ -159,16 +159,19 @@ export function splice(text, { start, end }, replacement) {
   return text.slice(0, start) + replacement + text.slice(end);
 }
 
-export async function get_page_info(title) {
-  const res = await api.get({
+export async function get_page_info(title, revid = null) {
+  const params = {
     action: "query",
     prop: "revisions",
-    titles: title,
     rvprop: "ids|timestamp|content",
     rvslots: "main",
     formatversion: 2,
     curtimestamp: true,
-  });
+  };
+  if (revid) params.revids = revid;
+  else params.titles = title;
+
+  const res = await api.get(params);
   const page = res.query?.pages?.[0];
   if (!page || page.missing) return null;
   const rev = page.revisions?.[0];

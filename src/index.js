@@ -17,7 +17,7 @@ import {
 } from "./page-actions/ArticleActions.js";
 
 import CategoryStats from "./apps/category-stats.vue";
-import Main from "./apps/main-app.vue";
+import NewCaseApp from "./apps/new-case-app.vue";
 
 mw.util.addCSS(styles);
 
@@ -28,13 +28,13 @@ const cases_categories = ["Category:AI_noticeboard_open_cleanup_cases"];
 const portlet_link = mw.util.addPortletLink(
   "p-tb",
   "#",
-  "New AINB tracking",
+  "New AINB case",
   "t-ainb-tracking",
-  "Generate tracking subpage for AINB",
+  "File a new AINB case",
 );
 $(portlet_link).on("click", (e) => {
   e.preventDefault();
-  create_app(Main);
+  create_app(NewCaseApp);
 });
 
 if (wgAction === "view") {
