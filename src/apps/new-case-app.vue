@@ -31,12 +31,16 @@ export default {
     CdxTextInput,
   },
 
+  props: {
+    initial_case_name: { type: String, default: "" },
+  },
+
   data() {
     return {
       app_open: true,
       app_loading: false,
 
-      current_step: 1,
+      current_step: this.initial_case_name ? 3 : 1,
 
       available_case_types: [
         { value: "article", label: "Article" },
@@ -44,8 +48,8 @@ export default {
         { value: "group", label: "Group" },
       ],
 
-      case_already_exists: false,
-      case_name_input: "",
+      case_already_exists: !!this.initial_case_name,
+      case_name_input: this.initial_case_name,
       case_type: "user",
       case_discussion_wikitext: "",
     };
@@ -73,6 +77,12 @@ export default {
     target_page_url() {
       return mw.util.getUrl(this.target_page_title);
     },
+  },
+
+  created() {
+    if (this.initial_case_name) {
+      this.case_discussion_wikitext = this.generate_case_discussion(true);
+    }
   },
 
   methods: {
@@ -320,6 +330,7 @@ export default {
         <template #label>Discussion subsection</template>
         <textarea
           v-model="case_discussion_wikitext"
+          :disabled="app_loading"
           class="ainb-new-case-discussion"
           rows="12"
         ></textarea>
@@ -359,7 +370,13 @@ export default {
             Target: <strong>{{ target_page_title }}</strong>
           </div>
           <div>
-            <cdx-button @click="current_step = 2">Back</cdx-button>
+            <cdx-button
+              v-if="!initial_case_name"
+              :disabled="app_loading"
+              @click="current_step = 2"
+            >
+              Back
+            </cdx-button>
             <cdx-button
               action="progressive"
               weight="primary"
@@ -370,7 +387,13 @@ export default {
               "
               @click="create_case_page"
             >
-              {{ app_loading ? "Writing..." : "File case" }}
+              {{
+                app_loading
+                  ? "Writing..."
+                  : case_already_exists
+                    ? "Add discussion"
+                    : "File case"
+              }}
             </cdx-button>
           </div>
         </template>
