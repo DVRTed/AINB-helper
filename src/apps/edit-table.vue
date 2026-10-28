@@ -131,6 +131,8 @@ export default {
     },
     changed_rows_original_data() {
       return this.original_rows.filter((row) => {
+        // locked rows are ignored
+        if (row.row_error) return false;
         const current_row = this.rows.find((e) => e.article === row.article);
         if (!current_row) return false;
         return (
@@ -145,6 +147,7 @@ export default {
     has_red_links() {
       return this.rows.some(
         (row) =>
+          !row.row_error &&
           row.is_new &&
           row.status !== "completed" &&
           row.status !== "unnecessary",
@@ -289,8 +292,20 @@ returns { error: str } on error
         for (const { article, is_new } of this.articles) {
           const found = this.find_row_matches(wikitext, article);
           if (found.error) {
-            this.app_error = found.error;
-            break;
+            if (this.is_single) {
+              this.app_error = found.error;
+              break;
+            }
+            // batch edit: keep the row, but lock it
+            loaded_rows.push({
+              article,
+              status: "requested",
+              notes: "",
+              match_count: 0,
+              is_new,
+              row_error: found.error,
+            });
+            continue;
           }
 
           const { matches } = found;
@@ -325,7 +340,7 @@ returns { error: str } on error
 
     mark_all_deleted_as_completed() {
       for (const row of this.rows) {
-        if (row.is_new) {
+        if (row.is_new && !row.row_error) {
           row.status = "completed";
         }
       }
@@ -611,15 +626,25 @@ returns { error: str } on error
                       {{ row.match_count }} entries in this table; all will be
                       updated.
                     </cdx-message>
+                    <cdx-message v-if="row.row_error" type="warning" inline>
+                      Appears in multiple tables, so it can't be edited here.
+                      <a href="#" @click.prevent="open_table_indexer">Reindex tables</a>
+                      to fix.
+                    </cdx-message>
                   </td>
                   <td>
                     <cdx-select
                       v-model:selected="row.status"
                       :menu-items="status_options"
+                      :disabled="!!row.row_error"
                     ></cdx-select>
                   </td>
                   <td>
-                    <cdx-text-area v-model="row.notes" rows="1"></cdx-text-area>
+                    <cdx-text-area
+                      v-model="row.notes"
+                      rows="1"
+                      :disabled="!!row.row_error"
+                    ></cdx-text-area>
                   </td>
                 </tr>
               </tbody>
