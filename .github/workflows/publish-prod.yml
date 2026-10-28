@@ -48,9 +48,9 @@ jobs:
         run: |
           artifact_dir="$(mktemp -d)"
           if [ -n "$VERSION" ]; then
-            commit_message="v$VERSION"
+            commit_message="v$VERSION (see [[User:DVRTed/AINB-helper/Changelog#v$VERSION]])"
           else
-            commit_message="$(git log -1 --format=%B)"
+            commit_message="unknown version"
           fi
           cp dist/AINB-helper.js dist/changelog.js "$artifact_dir/"
 
