@@ -53,8 +53,8 @@ export default {
             "",
           );
           const indexed_template = without_indexes.replace(
-            /^(\{\{\s*AIC article list\s*)\|/i,
-            `$1|index=${index + 1}|`,
+            /^(\{\{\s*AIC article list)\s*\|\s*/i,
+            `$1 |index=${index + 1} |\n`,
           );
 
           if (indexed_template === without_indexes) {
