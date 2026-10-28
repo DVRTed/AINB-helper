@@ -118,15 +118,15 @@ export default {
     },
     cross_table_error() {
       return (
-        `This entry appears in multiple tables, and the table can't be identified; ` +
-        `please [LINKTOTABLEINDEXER] to automatically (re)index the tables.`
+        `This entry appears in multiple tables, and the correct table couldn't be identified; ` +
+        `please [LINKTOTABLEINDEXER] to fix.`
       );
     },
     duplicate_index_error() {
       return (
         `This entry appears in multiple tables, ` +
-        `and the table's "index" param is duplicated; ` +
-        `please [LINKTOTABLEINDEXER] to automatically (re)index the tables.`
+        `and this table's index is duplicated; ` +
+        `please [LINKTOTABLEINDEXER] to fix.`
       );
     },
     changed_rows_original_data() {
@@ -530,7 +530,7 @@ returns { error: str } on error
         <cdx-message v-if="app_error" type="warning">
           <template v-if="app_error.includes('[LINKTOTABLEINDEXER]')">
             {{ app_error.split("[LINKTOTABLEINDEXER]")[0] }}
-            <a href="#" @click.prevent="open_table_indexer"> click here </a>
+            <a href="#" @click.prevent="open_table_indexer"> reindex tables </a>
             {{ app_error.split("[LINKTOTABLEINDEXER]")[1] }}
           </template>
           <template v-else>{{ app_error }}</template>
