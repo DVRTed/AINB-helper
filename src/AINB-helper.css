@@ -868,6 +868,29 @@
   padding-left: 18px;
 }
 
+.ainb-batch-edit-table-grid .cdx-message {
+  font-size: 0.8em;
+  line-height: 1.25;
+}
+
+.ainb-batch-edit-table-grid .cdx-message__content {
+  font-size: inherit;
+}
+
+.ainb-batch-edit-table-grid .cdx-message__icon {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.ainb-batch-edit-table-grid .cdx-message__icon svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.ainb-batch-edit-table-grid .cdx-message a {
+  font-size: inherit;
+}
+
 .ainb-batch-edit-table-grid td:nth-child(2)>*,
 .ainb-batch-edit-table-grid td:nth-child(3)>* {
   display: block;
