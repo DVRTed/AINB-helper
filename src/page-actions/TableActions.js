@@ -19,11 +19,12 @@ export function get_table_actions($table) {
 }
 
 export function init_row_editing() {
-  $("table")
+  $(".ainb-cleanup-table")
     .has('tr[class*="aic-row-"]')
     .not(".ainb-row-editing-done")
     .each(function () {
       const $table = $(this).addClass("ainb-row-editing-done");
+      const table_index = $($table).data("table-index");
       const $header_tr = $table.find("tr").has("th").first();
       $header_tr.prepend('<th class="ainb-action-header">Action</th>');
 
@@ -61,7 +62,7 @@ export function init_row_editing() {
           .text("Batch edit")
           .on("click", (e) => {
             e.preventDefault();
-            create_app(EditTable, { articles_input: articles });
+            create_app(EditTable, { table_index, articles_input: articles });
           });
         get_table_actions($table).append($button);
       }
@@ -83,6 +84,7 @@ export function init_row_editing() {
           .on("click", (e) => {
             e.preventDefault();
             create_app(EditTable, {
+              table_index,
               articles_input: {
                 article: $link.text().trim(),
                 is_new: $link.hasClass("new"),

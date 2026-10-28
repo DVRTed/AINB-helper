@@ -2,6 +2,7 @@
 import {
   CdxButton,
   CdxDialog,
+  CdxMessage,
   CdxProgressBar,
   CdxSelect,
   CdxTextArea,
@@ -12,13 +13,17 @@ import {
   APP_AD,
   api,
   close_app,
+  create_app,
   get_article_row_regex,
   get_article_url,
   get_history_url,
   get_page_info,
+  find_template_ranges,
+  splice,
 } from "../shared.js";
 import { add_page_buttons } from "../register-actions.js";
 import { build_article_row } from "./main-app.vue";
+import Table_indexer from "./components/table_indexer.vue";
 
 export default {
   name: "EditRow",
@@ -26,6 +31,7 @@ export default {
   components: {
     CdxButton,
     CdxDialog,
+    CdxMessage,
     CdxProgressBar,
     CdxSelect,
     CdxTextArea,
@@ -36,6 +42,12 @@ export default {
     articles_input: {
       type: [Array, Object],
       required: true,
+    },
+
+    table_index: {
+      default: null,
+      type: Number,
+      required: false,
     },
   },
 
@@ -104,16 +116,23 @@ export default {
     dialog_class() {
       return this.is_single ? "ainb-edit-table" : "ainb-batch-edit-table";
     },
-    duplicate_error() {
-      const link = `<a href="${mw.util.getUrl(
-        "User:DVRTed/AINB-helper#Known_issues",
-      )}" target="_blank" rel="noopener noreferrer">User:DVRTed/AINB-helper#Known_issues</a>`;
-      return `This entry is duplicated, so it cannot be edited with the script; see ${link}.`;
+    cross_table_error() {
+      return (
+        `This entry appears in multiple tables, and the table can't be identified; ` +
+        `please [LINKTOTABLEINDEXER] to automatically (re)index the tables.`
+      );
+    },
+    duplicate_index_error() {
+      return (
+        `This entry appears in multiple tables, ` +
+        `and the table's "index" param is duplicated; ` +
+        `please [LINKTOTABLEINDEXER] to automatically (re)index the tables.`
+      );
     },
     changed_rows_original_data() {
       return this.original_rows.filter((row) => {
         const current_row = this.rows.find((e) => e.article === row.article);
-        if (!current_row || row.multiple_matches) return false;
+        if (!current_row) return false;
         return (
           row.status !== current_row.status ||
           (row.notes || "") !== (current_row.notes || "")
@@ -127,7 +146,6 @@ export default {
       return this.rows.some(
         (row) =>
           row.is_new &&
-          !row.multiple_matches &&
           row.status !== "completed" &&
           row.status !== "unnecessary",
       );
@@ -153,6 +171,9 @@ export default {
     close_app() {
       close_app();
     },
+    open_table_indexer() {
+      create_app(Table_indexer);
+    },
 
     normalize_status(value) {
       const trimmed = value?.trim().toLowerCase() || "";
@@ -161,6 +182,93 @@ export default {
           option.value === trimmed || option.aliases?.includes(trimmed),
       );
       return status ? status.value : "requested";
+    },
+
+    // ranges of all {{AIC article list |index=X |...}} templates
+    // whose index matches this.table_index
+    get_index_table_ranges(wikitext) {
+      const index = Number(this.table_index);
+
+      if (this.table_index == null || Number.isNaN(index)) {
+        return [];
+      }
+
+      return find_template_ranges(wikitext, "AIC article list").filter(
+        ({ start, end }) => {
+          const template = wikitext.slice(start, end);
+          const match = /\|\s*index\s*=\s*([^|}]+)/i.exec(template);
+          return Number(match?.[1].trim()) === index;
+        },
+      );
+    },
+
+    /*
+locate an article's row(s).
+
+-> single match on the page: ok
+-> multiple matches, all inside one table {{AIC article list}}: ok
+
+-> multiple matches across different tables:
+  -> narrow down using the table's unique "index" param
+    -> error if the index is missing or duplicated
+    -> otherwise: ok
+
+returns { range, matches, row_regex }
+-> `range` is the { start, end } of the match
+
+returns { error: str } on error
+*/
+    find_row_matches(wikitext, article) {
+      const row_regex = get_article_row_regex(article, true);
+      const page_matches = [...wikitext.matchAll(row_regex)];
+
+      // single match
+      if (page_matches.length <= 1) {
+        return {
+          range: { start: 0, end: wikitext.length },
+          matches: page_matches,
+          row_regex,
+        };
+      }
+
+      // check if matches are inside the same table
+      const tables = find_template_ranges(wikitext, "AIC article list");
+      const table_ids = page_matches.map((match) => {
+        // for each match, returns the index of the table it's inside
+        // note it's not from the "index" param
+        return tables.findIndex((table) => {
+          return match.index >= table.start && match.index < table.end;
+        });
+      });
+
+      const first_table_id = table_ids[0];
+      const is_inside_a_table = first_table_id !== -1;
+      const all_in_same_table = table_ids.every((id) => id === first_table_id);
+
+      if (is_inside_a_table && all_in_same_table) {
+        return {
+          range: tables[first_table_id],
+          matches: page_matches,
+          row_regex,
+        };
+      }
+
+      // matches are across tables,
+      // use the "index" param
+      const index_ranges = this.get_index_table_ranges(wikitext);
+      if (index_ranges.length === 0) return { error: this.cross_table_error };
+      if (index_ranges.length > 1) {
+        return { error: this.duplicate_index_error };
+      }
+
+      const range = index_ranges[0];
+      return {
+        range,
+        matches: [
+          ...wikitext.slice(range.start, range.end).matchAll(row_regex),
+        ],
+        row_regex,
+      };
     },
 
     async load_row_data() {
@@ -179,30 +287,33 @@ export default {
 
         const loaded_rows = [];
         for (const { article, is_new } of this.articles) {
-          const global_matches = [
-            ...wikitext.matchAll(get_article_row_regex(article, true)),
-          ];
+          const found = this.find_row_matches(wikitext, article);
+          if (found.error) {
+            this.app_error = found.error;
+            break;
+          }
 
-          if (global_matches.length > 0) {
-            const match = global_matches[0];
+          const { matches } = found;
+          if (matches.length > 0) {
+            // multiple matches (in the same table), show the first one
+            const match = matches[0];
             loaded_rows.push({
               article,
               status: this.normalize_status(match[1]?.trim()),
               notes: match[2]?.trim() || "",
-              multiple_matches: global_matches.length > 1,
+              match_count: matches.length,
               is_new,
             });
           }
         }
+
+        if (this.app_error) return;
 
         if (loaded_rows.length === 0) {
           this.app_error = "Could not find row data";
         } else {
           this.rows = loaded_rows;
           this.original_rows = structuredClone(loaded_rows);
-          if (this.is_single && loaded_rows[0].multiple_matches) {
-            this.app_error = this.duplicate_error;
-          }
         }
       } catch (e) {
         this.app_error = "Error loading row data: " + e.message;
@@ -214,7 +325,7 @@ export default {
 
     mark_all_deleted_as_completed() {
       for (const row of this.rows) {
-        if (row.is_new && !row.multiple_matches) {
+        if (row.is_new) {
           row.status = "completed";
         }
       }
@@ -226,14 +337,28 @@ export default {
       const page_name = mw.config.get("wgPageName");
       let new_wikitext = this.wikitext;
 
+      const changed_articles = new Set(
+        this.changed_rows_original_data.map((r) => r.article),
+      );
+
       for (const row of this.rows) {
-        if (!row.multiple_matches) {
-          const new_row = build_article_row(row.article, row.status, row.notes);
-          new_wikitext = new_wikitext.replace(
-            get_article_row_regex(row.article),
-            () => new_row,
-          );
+        if (!changed_articles.has(row.article)) continue;
+
+        const found = this.find_row_matches(new_wikitext, row.article);
+        if (found.error) {
+          this.app_error = found.error;
+          return;
         }
+
+        const { range, row_regex } = found;
+        const new_row = build_article_row(row.article, row.status, row.notes);
+        const scope = new_wikitext.slice(range.start, range.end);
+
+        new_wikitext = splice(
+          new_wikitext,
+          range,
+          scope.replace(row_regex, () => new_row),
+        );
       }
 
       // rm one or more ./,/; punctuation marks at the end
@@ -386,93 +511,107 @@ export default {
         <cdx-progress-bar inline />
       </div>
 
-      <!-- eslint-disable-next-line vue/no-v-html -->
-      <div v-else-if="app_error" class="ainb-error" v-html="app_error" />
+      <template v-else>
+        <cdx-message v-if="app_error" type="warning">
+          <template v-if="app_error.includes('[LINKTOTABLEINDEXER]')">
+            {{ app_error.split("[LINKTOTABLEINDEXER]")[0] }}
+            <a href="#" @click.prevent="open_table_indexer"> click here </a>
+            {{ app_error.split("[LINKTOTABLEINDEXER]")[1] }}
+          </template>
+          <template v-else>{{ app_error }}</template>
+        </cdx-message>
 
-      <div v-else-if="is_single && rows.length === 1" class="ainb-edit-step">
-        <div class="ainb-form-field">
-          Article:
-          <strong>
-            <a
-              :href="get_article_url(rows[0].article)"
-              :class="{ new: rows[0].is_new }"
-              rel="mw:WikiLink"
-              target="_blank"
-            >
-              {{ rows[0].article }}
-            </a>
-          </strong>
-          <a
-            :href="get_history_url(rows[0].article)"
-            class="ainb-history-link"
-            target="_blank"
-            rel="noopener noreferrer"
+        <div v-else-if="is_single && rows.length === 1" class="ainb-edit-step">
+          <cdx-message
+            v-if="rows[0].match_count > 1"
+            type="notice"
+            class="ainb-form-field"
           >
-            (hist)
-          </a>
-        </div>
+            There are {{ rows[0].match_count }} entries for this article in this
+            table. Updating this will update all of them.
+          </cdx-message>
 
-        <div class="ainb-form-field">
-          <div class="ainb-form-label">Status:</div>
-          <div>
-            <cdx-select
-              v-model:selected="rows[0].status"
-              :menu-items="status_options"
-            />
+          <div class="ainb-form-field">
+            Article:
+            <strong>
+              <a
+                :href="get_article_url(rows[0].article)"
+                :class="{ new: rows[0].is_new }"
+                rel="mw:WikiLink"
+                target="_blank"
+              >
+                {{ rows[0].article }}
+              </a>
+            </strong>
+            <a
+              :href="get_history_url(rows[0].article)"
+              class="ainb-history-link"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              (hist)
+            </a>
+          </div>
+
+          <div class="ainb-form-field">
+            <div class="ainb-form-label">Status:</div>
+            <div>
+              <cdx-select
+                v-model:selected="rows[0].status"
+                :menu-items="status_options"
+              />
+            </div>
+          </div>
+
+          <div class="ainb-form-field">
+            <div class="ainb-form-label">Notes:</div>
+            <cdx-text-area v-model="rows[0].notes" rows="4" />
           </div>
         </div>
 
-        <div class="ainb-form-field">
-          <div class="ainb-form-label">Notes:</div>
-          <cdx-text-area v-model="rows[0].notes" rows="4" />
-        </div>
-      </div>
+        <div v-else>
+          <label class="ainb-hide-resolved-label">
+            <input v-model="hide_resolved" type="checkbox" />
+            Hide resolved entries
+          </label>
 
-      <div v-else>
-        <label class="ainb-hide-resolved-label">
-          <input v-model="hide_resolved" type="checkbox" />
-          Hide resolved entries
-        </label>
-
-        <div class="ainb-batch-edit-table-scroll">
-          <table class="ainb-batch-edit-table-grid">
-            <thead>
-              <tr>
-                <th>Article</th>
-                <th>Status</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in filtered_rows" :key="row.article">
-                <td>
-                  <a
-                    :href="get_article_url(row.article)"
-                    :class="{ new: row.is_new }"
-                    rel="mw:WikiLink"
-                    target="_blank"
-                  >
-                    {{ row.article }}
-                  </a>
-                  <a
-                    :href="get_history_url(row.article)"
-                    class="ainb-history-link"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    (hist)
-                  </a>
-                </td>
-                <template v-if="row.multiple_matches">
-                  <!-- eslint-disable vue/no-v-html -->
-                  <td
-                    colspan="2"
-                    class="ainb-error"
-                    v-html="duplicate_error"
-                  ></td>
-                  <!-- eslint-enable vue/no-v-html -->
-                </template>
-                <template v-else>
+          <div class="ainb-batch-edit-table-scroll">
+            <table class="ainb-batch-edit-table-grid">
+              <thead>
+                <tr>
+                  <th>Article</th>
+                  <th>Status</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in filtered_rows" :key="row.article">
+                  <td>
+                    <a
+                      :href="get_article_url(row.article)"
+                      :class="{ new: row.is_new }"
+                      rel="mw:WikiLink"
+                      target="_blank"
+                    >
+                      {{ row.article }}
+                    </a>
+                    <a
+                      :href="get_history_url(row.article)"
+                      class="ainb-history-link"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      (hist)
+                    </a>
+                    <cdx-message
+                      v-if="row.match_count > 1"
+                      type="warning"
+                      inline
+                    >
+                      {{ row.match_count }} entries in this table; all will be
+                      updated.
+                    </cdx-message>
+                  </td>
                   <td>
                     <cdx-select
                       v-model:selected="row.status"
@@ -482,17 +621,16 @@ export default {
                   <td>
                     <cdx-text-area v-model="row.notes" rows="1"></cdx-text-area>
                   </td>
-                </template>
-              </tr>
-            </tbody>
-          </table>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      </template>
 
       <template #footer>
-        <div class="ainb-dialog-edit-summary">
+        <div v-if="rows.length >= 1" class="ainb-dialog-edit-summary">
           <cdx-text-input
-            v-if="!app_loading"
             id="ainb_custom_summary"
             v-model="custom_summary"
             name="ainb_custom_summary"
