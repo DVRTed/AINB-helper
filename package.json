@@ -6,7 +6,7 @@
         "dev": "vite build --mode development --watch",
         "lint": "eslint .",
         "build": "eslint . && vite build --mode production",
-        "build:usync": "eslint . && USYNC=1 vite build --mode production"
+        "build:usync": "eslint . && USYNC=1 vite build --mode production && node build/build-changelog.mjs"
     },
     "devDependencies": {
         "@eslint/js": "^8.57.1",

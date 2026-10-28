@@ -1,16 +1,30 @@
-name: Publish production build
+name: Release
 
 on:
   push:
-    branches:
-      - master
+    branches: [master]
   workflow_dispatch:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.rp.outputs.release_created }}
+      version: ${{ steps.rp.outputs.version }}
+    steps:
+      - id: rp
+        uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
   publish:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Check out master
@@ -29,10 +43,16 @@ jobs:
         run: npm run build:usync
 
       - name: Publish files to production branch
+        env:
+          VERSION: ${{ needs.release-please.outputs.version }}
         run: |
           artifact_dir="$(mktemp -d)"
-          commit_message="$(git log -1 --format=%B)"
-          cp dist/AINB-helper.js "$artifact_dir/"
+          if [ -n "$VERSION" ]; then
+            commit_message="v$VERSION"
+          else
+            commit_message="$(git log -1 --format=%B)"
+          fi
+          cp dist/AINB-helper.js dist/changelog.js "$artifact_dir/"
 
           if git ls-remote --exit-code --heads origin refs/heads/production >/dev/null 2>&1; then
             git fetch origin production
@@ -42,10 +62,10 @@ jobs:
             git rm -rf .
           fi
 
-          cp "$artifact_dir/AINB-helper.js" .
+          cp "$artifact_dir/AINB-helper.js" "$artifact_dir/changelog.js" .
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- AINB-helper.js
+          git add -- AINB-helper.js changelog.js
 
           if git diff --cached --quiet; then
             echo "Production files are unchanged."
