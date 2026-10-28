@@ -62,7 +62,7 @@ export function normalize_title(t) {
 }
 
 // async to await the select component when there are multiple usernames
-export async function get_case_username(page) {
+export async function get_case_username(page, return_multiple = false) {
   // ".ainb-userlinks" is added by {{User-ainb}}, [[special:diff/1382279612]]
   const ainb_userlinks = $(".ainb-userlinks");
 
@@ -113,7 +113,13 @@ export async function get_case_username(page) {
   // only one unique userlink, return it
   if (usernames.length <= 1) return usernames[0];
 
-  // multiple usernames, prompt user to pick one
+  // multiple usernames:
+  // if `return_multiple` is true, return all usernames
+  // separated by "|"
+  // otherwise prompt the user
+  if (return_multiple) {
+    return usernames.map((u) => `User:${u}`).join(" | ");
+  }
   const options = usernames.map((name) => {
     return { label: `User:${name}`, value: name };
   });
