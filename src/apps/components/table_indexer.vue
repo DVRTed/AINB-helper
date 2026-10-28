@@ -70,7 +70,7 @@ export default {
             action: "edit",
             title: wgPageName,
             text: new_text,
-            summary: `Reindexing ${ranges.length} tracking tables ${APP_AD}`,
+            summary: `Reindexed ${ranges.length} tracking table(s) ${APP_AD}`,
             baserevid: page.revid,
             starttimestamp: page.starttimestamp,
             nocreate: true,
