@@ -184,7 +184,7 @@ export default {
 <template>
   <cdx-dialog
     v-model:open="app_open"
-    title="Update case banner"
+    title="Edit case banner"
     :use-close-button="true"
     @update:open="close_app"
   >
