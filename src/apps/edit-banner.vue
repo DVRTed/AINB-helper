@@ -37,12 +37,13 @@ const FIELDS = [
         "open",
         "Applicability of LLMPROD not established yet.",
       ),
-      map_opt("ongoing", "open", "LLMPROD is ongoing."),
       map_opt(
         "waiting",
         "open",
         "LLMPRODs are needed, waiting to meet the eligibility criteria.",
       ),
+      map_opt("ongoing", "open", "LLMPROD is ongoing."),
+
       map_opt("completed", "closed", "All pages have been deleted or cleaned."),
       map_opt(
         "unnecessary",
