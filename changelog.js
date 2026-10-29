@@ -1,5 +1,11 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 1.1.1 (2026-10-29) ==
+
+=== Bug Fixes ===
+
+* '''edit-banner:''' correct llmprod and conduct labels, drop "requested" from llmprod ([https://github.com/DVRTed/AINB-helper/commit/35152edc19fc2f8f74ee32517d51aa4e5cc30463 35152ed])
+
 == 1.1.0 (2026-10-28) ==
 
 === Features ===
