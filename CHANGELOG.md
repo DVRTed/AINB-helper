@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/DVRTed/AINB-helper/compare/v1.1.0...v1.1.1) (2026-10-29)
+
+
+### Bug Fixes
+
+* **edit-banner:** correct llmprod and conduct labels, drop "requested" from llmprod ([35152ed](https://github.com/DVRTed/AINB-helper/commit/35152edc19fc2f8f74ee32517d51aa4e5cc30463))
+
 ## [1.1.0](https://github.com/DVRTed/AINB-helper/compare/v1.0.0...v1.1.0) (2026-10-28)
 
 
