@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/DVRTed/AINB-helper/compare/v1.1.1...v1.1.2) (2026-10-29)
+
+
+### Bug Fixes
+
+* **edit-banner:** widen the select menu to avoid unnecessary scrolling ([83d23b8](https://github.com/DVRTed/AINB-helper/commit/83d23b8b1ead8ff336f3a4ba56d992120619b308))
+
 ## [1.1.1](https://github.com/DVRTed/AINB-helper/compare/v1.1.0...v1.1.1) (2026-10-29)
 
 
