@@ -1,5 +1,11 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 1.1.2 (2026-10-29) ==
+
+=== Bug Fixes ===
+
+* '''edit-banner:''' widen the select menu to avoid unnecessary scrolling ([https://github.com/DVRTed/AINB-helper/commit/83d23b8b1ead8ff336f3a4ba56d992120619b308 83d23b8])
+
 == 1.1.1 (2026-10-29) ==
 
 === Bug Fixes ===
