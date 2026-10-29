@@ -196,6 +196,7 @@ export default {
         <template #label>{{ f.label }}</template>
         <cdx-select
           v-model:selected="values[f.key]"
+          class="ainb-banner-status-select"
           :menu-items="f.map_options"
           :disabled="app_saving"
         />

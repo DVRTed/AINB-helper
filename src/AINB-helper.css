@@ -23,6 +23,10 @@
   margin: 0 4px;
 }
 
+.ainb-banner-status-select {
+  width: 100%;
+}
+
 /* end overrides */
 
 .ainb-page-actions,
