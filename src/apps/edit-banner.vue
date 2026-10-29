@@ -43,11 +43,6 @@ const FIELDS = [
         "open",
         "LLMPRODs are needed, waiting to meet the eligibility criteria.",
       ),
-      map_opt(
-        "requested",
-        "open",
-        "All LLMPROD tags have been applied, awaiting administrative action.",
-      ),
       map_opt("completed", "closed", "All pages have been deleted or cleaned."),
       map_opt(
         "unnecessary",
@@ -62,7 +57,7 @@ const FIELDS = [
     map_options: [
       map_opt("review", "open", "AI editing behavior is under investigation."),
       map_opt("admin", "open", "Admin needed to deal with editing behavior."),
-      map_opt("hold", "open", "Case ongoing but put on hold (e.g. SPI)."),
+      map_opt("hold", "open", "Waiting for further developments."),
       map_opt("inactive", "closed", "No active editing from user."),
       map_opt("pblock", "closed", "Partially blocked."),
       map_opt("siteblock", "closed", "Fully blocked."),
@@ -127,7 +122,11 @@ export default {
           return;
         }
         const key = piece.slice(0, equal_index).trim();
-        const value = piece.slice(equal_index + 1).trim();
+        let value = piece.slice(equal_index + 1).trim();
+        if (key === "llmprod" && value === "requested") {
+          mw.notify(`LLMPROD status "requested" is now treated as "ongoing"`);
+          value = "ongoing";
+        }
         this.current_params.push([key, value]);
       });
 
