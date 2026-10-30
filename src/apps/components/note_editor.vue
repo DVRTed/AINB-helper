@@ -1,5 +1,5 @@
 <script>
-const link = String.raw`\[\[Special:Diff/(\d+)\|\(([+-]\d+)\)\]\]`;
+const link = String.raw`\[\[Special:Diff/(\d+)\|\(([+-]\d+|0)\)\]\]`;
 const link_run_regex = new RegExp(`${link}(?:\\s+${link})*`, "gi");
 const link_regex = new RegExp(link, "gi");
 
@@ -64,7 +64,9 @@ export default {
         change_node.className =
           change[0] === "+"
             ? "ainb-note-diff-sign-added"
-            : "ainb-note-diff-sign-removed";
+            : change[0] === "-"
+              ? "ainb-note-diff-sign-removed"
+              : "";
         change_node.textContent = ` (${change})`;
 
         links.append(" ", a, change_node);
