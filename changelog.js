@@ -1,5 +1,11 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 1.2.1 (2026-10-30) ==
+
+=== Bug Fixes ===
+
+* handle zero-byte diffs in note editor ([https://github.com/DVRTed/AINB-helper/commit/6369896872d282baecdf2c1b5fe9344fab972d2f 6369896])
+
 == 1.2.0 (2026-10-30) ==
 
 === Features ===
