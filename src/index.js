@@ -38,7 +38,6 @@ if (wgAction === "view") {
     wgPageName.startsWith("Wikipedia:AI_noticeboard/") ||
     wgPageName == DEBUG_PAGE
   ) {
-    add_page_buttons();
     mw.hook("wikipage.content").add(($content) => {
       if (!$content.is("#mw-content-text")) return;
       add_page_buttons();

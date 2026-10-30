@@ -8,6 +8,7 @@ import EditTable from "../apps/edit-table.vue";
 import UpdateTable from "../apps/rebuild-table.vue";
 
 const wgPageName = mw.config.get("wgPageName");
+const saved_filters = {};
 
 export function get_table_actions($table) {
   let $actions = $table.prev(".ainb-table-actions");
@@ -112,8 +113,7 @@ export function init_progress_bar() {
     "unknown",
   ];
 
-  $("table")
-    .has('tr[class*="aic-row-"]')
+  $(".ainb-cleanup-table")
     .not(".ainb-progress-done")
     .each(function () {
       $(this).addClass("ainb-progress-done");
@@ -197,6 +197,18 @@ export function init_progress_bar() {
       $bar.find(".ainb-hide-non-creation-cb").on("change", function () {
         $table.toggleClass("ainb-only-created", $(this).is(":checked"));
       });
+
+      const table_key = $(".ainb-cleanup-table").index($table);
+      $bar
+        .find("input")
+        .each(function () {
+          $(this)
+            .prop("checked", !!saved_filters[table_key + this.className])
+            .trigger("change");
+        })
+        .on("change", function () {
+          saved_filters[table_key + this.className] = this.checked;
+        });
 
       $table.before($bar);
     });
