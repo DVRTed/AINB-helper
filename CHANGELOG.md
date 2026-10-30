@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.2.0](https://github.com/DVRTed/AINB-helper/compare/v1.1.2...v1.2.0) (2026-10-30)
+
+
+### Features
+
+* add dark mode support using Codex color palette ([c880aa4](https://github.com/DVRTed/AINB-helper/commit/c880aa4c322a1e6def44b94931343a1731c6e310))
+* **edit-table:** improve batch editing UI and add bulk status updates ([94210c3](https://github.com/DVRTed/AINB-helper/commit/94210c334ce0782d8c4ff235f8e4270099ded24a))
+
+
+### Bug Fixes
+
+* **edit-table:** widen the single-row edit menu's inputs to prevent unnecessary scrolling ([7ac5a17](https://github.com/DVRTed/AINB-helper/commit/7ac5a17f13caa41ac304f398ca2d50a128ac106c))
+* **new-case-app:** prevent case type dropdown from being clipped ([0343cf0](https://github.com/DVRTed/AINB-helper/commit/0343cf053ddbeea8ac23a1f374504f8c3ccaf8e1))
+* remove confusing progress bar from cleanup category ([927fe5b](https://github.com/DVRTed/AINB-helper/commit/927fe5ba57aa32f25565159496c3327c5b01c26f))
+* retain tracking table filters when editing rows ([3955b2c](https://github.com/DVRTed/AINB-helper/commit/3955b2c13a697f4699376299b964271082fb369f))
+
 ## [1.1.2](https://github.com/DVRTed/AINB-helper/compare/v1.1.1...v1.1.2) (2026-10-29)
 
 
