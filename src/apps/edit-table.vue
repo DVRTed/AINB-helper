@@ -23,6 +23,7 @@ import {
 } from "../shared.js";
 import { add_page_buttons } from "../register-actions.js";
 import { build_article_row } from "./main-app.vue";
+import NoteEditor from "./components/note_editor.vue";
 import Table_indexer from "./components/table_indexer.vue";
 
 export default {
@@ -36,6 +37,7 @@ export default {
     CdxSelect,
     CdxTextArea,
     CdxTextInput,
+    NoteEditor,
   },
 
   props: {
@@ -93,11 +95,10 @@ export default {
       ],
 
       hide_resolved: false,
-      articles: Array.isArray(this.articles_input)
-        ? this.articles_input
-        : [this.articles_input],
+
       rows: [],
       original_rows: [],
+      selected: [],
 
       custom_summary: "",
       wikitext: "",
@@ -129,11 +130,24 @@ export default {
         `please [LINKTOTABLEINDEXER] to fix.`
       );
     },
+
+    articles() {
+      const seen = new Set();
+      return [].concat(this.articles_input).filter(({ article }) => {
+        if (seen.has(article)) return false;
+        seen.add(article);
+        return true;
+      });
+    },
+
     changed_rows_original_data() {
+      const current_by_article = new Map(
+        this.rows.map((row) => [row.article, row]),
+      );
       return this.original_rows.filter((row) => {
         // locked rows are ignored
         if (row.row_error) return false;
-        const current_row = this.rows.find((e) => e.article === row.article);
+        const current_row = current_by_article.get(row.article);
         if (!current_row) return false;
         return (
           row.status !== current_row.status ||
@@ -141,9 +155,15 @@ export default {
         );
       });
     },
-    can_save() {
-      return !this.app_loading && this.changed_rows_original_data.length > 0;
+
+    num_changed_rows() {
+      return this.changed_rows_original_data.length;
     },
+
+    can_save() {
+      return !this.app_loading && this.num_changed_rows > 0;
+    },
+
     has_red_links() {
       return this.rows.some(
         (row) =>
@@ -153,6 +173,7 @@ export default {
           row.status !== "unnecessary",
       );
     },
+
     filtered_rows() {
       if (!this.hide_resolved) return this.rows;
       return this.rows.filter(
@@ -160,6 +181,27 @@ export default {
           row.status !== "completed" &&
           row.status !== "unnecessary" &&
           row.status !== "tagged",
+      );
+    },
+
+    // for the "select" checkbox
+    selected_set() {
+      return new Set(this.selected);
+    },
+    selectable_rows() {
+      // - the no-index-duplicated rows
+      return this.filtered_rows.filter((row) => !row.row_error);
+    },
+    selected_rows() {
+      // only count rows that are still visible and editable
+      return this.selectable_rows.filter((row) =>
+        this.selected_set.has(row.article),
+      );
+    },
+    all_selected() {
+      return (
+        this.selectable_rows.length > 0 &&
+        this.selected_rows.length === this.selectable_rows.length
       );
     },
   },
@@ -378,12 +420,12 @@ returns { error: str } on error
 
       // rm one or more ./,/; punctuation marks at the end
       const custom = this.custom_summary.trim().replace(/[.,;]+$/, "");
-      const is_batch_edit = this.changed_rows_original_data.length > 1;
+      const is_batch_edit = this.num_changed_rows > 1;
 
       let auto_summary = "";
 
       if (is_batch_edit) {
-        auto_summary = `Batch edited ${this.changed_rows_original_data.length} rows`;
+        auto_summary = `Batch edited ${this.num_changed_rows} rows`;
 
         // group and count new statuses
         const status_counts = this.changed_rows_original_data.reduce(
@@ -508,6 +550,25 @@ returns { error: str } on error
         add_page_buttons();
       }
     },
+
+    // for the select checkbox
+    toggle_all(event) {
+      this.selected = event.target.checked
+        ? this.selectable_rows.map((row) => row.article)
+        : [];
+    },
+    toggle_row(article, checked) {
+      this.selected = checked
+        ? [...this.selected, article]
+        : this.selected.filter((a) => a !== article);
+    },
+    apply_bulk_status(event) {
+      const status = event.target.value;
+      if (!status) return;
+      for (const row of this.selected_rows) row.status = status;
+
+      event.target.value = "";
+    },
   },
 };
 </script>
@@ -585,26 +646,73 @@ returns { error: str } on error
         </div>
 
         <div v-else>
-          <label class="ainb-hide-resolved-label">
-            <input v-model="hide_resolved" type="checkbox" />
-            Hide resolved entries
-          </label>
+          <div class="ainb-table-actions">
+            <span>
+              <label class="ainb-hide-resolved-label">
+                <input v-model="hide_resolved" type="checkbox" />
+                Hide resolved entries
+              </label>
+              <span v-if="num_changed_rows">
+                &middot; {{ num_changed_rows }}
+                {{ num_changed_rows > 1 ? "entries" : "entry" }} modified</span>
+            </span>
+            <cdx-button
+              v-if="has_red_links"
+              @click="mark_all_deleted_as_completed"
+            >
+              Mark all deleted articles as completed
+            </cdx-button>
+          </div>
 
           <div class="ainb-batch-edit-table-scroll">
             <table class="ainb-batch-edit-table-grid">
+              <colgroup>
+                <col class="ainb-col-check" />
+                <col class="ainb-col-article" />
+                <col class="ainb-col-status" />
+                <col />
+              </colgroup>
               <thead>
                 <tr>
+                  <th>
+                    <input
+                      type="checkbox"
+                      :checked="all_selected"
+                      :disabled="!selectable_rows.length"
+                      @change="toggle_all"
+                    />
+                  </th>
                   <th>Article</th>
                   <th>Status</th>
                   <th>Notes</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="row in filtered_rows" :key="row.article">
+                <tr
+                  v-for="row in filtered_rows"
+                  :key="row.article"
+                  v-memo="[
+                    row.status,
+                    row.notes,
+                    row.row_error,
+                    row.match_count,
+                    row.is_new,
+                    selected_set.has(row.article),
+                  ]"
+                >
+                  <td>
+                    <input
+                      type="checkbox"
+                      :checked="selected_set.has(row.article)"
+                      :disabled="!!row.row_error"
+                      @change="toggle_row(row.article, $event.target.checked)"
+                    />
+                  </td>
                   <td>
                     <a
                       :href="get_article_url(row.article)"
-                      :class="{ new: row.is_new }"
+                      :class="['ainb-article-link', { new: row.is_new }]"
+                      :title="row.article"
                       rel="mw:WikiLink"
                       target="_blank"
                     >
@@ -633,18 +741,26 @@ returns { error: str } on error
                     </cdx-message>
                   </td>
                   <td>
-                    <cdx-select
-                      v-model:selected="row.status"
-                      :menu-items="status_options"
+                    <select
+                      v-model="row.status"
+                      class="ainb-batch-status-select"
                       :disabled="!!row.row_error"
-                    ></cdx-select>
+                    >
+                      <option
+                        v-for="option in status_options"
+                        :key="option.value"
+                        :value="option.value"
+                        :title="option.description"
+                      >
+                        {{ option.label }}
+                      </option>
+                    </select>
                   </td>
                   <td>
-                    <cdx-text-area
+                    <note-editor
                       v-model="row.notes"
-                      rows="1"
                       :disabled="!!row.row_error"
-                    ></cdx-text-area>
+                    />
                   </td>
                 </tr>
               </tbody>
@@ -654,24 +770,30 @@ returns { error: str } on error
       </template>
 
       <template #footer>
-        <div v-if="rows.length >= 1" class="ainb-dialog-edit-summary">
-          <cdx-text-input
-            id="ainb_custom_summary"
-            v-model="custom_summary"
-            name="ainb_custom_summary"
-            placeholder="Edit summary (optional)"
-            maxlength="200"
-            aria-label="Custom edit summary"
-          ></cdx-text-input>
-        </div>
-        <div class="ainb-dialog-footer">
-          <div>
-            <cdx-button
-              v-if="!is_single && has_red_links"
-              @click="mark_all_deleted_as_completed"
+        <div v-if="selected_rows.length" class="ainb-bulk-bar">
+          <strong>{{ selected_rows.length }} selected.</strong> Set status to:
+          <select class="ainb-batch-status-select" @change="apply_bulk_status">
+            <option value="" selected disabled>Choose…</option>
+            <option
+              v-for="option in status_options"
+              :key="option.value"
+              :value="option.value"
             >
-              Mark all deleted articles as completed
-            </cdx-button>
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="ainb-dialog-footer">
+          <div v-if="rows.length >= 1" class="ainb-dialog-edit-summary">
+            <cdx-text-input
+              id="ainb_custom_summary"
+              v-model="custom_summary"
+              name="ainb_custom_summary"
+              placeholder="Edit summary (optional)"
+              maxlength="200"
+              aria-label="Custom edit summary"
+            ></cdx-text-input>
           </div>
           <div>
             <cdx-button @click="close_app">Cancel</cdx-button>
@@ -689,3 +811,7 @@ returns { error: str } on error
     </cdx-dialog>
   </div>
 </template>
+
+<style>
+@import "../stylesheets/edit-table.css";
+</style>
