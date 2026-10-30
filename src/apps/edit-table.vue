@@ -647,7 +647,7 @@ returns { error: str } on error
         </div>
 
         <div v-else>
-          <div class="ainb-table-actions">
+          <div class="ainb-dialog-table-actions">
             <span>
               <label class="ainb-hide-resolved-label">
                 <input v-model="hide_resolved" type="checkbox" />

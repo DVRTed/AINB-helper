@@ -25,12 +25,71 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
-  margin: 0.5em 0;
+  margin: 0;
+  padding: 0.6em;
+  border-radius: 5px 5px 0 0;
+  background-color: var(--ainb-background-color-interactive-subtle);
 }
 
-.ainb-table-actions {
+/* same as above but it's inside the batch edit dialog */
+.ainb-dialog-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.6em;
+  border-radius: 5px 5px 0 0;
+  background-color: var(--ainb-background-color-interactive-subtle);
   justify-content: space-between;
 }
+
+
+.ainb-table-actions {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+.ainb-table-actions .cdx-button--action-progressive {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+}
+
+.ainb-table-actions .ainb-table-filters {
+  grid-column: 2;
+  grid-row: 1;
+  justify-content: center;
+  margin-top: 0;
+}
+
+.ainb-table-actions .cdx-button--action-destructive {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+}
+
+@media (max-width: 700px) {
+  .ainb-table-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .ainb-table-actions .cdx-button--action-progressive,
+  .ainb-table-actions .ainb-table-filters,
+  .ainb-table-actions .cdx-button--action-destructive {
+    grid-column: auto;
+    grid-row: auto;
+    justify-self: start;
+  }
+}
+
+.ainb-cleanup-table {
+  /* so the above actions bar and the table sit nicely */
+  margin: 0;
+}
+
+
 
 .ainb-dialog-footer {
   display: flex;
