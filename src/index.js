@@ -6,7 +6,7 @@ import {
   DEBUG_PAGE,
 } from "./shared.js";
 
-import styles from "./AINB-helper.css?inline";
+import styles from "./stylesheets/AINB-helper.css?inline";
 
 import { add_page_buttons } from "./register-actions.js";
 
@@ -16,13 +16,9 @@ import {
   replace_edittext_with_session,
 } from "./page-actions/ArticleActions.js";
 
-import CategoryStats from "./apps/category-stats.vue";
 import NewCaseApp from "./apps/new-case-app.vue";
 
 mw.util.addCSS(styles);
-
-// categories to enable the "overall progress" bar in
-const cases_categories = ["Category:AI_noticeboard_open_cleanup_cases"];
 
 // main app's portlet
 const portlet_link = mw.util.addPortletLink(
@@ -38,8 +34,6 @@ $(portlet_link).on("click", (e) => {
 });
 
 if (wgAction === "view") {
-  if (wgPageName in cases_categories) create_app(CategoryStats);
-
   if (
     wgPageName.startsWith("Wikipedia:AI_noticeboard/") ||
     wgPageName == DEBUG_PAGE
