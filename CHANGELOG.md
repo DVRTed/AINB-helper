@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/DVRTed/AINB-helper/compare/v1.2.0...v1.2.1) (2026-10-30)
+
+
+### Bug Fixes
+
+* handle zero-byte diffs in note editor ([6369896](https://github.com/DVRTed/AINB-helper/commit/6369896872d282baecdf2c1b5fe9344fab972d2f))
+
 ## [1.2.0](https://github.com/DVRTed/AINB-helper/compare/v1.1.2...v1.2.0) (2026-10-30)
 
 
