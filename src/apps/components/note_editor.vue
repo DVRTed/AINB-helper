@@ -134,8 +134,9 @@ export default {
 
 .ainb-note-diff-wrapper {
   display: inline-flex;
-  align-items: center;
+  align-items: baseline;
   gap: 0.25rem;
+  max-width: 100%;
   padding: 0.125rem 0.375rem;
   border: 1px solid var(--ainb-border-color-muted);
   border-radius: 2px;
@@ -145,6 +146,9 @@ export default {
 
 .ainb-note-diff-wrapper:has(.ainb-note-diff-toggle:hover) {
   background: var(--ainb-background-color-progressive-subtle);
+  button {
+    color: var(--ainb-color-progressive);
+  }
 }
 
 .ainb-note-diff-toggle {
