@@ -1,0 +1,173 @@
+.ainb-row-updating>td {
+    background-color: var(--ainb-background-color-progressive-subtle) !important;
+}
+
+.ainb-updating-cell {
+    color: transparent !important;
+}
+
+.ainb-updating-cell>* {
+    visibility: hidden !important;
+}
+
+.ainb-updating-label {
+    position: relative;
+}
+
+.ainb-updating-label::after {
+    content: "Updating...";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    padding: 5px 8px;
+    color: var(--ainb-color-base);
+    font-weight: 600;
+    visibility: visible;
+}
+
+.ainb-dialog-edit-summary {
+    flex: 1;
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+.ainb-edit-table .cdx-dialog__window {
+    width: 700px !important;
+    max-width: 90vw !important;
+}
+
+.ainb-edit-btn {
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    border: 1px solid var(--ainb-border-color-base);
+    background: var(--ainb-background-color-interactive-subtle);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.ainb-edit-btn:hover {
+    background: var(--ainb-background-color-neutral);
+    border-color: var(--ainb-border-color-base);
+}
+
+.ainb-batch-edit-table,
+.cdx-dialog,
+.cdx-dialog__window {
+    max-width: 1200px !important;
+    width: min(95vw, 1200px) !important;
+}
+
+.ainb-batch-edit-table-scroll {
+    max-height: calc(100vh - 17rem);
+    min-height: 12rem;
+    overflow: auto;
+    border: 1px solid var(--ainb-border-color-subtle);
+    border-radius: 4px;
+}
+
+.ainb-batch-edit-table-grid {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    border-spacing: 0;
+    font-size: 0.95em;
+    line-height: 1.35;
+}
+
+.ainb-col-check {
+    width: 3rem;
+}
+
+.ainb-col-article {
+    width: 30%;
+}
+
+.ainb-col-status {
+    width: 9.5rem;
+}
+
+.ainb-batch-edit-table-grid th,
+.ainb-batch-edit-table-grid td {
+    padding: 2px 8px;
+}
+
+.ainb-batch-edit-table-grid th {
+    padding: 4px 8px;
+}
+
+.ainb-batch-edit-table-grid th:first-child,
+.ainb-batch-edit-table-grid td:first-child {
+    text-align: center;
+}
+
+.ainb-batch-edit-table-grid input[type="checkbox"] {
+    width: 1.3rem;
+    height: 1.3rem;
+    margin: 0;
+    vertical-align: middle;
+}
+
+.ainb-batch-edit-table-grid .cdx-message__content {
+    font-size: 0.8em;
+    line-height: 1.25;
+}
+
+.ainb-batch-edit-table .ainb-batch-edit-table-grid .cdx-message__icon--vue.cdx-icon {
+    min-width: 16px;
+    min-height: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.ainb-batch-edit-table-grid tbody td {
+    border-bottom: 1px solid var(--ainb-border-color-subtle);
+}
+
+.ainb-batch-edit-table .ainb-batch-edit-table-grid tbody tr:nth-child(odd)>td {
+    background-color: var(--ainb-background-color-neutral);
+}
+
+.ainb-batch-edit-table .ainb-batch-edit-table-grid tbody tr:nth-child(even)>td {
+    background-color: var(--ainb-background-color-base);
+}
+
+.ainb-batch-edit-table-grid tr:last-child td {
+    border-bottom: none;
+}
+
+.ainb-article-link {
+    font-weight: 700;
+}
+
+.ainb-batch-status-select {
+    min-height: 0;
+    height: 1.9rem;
+    padding: 0 4px;
+    border: 1px solid var(--ainb-border-color-base);
+    border-radius: 2px;
+    background-color: var(--ainb-background-color-base);
+    color: var(--ainb-color-base);
+    font: inherit;
+}
+
+.ainb-batch-edit-table-grid .ainb-batch-status-select {
+    width: 100%;
+}
+
+.ainb-batch-row-error {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.8em;
+    line-height: 1.25;
+}
+
+.ainb-bulk-bar {
+    margin-bottom: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--ainb-border-color-progressive);
+    border-radius: 2px;
+    background-color: var(--ainb-background-color-progressive-subtle);
+    font-weight: 600;
+}
