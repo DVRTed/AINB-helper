@@ -408,3 +408,56 @@ export default {
     </template>
   </cdx-dialog>
 </template>
+
+<style>
+.ainb-new-case-step {
+  max-height: none;
+  overflow: visible;
+}
+
+.ainb-new-case-discussion {
+  padding: 8px;
+  resize: vertical;
+}
+
+.ainb-intro-choices {
+  display: flex;
+  gap: 12px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.ainb-new-case .ainb-intro-choice {
+  /* mostly more overrides because we're using the cdx button */
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 112px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+/* svg icons and stuff */
+.ainb-intro-choice-icon {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+@media (max-width: 520px) {
+  .ainb-intro-choices {
+    flex-direction: column;
+  }
+}
+</style>

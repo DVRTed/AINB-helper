@@ -510,8 +510,8 @@ export default {
             @update:model-value="update_tracker = $event"
           >
             Mark as
-            {{ selected_option === "llm_prod" ? "ongoing" : "tagged" }} on the
-            case page
+            {{ selected_option === "llm_prod" ? "ongoing" : "tagged" }} in the
+            tracking table
           </cdx-checkbox>
         </div>
 

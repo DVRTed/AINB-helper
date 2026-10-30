@@ -1503,3 +1503,7 @@ export default {
     </cdx-dialog>
   </div>
 </template>
+
+<style>
+@import "../stylesheets/main-app.css";
+</style>
