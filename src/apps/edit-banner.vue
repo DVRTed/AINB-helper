@@ -220,3 +220,9 @@ export default {
     </template>
   </cdx-dialog>
 </template>
+
+<style scoped>
+.ainb-banner-status-select {
+  width: 100%;
+}
+</style>
