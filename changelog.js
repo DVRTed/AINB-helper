@@ -1,5 +1,19 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 1.2.0 (2026-10-30) ==
+
+=== Features ===
+
+* add dark mode support using Codex color palette ([https://github.com/DVRTed/AINB-helper/commit/c880aa4c322a1e6def44b94931343a1731c6e310 c880aa4])
+* '''edit-table:''' improve batch editing UI and add bulk status updates ([https://github.com/DVRTed/AINB-helper/commit/94210c334ce0782d8c4ff235f8e4270099ded24a 94210c3])
+
+=== Bug Fixes ===
+
+* '''edit-table:''' widen the single-row edit menu's inputs to prevent unnecessary scrolling ([https://github.com/DVRTed/AINB-helper/commit/7ac5a17f13caa41ac304f398ca2d50a128ac106c 7ac5a17])
+* '''new-case-app:''' prevent case type dropdown from being clipped ([https://github.com/DVRTed/AINB-helper/commit/0343cf053ddbeea8ac23a1f374504f8c3ccaf8e1 0343cf0])
+* remove confusing progress bar from cleanup category ([https://github.com/DVRTed/AINB-helper/commit/927fe5ba57aa32f25565159496c3327c5b01c26f 927fe5b])
+* retain tracking table filters when editing rows ([https://github.com/DVRTed/AINB-helper/commit/3955b2c13a697f4699376299b964271082fb369f 3955b2c])
+
 == 1.1.2 (2026-10-29) ==
 
 === Bug Fixes ===
