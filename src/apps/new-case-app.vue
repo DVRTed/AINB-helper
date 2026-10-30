@@ -410,11 +410,6 @@ export default {
 </template>
 
 <style>
-.ainb-new-case-step {
-  max-height: none;
-  overflow: visible;
-}
-
 .ainb-new-case-discussion {
   padding: 8px;
   resize: vertical;
