@@ -1,0 +1,33 @@
+/* light-mode fallbacks for Codex color variables (as of oct 2026). */
+
+/* for attribution,
+  see https://raw.githubusercontent.com/wikimedia/design-codex/main/packages/codex-design-tokens/src/themes/wikimedia-ui.json 
+*/
+
+
+:root {
+    --ainb-color-base: var(--color-base, #202122);
+    --ainb-color-subtle: var(--color-subtle, #54595d);
+    --ainb-color-placeholder: var(--color-placeholder, #72777d);
+    --ainb-color-progressive: var(--color-progressive, #36c);
+    --ainb-color-destructive: var(--color-destructive, #bf3c2c);
+    --ainb-color-success: var(--color-success, #177860);
+    --ainb-color-inverted: var(--color-inverted, #fff);
+
+    --ainb-border-color-base: var(--border-color-base, #a2a9b1);
+    --ainb-border-color-subtle: var(--border-color-subtle, #c8ccd1);
+    --ainb-border-color-muted: var(--border-color-muted, #dadde3);
+
+    --ainb-background-color-base: var(--background-color-base, #fff);
+    --ainb-background-color-neutral: var(--background-color-neutral, #f8f9fa);
+    --ainb-background-color-interactive-subtle: var(--background-color-interactive-subtle,
+            #f8f9fa);
+    --ainb-background-color-progressive: var(--background-color-progressive,
+            #36c);
+    --ainb-background-color-progressive-subtle: var(--background-color-progressive-subtle,
+            #e8eeff);
+    --ainb-background-color-success-subtle: var(--background-color-success-subtle,
+            #dff2eb);
+    --ainb-background-color-destructive-subtle: var(--background-color-destructive-subtle,
+            #ffe9e5);
+}

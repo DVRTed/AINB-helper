@@ -1,0 +1,372 @@
+@import "codex-color-tokens.css";
+
+/* overrides for annoying codex defaults */
+.ainb-helper .cdx-checkbox,
+.ainb-helper .cdx-label {
+  margin: 0 !important;
+}
+
+.ainb-helper.cdx-dialog__window,
+.ainb-helper .cdx-dialog__window,
+.ainb-helper {
+  width: 960px !important;
+  max-width: 92vw !important;
+}
+
+.ainb-dialog-footer .cdx-button {
+  margin: 0 4px;
+}
+
+/* end overrides */
+
+.ainb-page-actions,
+.ainb-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5em 0;
+}
+
+.ainb-table-actions {
+  justify-content: space-between;
+}
+
+.ainb-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ainb-step {
+  padding: 1em 0;
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
+.ainb-error {
+  color: var(--ainb-border-color-destructive);
+  margin-top: 0.5em;
+  padding: 0.5em;
+  background: var(--ainb-background-color-destructive-subtle);
+  border-radius: 2px;
+}
+
+.ainb-loading {
+  text-align: center;
+}
+
+.ainb-progress-wrap {
+  margin-bottom: 1em;
+  padding: 8px 12px;
+  border: 1px solid var(--ainb-border-color-base);
+  border-radius: 4px;
+}
+
+.ainb-progress-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.ainb-progress-percent {
+  font-size: 1.8em;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ainb-color-base);
+}
+
+.ainb-progress-top-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.ainb-progress-title {
+  font-weight: 600;
+  font-size: 0.9em;
+}
+
+.ainb-progress-stats {
+  font-size: 0.9em;
+  color: var(--ainb-color-subtle);
+}
+
+
+.ainb-progress-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--ainb-background-color-base);
+}
+
+.ainb-seg {
+  height: 100%;
+}
+
+/* don't change these to cdx variables just yet */
+.ainb-seg-completed {
+  background: #14866d;
+}
+
+.ainb-seg-unnecessary {
+  background: #c8ccd1;
+}
+
+.ainb-seg-ongoing {
+  background: #eb2aa7;
+}
+
+.ainb-seg-todo {
+  background: #fc3
+}
+
+.ainb-seg-tagged {
+  background: #36c
+}
+
+.ainb-progress-legend {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+  color: var(--ainb-color-subtle);
+  text-transform: capitalize;
+}
+
+.ainb-progress-legend i.ainb-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 3px;
+}
+
+.ainb-progress-credit {
+  font-size: 0.75em;
+  color: var(--ainb-color-subtle);
+  font-weight: normal;
+  text-align: right;
+}
+
+.ainb-table-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em 1em;
+  margin-top: 4px;
+}
+
+.ainb-hide-resolved .ainb-row-resolved {
+  display: none;
+}
+
+.ainb-only-created .ainb-row:not(.ainb-row-created) {
+  display: none;
+}
+
+.ainb-seg-unknown {
+  background: #c8ccd1;
+}
+
+.ainb-llm-dialog.cdx-dialog__window,
+.ainb-llm-dialog .cdx-dialog__window,
+.ainb-llm-dialog {
+  width: 680px !important;
+  max-width: 90vw !important;
+}
+
+.ainb-llm-dialog .cdx-combobox,
+.ainb-llm-dialog .cdx-text-input,
+.ainb-llm-dialog .cdx-text-area,
+.ainb-llm-dialog .cdx-field {
+  width: 100% !important;
+}
+
+.ainb-preview-link-wrap {
+  font-size: 0.875em;
+  margin: 4px 0 8px;
+}
+
+.ainb-preview-box {
+  border: 1px solid var(--ainb-border-color-subtle);
+  border-radius: 2px;
+  padding: 0.75em 1em;
+  margin-bottom: 0.75em;
+  background: var(--ainb-background-color-base);
+  max-height: 300px;
+  overflow-y: auto;
+  font-size: 0.9em;
+}
+
+.ainb-category-mini {
+  margin-top: 8px;
+  font-size: 0.875em;
+  color: var(--ainb-color-subtle);
+}
+
+.ainb-category-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 0.8em;
+  color: var(--ainb-color-subtle);
+}
+
+.ainb-thread-context {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  background: var(--ainb-background-color-progressive-subtle);
+  border: 1px solid var(--ainb-border-color-subtle);
+  border-radius: 4px;
+}
+
+.ainb-thread-context-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ainb-restore-note {
+  margin-bottom: 8px;
+  font-size: 0.85em;
+  color: var(--ainb-color-subtle);
+}
+
+.ainb-llm-top-options {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.85em;
+}
+
+.ainb-llm-top-options .cdx-checkbox {
+  font-size: 0.9em;
+}
+
+.ainb-log-target-hint {
+  font-size: 0.85em;
+  color: var(--ainb-color-subtle);
+}
+
+.ainb-advanced-toggle {
+  display: inline-block;
+  font-size: 0.85em;
+  color: var(--ainb-color-subtle);
+  text-decoration: none;
+  margin: 4px 0 8px;
+}
+
+.ainb-advanced-toggle:hover {
+  color: var(--ainb-color-base);
+  text-decoration: underline;
+}
+
+.ainb-advanced-wrap {
+  margin-top: 4px;
+}
+
+.ainb-advanced-wrap .cdx-field {
+  margin-top: 4px;
+}
+
+.ainb-advanced-wrap .cdx-checkbox__label,
+.ainb-advanced-wrap .cdx-checkbox .cdx-label__label {
+  font-size: 0.95em;
+}
+
+.ainb-tracker-row {
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  background: var(--ainb-background-color-base);
+  border: 1px solid var(--ainb-border-color-base);
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.ainb-save-status {
+  padding: 10px 12px;
+  margin-bottom: 0.75em;
+  background: var(--ainb-background-color-base);
+  border: 1px solid var(--ainb-border-color-base);
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.ainb-save-status-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.ainb-save-status-icon {
+  width: 1em;
+  flex-shrink: 0;
+  text-align: center;
+  font-weight: 700;
+}
+
+.ainb-save-status-pending .ainb-save-status-icon {
+  color: var(--ainb-color-subtle);
+}
+
+.ainb-save-status-success .ainb-save-status-icon {
+  color: var(--ainb-color-success);
+}
+
+.ainb-save-status-success {
+  color: var(--ainb-color-success);
+}
+
+.ainb-save-status-error .ainb-save-status-icon,
+.ainb-save-status-error {
+  color: var(--ainb-color-destructive);
+}
+
+.ainb-save-status-reload {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--ainb-border-color-base);
+  color: var(--ainb-color-subtle);
+  font-style: italic;
+}
+
+.ainb-check-pct-wrap {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--ainb-border-color-base);
+}
+
+.ainb-check-pct {
+  /* visited url seems to override it... update: nope */
+  color: var(--ainb-color-subtle) !important;
+  font-size: 0.85em;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ainb-check-pct:hover {
+  color: var(--ainb-color-base) !important;
+}
+
+a.ainb-check-pct.ainb-disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.ainb-update-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ainb-form-field {
+  margin: 5px 0;
+}
