@@ -635,6 +635,7 @@ returns { error: str } on error
               <cdx-select
                 v-model:selected="rows[0].status"
                 :menu-items="status_options"
+                class="ainb-edit-table-status-select"
               />
             </div>
           </div>

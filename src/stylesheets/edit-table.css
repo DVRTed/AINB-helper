@@ -52,6 +52,10 @@
     border-color: var(--ainb-border-color-base);
 }
 
+.ainb-edit-table-status-select {
+    width: 35%;
+}
+
 .ainb-batch-edit-table,
 .cdx-dialog,
 .cdx-dialog__window {
