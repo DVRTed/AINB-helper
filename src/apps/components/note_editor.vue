@@ -48,8 +48,11 @@ export default {
       span.contentEditable = "false";
       span.dataset.wikitext = wikitext;
 
+      const diff_count = [...wikitext.matchAll(link_regex)].length;
+
       const links = document.createElement("span");
-      links.hidden = true;
+      links.hidden = diff_count >= 10;
+
       for (const [, id, change] of wikitext.matchAll(link_regex)) {
         const a = document.createElement("a");
         a.href = `/wiki/Special:Diff/${id}`;
@@ -70,7 +73,7 @@ export default {
       const toggle = document.createElement("button");
       toggle.type = "button";
       toggle.className = "ainb-note-diff-toggle";
-      toggle.textContent = "show diffs";
+      toggle.textContent = links.hidden ? "show diffs" : "hide diffs";
       toggle.addEventListener("click", () => {
         links.hidden = !links.hidden;
         toggle.textContent = links.hidden ? "show diffs" : "hide diffs";
