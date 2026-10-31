@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.0](https://github.com/DVRTed/AINB-helper/compare/v1.3.2...v1.4.0) (2026-10-31)
+
+
+### Features
+
+* add confirmation dialog before removing author's content ([5fec53f](https://github.com/DVRTed/AINB-helper/commit/5fec53f87e7aa6085301eebd82b1829a0880781e))
+
+
+### Bug Fixes
+
+* **edit-table:** prevent unsaved changes from being lost when reindexing tables ([d977525](https://github.com/DVRTed/AINB-helper/commit/d977525a646750642408de975b54598e28280eb4))
+
 ## [1.3.2](https://github.com/DVRTed/AINB-helper/compare/v1.3.1...v1.3.2) (2026-10-31)
 
 
