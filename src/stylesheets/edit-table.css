@@ -57,7 +57,7 @@
 }
 
 .ainb-edit-table-status-select {
-    width: 35%;
+    min-width: 75%;
 }
 
 .ainb-batch-edit-table.cdx-dialog,

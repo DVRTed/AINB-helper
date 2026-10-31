@@ -1,47 +1,14 @@
-<template>
-  <cdx-dialog
-    v-model:open="open"
-    :title="article"
-    :subtitle="`Highlighting content authored by User:${selected_username} · ${status}`"
-    close-button-label="Close"
-    style="max-width: none"
-  >
-    <div v-if="loading || status_error" class="ainb-loading">
-      {{ status }}
-    </div>
-    <div
-      v-else
-      style="white-space: pre-wrap; font-family: monospace; font-size: 0.8em"
-    >
-      <template v-for="(seg, i) in segments">
-        <mark v-if="seg.mine" :key="i" style="background: #ffe066">{{
-          seg.text
-        }}</mark>
-        <span v-else :key="'else' + i">{{ seg.text }}</span>
-      </template>
-    </div>
-    <template #footer>
-      <cdx-button
-        action="destructive"
-        :disabled="!has_highlighted_text"
-        @click="open_edit"
-      >
-        Remove all content authored by this user
-      </cdx-button>
-    </template>
-  </cdx-dialog>
-</template>
-
 <script>
-import { CdxButton, CdxDialog } from "@wikimedia/codex";
+import { CdxButton, CdxDialog, CdxMessage } from "@wikimedia/codex";
 import { api, get_case_origin } from "../shared.js";
+import ConfirmDialog from "./components/confirm_dialog.vue";
 
 const WIKIWHO =
   "https://wikiwho.wmcloud.org/en/api/v1.0.0-beta/latest_rev_content/";
 const EDIT_TEXT_KEY = "ainb-author-highlight-edit-text";
 
 export default {
-  components: { CdxButton, CdxDialog },
+  components: { CdxButton, CdxDialog, ConfirmDialog, CdxMessage },
   props: {
     article: { type: String, required: true },
     username: { type: String, required: true },
@@ -49,6 +16,7 @@ export default {
   data() {
     return {
       open: false,
+      confirm_open: false,
       loading: false,
       status: "",
       status_error: false,
@@ -172,3 +140,60 @@ export default {
   },
 };
 </script>
+
+<template>
+  <div>
+    <cdx-dialog
+      v-model:open="open"
+      :title="article"
+      :subtitle="`Highlighting content authored by User:${selected_username} · ${status}`"
+      close-button-label="Close"
+      style="max-width: none"
+    >
+      <div v-if="loading || status_error" class="ainb-loading">
+        {{ status }}
+      </div>
+      <div
+        v-else
+        style="white-space: pre-wrap; font-family: monospace; font-size: 0.8em"
+      >
+        <template v-for="(seg, i) in segments">
+          <mark v-if="seg.mine" :key="i" style="background: #ffe066">{{
+            seg.text
+          }}</mark>
+          <span v-else :key="'else' + i">{{ seg.text }}</span>
+        </template>
+      </div>
+      <template #footer>
+        <cdx-button
+          action="destructive"
+          :disabled="!has_highlighted_text"
+          @click="confirm_open = true"
+        >
+          Remove all content authored by this user
+        </cdx-button>
+      </template>
+    </cdx-dialog>
+
+    <ConfirmDialog
+      v-model:open="confirm_open"
+      title="Are you sure you want to remove this content?"
+      @confirm="open_edit"
+    >
+      <!-- another hack to avoid cdx styling first child -->
+      <div></div>
+      <cdx-message type="error">
+        Blanket removal of a user's content is almost never appropriate because
+        it is likely to break sentences and template syntax.
+      </cdx-message>
+
+      <p>
+        Where possible, you should instead try
+        <strong>reverting to an older revision</strong> of the article from
+        before the user's edits. Ideally, you'd then re-apply any worthwhile
+        edits made in between.
+      </p>
+      <p>Do you still want to continue to the edit page?</p>
+    </ConfirmDialog>
+  </div>
+</template>

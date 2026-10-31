@@ -76,15 +76,15 @@ export function replace_edittext_with_session() {
     $("#wpDiff").trigger("click");
 
     const message_mount = document.createElement("div");
-    $("#editpage-copywarn").append(message_mount);
+    $(".editButtons").prepend(message_mount);
     createMwApp({
       render() {
         return h(
           CdxMessage,
-          { type: "warning" },
+          { type: "error" },
           {
             default: () => [
-              "ALL content authored by ",
+              "All content authored by ",
               h("strong", `User:${username}`),
               " has been removed; please review the changes carefully if you decide to save this page.",
             ],
