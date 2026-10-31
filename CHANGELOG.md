@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/DVRTed/AINB-helper/compare/v1.2.1...v1.2.2) (2026-10-31)
+
+
+### Bug Fixes
+
+* **edit-table:** make batch-edit usable on mobile viewport ([8c29c65](https://github.com/DVRTed/AINB-helper/commit/8c29c65bc63826abb527ca3e9f4793505c4415db))
+
 ## [1.2.1](https://github.com/DVRTed/AINB-helper/compare/v1.2.0...v1.2.1) (2026-10-30)
 
 
