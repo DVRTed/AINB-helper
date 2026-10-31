@@ -90,7 +90,7 @@ export default defineConfig(({ mode }) => {
         external: ["vue", "@wikimedia/codex"],
         output: {
           banner:
-            "mw.loader.using(['vue', '@wikimedia/codex', 'mediawiki.api', 'mediawiki.util']).then(function (require) {",
+            "mw.loader.using(['vue', '@wikimedia/codex', 'mediawiki.api', 'mediawiki.util', 'jquery.tablesorter']).then(function (require) {",
           footer: "});",
         },
       },

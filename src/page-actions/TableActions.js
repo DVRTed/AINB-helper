@@ -19,6 +19,24 @@ export function get_table_actions($table) {
   return $actions;
 }
 
+function fix_table_sort($table) {
+  if ($table.hasClass("ainb-sorter-fixed")) return;
+
+  const $headers = $table.find("tr").has("th").first().children("th");
+  $table
+    .addClass("ainb-sorter-fixed")
+    .removeClass("jquery-tablesorter")
+    .removeData("tablesorter")
+    .off(".tablesorter");
+
+  $headers
+    .off("click keypress")
+    .removeClass("headerSort headerSortUp headerSortDown")
+    .removeAttr("role tabindex title");
+
+  $table.tablesorter();
+}
+
 export function init_row_editing() {
   $(".ainb-cleanup-table")
     .has('tr[class*="aic-row-"]')
@@ -27,7 +45,9 @@ export function init_row_editing() {
       const $table = $(this).addClass("ainb-row-editing-done");
       const table_index = $($table).data("table-index");
       const $header_tr = $table.find("tr").has("th").first();
-      $header_tr.prepend('<th class="ainb-action-header">Action</th>');
+      $header_tr.prepend(
+        '<th class="ainb-action-header unsortable">Action</th>',
+      );
 
       // elements in the row to trigger set_case_origin
       const origin_trigger_selector = [
@@ -95,6 +115,7 @@ export function init_row_editing() {
 
         $edit_td.append($edit_button);
       });
+      fix_table_sort($table);
     });
 }
 
