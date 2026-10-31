@@ -1,5 +1,15 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 1.4.0 (2026-10-31) ==
+
+=== Features ===
+
+* add confirmation dialog before removing author's content ([https://github.com/DVRTed/AINB-helper/commit/5fec53f87e7aa6085301eebd82b1829a0880781e 5fec53f])
+
+=== Bug Fixes ===
+
+* '''edit-table:''' prevent unsaved changes from being lost when reindexing tables ([https://github.com/DVRTed/AINB-helper/commit/d977525a646750642408de975b54598e28280eb4 d977525])
+
 == 1.3.2 (2026-10-31) ==
 
 === Bug Fixes ===
