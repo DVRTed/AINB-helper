@@ -60,9 +60,9 @@
     width: 35%;
 }
 
-.ainb-batch-edit-table,
-.cdx-dialog,
-.cdx-dialog__window {
+.ainb-batch-edit-table.cdx-dialog,
+.ainb-batch-edit-table .cdx-dialog,
+.ainb-batch-edit-table .cdx-dialog__window {
     max-width: 1200px !important;
     width: min(95vw, 1200px) !important;
 }
