@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/DVRTed/AINB-helper/compare/v1.3.1...v1.3.2) (2026-10-31)
+
+
+### Bug Fixes
+
+* widen preview dialog to avoid cramped layout ([915d215](https://github.com/DVRTed/AINB-helper/commit/915d21556f2e8af2102909f9545805b14bd4bf5c))
+
 ## [1.3.1](https://github.com/DVRTed/AINB-helper/compare/v1.3.0...v1.3.1) (2026-10-31)
 
 
