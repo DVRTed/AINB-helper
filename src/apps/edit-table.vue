@@ -235,7 +235,14 @@ export default {
     close_app() {
       close_app();
     },
+
     open_table_indexer() {
+      // for batch edit
+      // but it's harmless and cleaner to have it here
+      if (this.num_changed_rows > 0) {
+        const ok = window.confirm("Unsaved changes will be lost. Continue?");
+        if (!ok) return;
+      }
       create_app(Table_indexer);
     },
 
