@@ -826,6 +826,7 @@ returns { error: str } on error
               aria-label="Custom edit summary"
             ></cdx-text-input>
           </div>
+          <div v-else></div>
           <div>
             <cdx-button @click="close_app">Cancel</cdx-button>
             <cdx-button
