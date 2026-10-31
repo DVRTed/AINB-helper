@@ -1,5 +1,11 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 1.3.2 (2026-10-31) ==
+
+=== Bug Fixes ===
+
+* widen preview dialog to avoid cramped layout ([https://github.com/DVRTed/AINB-helper/commit/915d21556f2e8af2102909f9545805b14bd4bf5c 915d215])
+
 == 1.3.1 (2026-10-31) ==
 
 === Bug Fixes ===
