@@ -1,6 +1,6 @@
 {
     "name": "ainb-helper",
-    "version": "1.3.2",
+    "version": "1.3.3",
     "private": true,
     "scripts": {
         "dev": "vite build --mode development --watch",
