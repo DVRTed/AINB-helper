@@ -73,3 +73,12 @@ export default {
     </template>
   </cdx-dialog>
 </template>
+
+<style>
+.ainb-preview-dialog.cdx-dialog,
+.ainb-preview-dialog .cdx-dialog,
+.ainb-preview-dialog .cdx-dialog__window {
+  max-width: 1200px !important;
+  width: min(95vw, 1200px) !important;
+}
+</style>
