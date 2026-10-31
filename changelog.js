@@ -1,5 +1,11 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 1.2.2 (2026-10-31) ==
+
+=== Bug Fixes ===
+
+* '''edit-table:''' make batch-edit usable on mobile viewport ([https://github.com/DVRTed/AINB-helper/commit/8c29c65bc63826abb527ca3e9f4793505c4415db 8c29c65])
+
 == 1.2.1 (2026-10-30) ==
 
 === Bug Fixes ===
