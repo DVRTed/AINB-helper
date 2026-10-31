@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/DVRTed/AINB-helper/compare/v1.3.0...v1.3.1) (2026-10-31)
+
+
+### Bug Fixes
+
+* prevent edit table styles from leaking ([b36e27c](https://github.com/DVRTed/AINB-helper/commit/b36e27c82765a0a73de049d378c109469007bc7f))
+
 ## [1.3.0](https://github.com/DVRTed/AINB-helper/compare/v1.2.2...v1.3.0) (2026-10-31)
 
 
