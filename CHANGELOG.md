@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.3.0](https://github.com/DVRTed/AINB-helper/compare/v1.2.2...v1.3.0) (2026-10-31)
+
+
+### Features
+
+* **edit-table:** add page-creation filter to batch edit ([49062f2](https://github.com/DVRTed/AINB-helper/commit/49062f2c4976cb79a7dc0a4ac1c9d7e390f67b3c))
+* **llmprod:** show preview in its own dialog ([2753a58](https://github.com/DVRTed/AINB-helper/commit/2753a587058903152bf617ccb6c0245584742ba4))
+* **new-case-app:** add show preview button ([e8f0483](https://github.com/DVRTed/AINB-helper/commit/e8f0483334b2f21ede7adba2d3d73ea706665ebb))
+
+
+### Bug Fixes
+
+* **edit-table:** prevent footer buttons jumping after rows load ([ab4be60](https://github.com/DVRTed/AINB-helper/commit/ab4be6016e4b65b2b1964b0cb4cf1b42b41e4cc1))
+* **main-app:** improve diff view rendering ([d8e8f71](https://github.com/DVRTed/AINB-helper/commit/d8e8f7165daeb4e5b078669b63be88294eed7d2d))
+* status column sorting on cleanup tables ([a6fcd5e](https://github.com/DVRTed/AINB-helper/commit/a6fcd5e82a9ca76b2442806a339e6e7632670cd5))
+
 ## [1.2.2](https://github.com/DVRTed/AINB-helper/compare/v1.2.1...v1.2.2) (2026-10-31)
 
 
