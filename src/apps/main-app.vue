@@ -19,6 +19,8 @@ import {
   get_page_info,
 } from "../shared.js";
 
+import DiffView from "./components/diff_view.vue";
+
 export const NOTICEBOARD_PREFIX = "Wikipedia:AI noticeboard/";
 const TRACKING_SECTION = "Cleanup";
 const TRACKING_SECTION_RE =
@@ -57,6 +59,7 @@ export default {
     CdxMenuButton,
     CdxProgressBar,
     CdxTextInput,
+    DiffView,
   },
 
   props: {
@@ -102,14 +105,13 @@ export default {
        * Array of article groups.
        * @type {Array<{
        * title: string,
-       * edits: [usercontrib, selected: boolean, diff_loading: boolean, diff_content: string],
+       * edits: [usercontrib, selected: boolean],
        * all_selected: boolean,
        * some_selected: boolean,
        * selected_count: number
        * }>}
        */
       article_groups: [],
-      current_diff_data: null,
       viewing_diff_edit: null,
 
       extra_notes: "",
@@ -180,34 +182,6 @@ export default {
     some_selected() {
       return this.article_groups.some(
         (group) => group.some_selected || group.all_selected,
-      );
-    },
-
-    diff_dialog_open: {
-      get() {
-        return !!this.viewing_diff_edit;
-      },
-      set(val) {
-        if (!val) this.viewing_diff_edit = null;
-      },
-    },
-
-    diff_edit_index() {
-      if (!this.selected_group || !this.viewing_diff_edit) return -1;
-      return this.selected_group.edits.findIndex(
-        (edit) => edit.revid === this.viewing_diff_edit.revid,
-      );
-    },
-
-    has_prev_diff() {
-      return this.diff_edit_index > 0;
-    },
-
-    has_next_diff() {
-      return (
-        this.diff_edit_index >= 0 &&
-        this.selected_group &&
-        this.diff_edit_index < this.selected_group.edits.length - 1
       );
     },
 
@@ -579,8 +553,6 @@ export default {
           groups[edit.title].edits.push({
             ...edit,
             selected: false,
-            diff_loading: false,
-            diff_content: "",
           });
         });
 
@@ -617,56 +589,12 @@ export default {
 
     show_diff_popup(edit) {
       this.viewing_diff_edit = edit;
-      this.load_diff(edit);
     },
 
-    close_diff_popup() {
-      this.viewing_diff_edit = null;
-    },
-
-    // next/prev on diff
-    go_to_diff(offset) {
-      if (!this.selected_group || this.diff_edit_index < 0) return;
-      const next_edit =
-        this.selected_group.edits[this.diff_edit_index + offset];
-      if (next_edit) this.show_diff_popup(next_edit);
-    },
-
-    // jump, i.e., click on a random diff
-    jump_to_diff(revid) {
-      if (!this.selected_group) return;
-      const edit = this.selected_group.edits.find((e) => e.revid == revid);
-      if (edit) this.show_diff_popup(edit);
-    },
-
-    async load_diff(edit) {
-      if (edit.diff_content || edit.diff_loading) return;
-
-      edit.diff_loading = true;
-      try {
-        const response = await api.get({
-          action: "compare",
-          fromrev: edit.revid,
-          torelative: "prev",
-          prop: "diff",
-          formatversion: 2,
-        });
-
-        const res_content = response.compare?.body;
-        if (res_content) {
-          edit.diff_content = `<table class="diff">${res_content}</table>`;
-        } else {
-          edit.diff_content = "<p>Could not load diff.</p>";
-        }
-      } catch (error) {
-        console.error("Error loading diff:", error);
-        edit.diff_content =
-          "<p>Error loading diff: " +
-          (error?.message ?? String(error)) +
-          "</p>";
-      } finally {
-        edit.diff_loading = false;
-      }
+    // called by diff-view's "include" checkbox
+    set_edit_selected(edit, value) {
+      edit.selected = value;
+      if (this.selected_group) this.update_group_selection(this.selected_group);
     },
 
     // existing table dialog
@@ -1342,87 +1270,11 @@ export default {
       </template>
     </cdx-dialog>
 
-    <cdx-dialog
-      v-model:open="diff_dialog_open"
-      :title="viewing_diff_edit ? 'Diff for ' + viewing_diff_edit.title : ''"
-      :use-close-button="true"
-      class="ainb-diff-dialog"
-      @keyup.left="go_to_diff(-1)"
-      @keyup.right="go_to_diff(1)"
-    >
-      <div v-if="viewing_diff_edit" class="ainb-diff-dialog-body">
-        <div class="ainb-diff-meta">
-          <select
-            v-if="selected_group.edits.length > 1"
-            class="ainb-diff-select"
-            :value="viewing_diff_edit.revid"
-            @change="jump_to_diff($event.target.value)"
-          >
-            <option
-              v-for="(e, idx) in selected_group.edits"
-              :key="e.revid"
-              :value="e.revid"
-            >
-              {{ idx + 1 }} / {{ selected_group.edits.length }} —
-              {{ format_date(e.timestamp) }} ({{ format_bytes(e.sizediff) }})
-            </option>
-          </select>
-          <a
-            :href="get_diff_url(viewing_diff_edit.revid)"
-            target="_blank"
-            class="ainb-diff-meta-link"
-          >
-            Open in new tab &#8599;
-          </a>
-        </div>
-        <div class="ainb-diff-meta-include">
-          <cdx-checkbox
-            v-model="viewing_diff_edit.selected"
-            @update:model-value="update_group_selection(selected_group)"
-          >
-            Include
-          </cdx-checkbox>
-        </div>
-        <div class="ainb-diff-meta-comment" :title="viewing_diff_edit.comment">
-          <span
-            :class="[
-              'ainb-diff-meta-size',
-              get_size_class(viewing_diff_edit.sizediff),
-            ]"
-          >
-            {{ format_bytes(viewing_diff_edit.sizediff) }} bytes
-          </span>
-          &middot; <span class="ainb-diff-meta-comment-label">Summary:</span>
-          {{ viewing_diff_edit.comment || "No edit summary" }}
-        </div>
-
-        <div v-if="viewing_diff_edit.diff_loading" class="ainb-diff-loading">
-          Loading diff...
-        </div>
-        <!-- eslint-disable vue/no-v-html -->
-        <div
-          v-else-if="viewing_diff_edit.diff_content"
-          class="ainb-diff-content"
-          v-html="viewing_diff_edit.diff_content"
-        ></div>
-        <!-- eslint-disable vue/no-v-html -->
-
-        <div v-else class="ainb-diff-loading">No content loaded.</div>
-      </div>
-      <template #footer>
-        <div class="ainb-dialog-footer">
-          <div class="ainb-diff-nav">
-            <cdx-button :disabled="!has_prev_diff" @click="go_to_diff(-1)">
-              &larr; Prev
-            </cdx-button>
-            <cdx-button :disabled="!has_next_diff" @click="go_to_diff(1)">
-              Next &rarr;
-            </cdx-button>
-          </div>
-          <cdx-button @click="close_diff_popup">Close</cdx-button>
-        </div>
-      </template>
-    </cdx-dialog>
+    <DiffView
+      v-model:edit="viewing_diff_edit"
+      :edits="selected_group ? selected_group.edits : []"
+      @set-selected="set_edit_selected"
+    />
 
     <cdx-dialog
       v-model:open="tag_dialog_open"
