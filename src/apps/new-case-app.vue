@@ -16,6 +16,7 @@ import {
   get_page_info,
 } from "../shared.js";
 import Main, { NOTICEBOARD_PREFIX } from "./main-app.vue";
+import ShowPreview from "./components/show_preview.vue";
 
 // freeze rev of Wikipedia:AI noticeboard/AINB/Blank report
 // note that the current rev is fetched instead of this when DEBUG_MODE is enabled
@@ -29,6 +30,7 @@ export default {
     CdxMessage,
     CdxSelect,
     CdxTextInput,
+    ShowPreview,
   },
 
   props: {
@@ -52,6 +54,7 @@ export default {
       case_name_input: this.initial_case_name,
       case_type: "user",
       case_discussion_wikitext: "",
+      preview_open: false,
     };
   },
 
@@ -257,156 +260,170 @@ export default {
 </script>
 
 <template>
-  <cdx-dialog
-    v-model:open="app_open"
-    class="ainb-helper ainb-new-case"
-    :title="dialog_title"
-    :use-close-button="true"
-    @update:open="handle_dialog_close"
-  >
-    <!-- two options: one to create a new case and another to add tracking table
+  <div>
+    <cdx-dialog
+      v-model:open="app_open"
+      class="ainb-helper ainb-new-case"
+      :title="dialog_title"
+      :use-close-button="true"
+      @update:open="handle_dialog_close"
+    >
+      <!-- two options: one to create a new case and another to add tracking table
    to an existing case. the second option semi-half-literally kills this app and
    launches the main-app. -->
-    <div v-if="current_step === 1">
-      <div class="ainb-intro-choices">
-        <cdx-button
-          class="ainb-intro-choice"
-          action="progressive"
-          @click="current_step = 2"
-        >
-          <svg
-            class="ainb-intro-choice-icon"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-            focusable="false"
+      <div v-if="current_step === 1">
+        <div class="ainb-intro-choices">
+          <cdx-button
+            class="ainb-intro-choice"
+            action="progressive"
+            @click="current_step = 2"
           >
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          <span>File a new case</span>
-        </cdx-button>
-        <cdx-button class="ainb-intro-choice" @click="open_main_app">
-          <svg
-            class="ainb-intro-choice-icon"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-            focusable="false"
-          >
-            <path d="M4 5h16v14H4zM4 10h16M9 10v9m6-9v9" />
-          </svg>
-          <span>Add tracking table to an existing case</span>
-        </cdx-button>
+            <svg
+              class="ainb-intro-choice-icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            <span>File a new case</span>
+          </cdx-button>
+          <cdx-button class="ainb-intro-choice" @click="open_main_app">
+            <svg
+              class="ainb-intro-choice-icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M4 5h16v14H4zM4 10h16M9 10v9m6-9v9" />
+            </svg>
+            <span>Add tracking table to an existing case</span>
+          </cdx-button>
+        </div>
       </div>
-    </div>
 
-    <div v-if="current_step === 2" class="ainb-step ainb-new-case-step">
-      <cdx-field>
-        <template #label>Case name</template>
-        <cdx-text-input
-          v-model="case_name_input"
-          placeholder="Typically a username without the User: prefix"
-          maxlength="150"
-          @keydown.enter="process_case_page"
-        />
-      </cdx-field>
+      <div v-if="current_step === 2" class="ainb-step ainb-new-case-step">
+        <cdx-field>
+          <template #label>Case name</template>
+          <cdx-text-input
+            v-model="case_name_input"
+            placeholder="Typically a username without the User: prefix"
+            maxlength="150"
+            @keydown.enter="process_case_page"
+          />
+        </cdx-field>
 
-      <cdx-field>
-        <template #label>Case type</template>
-        <cdx-select
-          v-model:selected="case_type"
-          :menu-items="available_case_types"
-        />
-      </cdx-field>
-    </div>
-
-    <div v-if="current_step === 3" class="ainb-step ainb-new-case-step">
-      <cdx-message v-if="case_already_exists" type="notice">
-        The following will be added to the Discussion section of the existing
-        case page for
-        <b>
-          <a :href="target_page_url" target="_blank">{{ case_name }}</a></b>.
-      </cdx-message>
-
-      <cdx-field>
-        <template #label>Discussion subsection</template>
-        <textarea
-          v-model="case_discussion_wikitext"
-          :disabled="app_loading"
-          class="ainb-new-case-discussion"
-          rows="12"
-        ></textarea>
-      </cdx-field>
-    </div>
-
-    <template v-if="current_step === 4">
-      <p v-if="case_already_exists">
-        Successfully added a new discussion subsection.
-      </p>
-      <p v-else>Successfully filed a new case.</p>
-      <p>
-        <a :href="target_page_url" target="_blank">{{ target_page_title }}</a>
-      </p>
-    </template>
-
-    <!-- the footers -->
-    <template #footer>
-      <div class="ainb-dialog-footer">
-        <template v-if="current_step === 2">
-          <div></div>
-          <div>
-            <cdx-button @click="current_step = 1">Back</cdx-button>
-            <cdx-button
-              action="progressive"
-              weight="primary"
-              :disabled="!case_name || app_loading"
-              @click="process_case_page"
-            >
-              {{ app_loading ? "Processing..." : "Continue" }}
-            </cdx-button>
-          </div>
-        </template>
-
-        <template v-if="current_step === 3">
-          <div class="ainb-subpage-info">
-            Target: <strong>{{ target_page_title }}</strong>
-          </div>
-          <div>
-            <cdx-button
-              v-if="!initial_case_name"
-              :disabled="app_loading"
-              @click="current_step = 2"
-            >
-              Back
-            </cdx-button>
-            <cdx-button
-              action="progressive"
-              weight="primary"
-              :disabled="
-                app_loading ||
-                  !case_discussion_wikitext.trim() ||
-                  case_discussion_wikitext.includes('[ Replace this line')
-              "
-              @click="create_case_page"
-            >
-              {{
-                app_loading
-                  ? "Writing..."
-                  : case_already_exists
-                    ? "Add discussion"
-                    : "File case"
-              }}
-            </cdx-button>
-          </div>
-        </template>
-
-        <template v-if="current_step === 4">
-          <div></div>
-          <div>
-            <cdx-button @click="handle_dialog_close(false)">Close</cdx-button>
-          </div>
-        </template>
+        <cdx-field>
+          <template #label>Case type</template>
+          <cdx-select
+            v-model:selected="case_type"
+            :menu-items="available_case_types"
+          />
+        </cdx-field>
       </div>
-    </template>
-  </cdx-dialog>
+
+      <div v-if="current_step === 3" class="ainb-step ainb-new-case-step">
+        <cdx-message v-if="case_already_exists" type="notice">
+          The following will be added to the Discussion section of the existing
+          case page for
+          <b>
+            <a :href="target_page_url" target="_blank">{{ case_name }}</a></b>.
+        </cdx-message>
+
+        <cdx-field>
+          <template #label>Discussion subsection</template>
+          <textarea
+            v-model="case_discussion_wikitext"
+            :disabled="app_loading"
+            class="ainb-new-case-discussion"
+            rows="12"
+          ></textarea>
+        </cdx-field>
+      </div>
+
+      <template v-if="current_step === 4">
+        <p v-if="case_already_exists">
+          Successfully added a new discussion subsection.
+        </p>
+        <p v-else>Successfully filed a new case.</p>
+        <p>
+          <a :href="target_page_url" target="_blank">{{ target_page_title }}</a>
+        </p>
+      </template>
+
+      <!-- the footers -->
+      <template #footer>
+        <div class="ainb-dialog-footer">
+          <template v-if="current_step === 2">
+            <div></div>
+            <div>
+              <cdx-button @click="current_step = 1">Back</cdx-button>
+              <cdx-button
+                action="progressive"
+                weight="primary"
+                :disabled="!case_name || app_loading"
+                @click="process_case_page"
+              >
+                {{ app_loading ? "Processing..." : "Continue" }}
+              </cdx-button>
+            </div>
+          </template>
+
+          <template v-if="current_step === 3">
+            <div class="ainb-subpage-info">
+              Target: <strong>{{ target_page_title }}</strong>
+            </div>
+            <div>
+              <cdx-button
+                v-if="!initial_case_name"
+                :disabled="app_loading"
+                @click="current_step = 2"
+              >
+                Back
+              </cdx-button>
+
+              <cdx-button
+                :disabled="app_loading || !case_discussion_wikitext.trim()"
+                @click="preview_open = true"
+              >
+                Show preview
+              </cdx-button>
+              <cdx-button
+                action="progressive"
+                weight="primary"
+                :disabled="
+                  app_loading ||
+                    !case_discussion_wikitext.trim() ||
+                    case_discussion_wikitext.includes('[ Replace this line')
+                "
+                @click="create_case_page"
+              >
+                {{
+                  app_loading
+                    ? "Writing..."
+                    : case_already_exists
+                      ? "Add discussion"
+                      : "File case"
+                }}
+              </cdx-button>
+            </div>
+          </template>
+
+          <template v-if="current_step === 4">
+            <div></div>
+            <div>
+              <cdx-button @click="handle_dialog_close(false)">Close</cdx-button>
+            </div>
+          </template>
+        </div>
+      </template>
+    </cdx-dialog>
+    <ShowPreview
+      v-model:open="preview_open"
+      :wikitext="case_discussion_wikitext"
+      :title="target_page_title"
+    />
+  </div>
 </template>
 
 <style>
