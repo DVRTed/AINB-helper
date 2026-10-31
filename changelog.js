@@ -1,5 +1,19 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 1.3.0 (2026-10-31) ==
+
+=== Features ===
+
+* '''edit-table:''' add page-creation filter to batch edit ([https://github.com/DVRTed/AINB-helper/commit/49062f2c4976cb79a7dc0a4ac1c9d7e390f67b3c 49062f2])
+* '''llmprod:''' show preview in its own dialog ([https://github.com/DVRTed/AINB-helper/commit/2753a587058903152bf617ccb6c0245584742ba4 2753a58])
+* '''new-case-app:''' add show preview button ([https://github.com/DVRTed/AINB-helper/commit/e8f0483334b2f21ede7adba2d3d73ea706665ebb e8f0483])
+
+=== Bug Fixes ===
+
+* '''edit-table:''' prevent footer buttons jumping after rows load ([https://github.com/DVRTed/AINB-helper/commit/ab4be6016e4b65b2b1964b0cb4cf1b42b41e4cc1 ab4be60])
+* '''main-app:''' improve diff view rendering ([https://github.com/DVRTed/AINB-helper/commit/d8e8f7165daeb4e5b078669b63be88294eed7d2d d8e8f71])
+* status column sorting on cleanup tables ([https://github.com/DVRTed/AINB-helper/commit/a6fcd5e82a9ca76b2442806a339e6e7632670cd5 a6fcd5e])
+
 == 1.2.2 (2026-10-31) ==
 
 === Bug Fixes ===
