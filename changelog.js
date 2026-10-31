@@ -1,5 +1,11 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 1.3.1 (2026-10-31) ==
+
+=== Bug Fixes ===
+
+* prevent edit table styles from leaking ([https://github.com/DVRTed/AINB-helper/commit/b36e27c82765a0a73de049d378c109469007bc7f b36e27c])
+
 == 1.3.0 (2026-10-31) ==
 
 === Features ===
