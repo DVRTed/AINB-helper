@@ -20,6 +20,7 @@ import {
   rm_underscores,
 } from "../shared.js";
 import { build_article_row } from "./main-app.vue";
+import ShowPreview from "./components/show_preview.vue";
 
 const LAST_CASE_KEY = "ainb-llm-tag-last-case";
 const LAST_CASE_TTL_MS = 3 * 60 * 60 * 1000;
@@ -46,6 +47,7 @@ export default {
     CdxRadio,
     CdxTextArea,
     CdxTextInput,
+    ShowPreview,
   },
 
   data() {
@@ -74,9 +76,8 @@ export default {
       // output
       editable_wikitext: "",
       editable_summary: "",
-      show_preview: false,
-      preview_html: "",
-      preview_loading: false,
+      preview_open: false,
+
       show_advanced: false,
       update_tracker: true,
       save_steps: [],
@@ -185,7 +186,6 @@ export default {
       }
 
       this.restored = true;
-      this.show_preview = false;
       this.current_step = 2;
     },
 
@@ -199,7 +199,6 @@ export default {
       this.restored = false;
       this.generate_defaults();
       this.persist_last_case();
-      this.show_preview = false;
       this.current_step = 2;
     },
 
@@ -218,35 +217,6 @@ export default {
       mw.storage.remove(LAST_CASE_KEY);
       this.restored = false;
       this.current_step = 1;
-    },
-
-    async toggle_preview() {
-      if (this.show_preview) {
-        this.show_preview = false;
-        return;
-      }
-
-      this.preview_loading = true;
-      this.show_preview = true;
-      try {
-        const res = await api.post({
-          action: "parse",
-          text: this.editable_wikitext,
-          title: this.page_name,
-          pst: true,
-          prop: "text",
-        });
-        if (res.parse?.text?.["*"]) {
-          this.preview_html = res.parse.text["*"];
-        } else {
-          this.preview_html = "Could not generate preview.";
-        }
-      } catch (err) {
-        console.error("Preview error:", err);
-        this.preview_html = `Preview error: ${err?.message ?? String(err)}`;
-      } finally {
-        this.preview_loading = false;
-      }
     },
 
     async log_to_userpage_action(revid) {
@@ -547,20 +517,6 @@ export default {
           ></cdx-text-area>
         </cdx-field>
 
-        <div v-if="!saving" class="ainb-preview-link-wrap">
-          <a href="#" @click.prevent="toggle_preview">
-            {{ show_preview ? "Hide preview" : "Show preview" }}
-          </a>
-        </div>
-
-        <div v-if="!saving && show_preview" class="ainb-preview-box">
-          <div v-if="preview_loading" class="ainb-loading">
-            Loading preview...
-          </div>
-          <!-- eslint-disable-next-line vue/no-v-html -->
-          <div v-else class="ainb-preview-content" v-html="preview_html"></div>
-        </div>
-
         <cdx-field v-if="!saving">
           <template #label>Edit summary:</template>
           <cdx-text-input v-model="editable_summary" :disabled="saving" />
@@ -589,6 +545,13 @@ export default {
           </div>
           <div v-if="current_step === 2">
             <cdx-button
+              v-if="!save_done"
+              :disabled="saving || !editable_wikitext"
+              @click="preview_open = true"
+            >
+              Show preview
+            </cdx-button>
+            <cdx-button
               v-if="save_done"
               action="progressive"
               weight="primary"
@@ -609,5 +572,11 @@ export default {
         </div>
       </template>
     </cdx-dialog>
+
+    <ShowPreview
+      v-model:open="preview_open"
+      :wikitext="editable_wikitext"
+      :title="page_name"
+    />
   </div>
 </template>
