@@ -700,6 +700,9 @@ returns { error: str } on error
                     row.is_new,
                     selected_set.has(row.article),
                   ]"
+                  :class="{
+                    'ainb-row-selected': selected_set.has(row.article),
+                  }"
                 >
                   <td>
                     <input

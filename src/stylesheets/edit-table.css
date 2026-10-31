@@ -176,6 +176,9 @@
     font-weight: 600;
 }
 
+.ainb-batch-edit-table .ainb-batch-edit-table-grid tbody tr.ainb-row-selected>td {
+    background-color: var(--ainb-background-color-progressive-subtle);
+}
 
 /* stack entries and adjust their borders on batch-edit for mobile */
 /* it's not perfect but fairly useable */
@@ -211,6 +214,10 @@
 
         tbody tr:nth-child(even) {
             background-color: var(--ainb-background-color-neutral);
+        }
+
+        tbody tr.ainb-row-selected {
+            background-color: var(--ainb-background-color-progressive-subtle);
         }
 
         tbody td {
