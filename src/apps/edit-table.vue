@@ -95,6 +95,7 @@ export default {
       ],
 
       hide_resolved: false,
+      show_only_created: false,
 
       rows: [],
       original_rows: [],
@@ -174,14 +175,32 @@ export default {
       );
     },
 
-    filtered_rows() {
-      if (!this.hide_resolved) return this.rows;
-      return this.rows.filter(
-        (row) =>
-          row.status !== "completed" &&
-          row.status !== "unnecessary" &&
-          row.status !== "tagged",
+    // notes contain "(page created)"
+    created_articles() {
+      return new Set(
+        this.original_rows
+          .filter((row) => (row.notes || "").includes("(page created)"))
+          .map((row) => row.article),
       );
+    },
+    created_count() {
+      return this.created_articles.size;
+    },
+
+    filtered_rows() {
+      let rows = this.rows;
+      if (this.hide_resolved) {
+        rows = rows.filter(
+          (row) =>
+            row.status !== "completed" &&
+            row.status !== "unnecessary" &&
+            row.status !== "tagged",
+        );
+      }
+      if (this.show_only_created) {
+        rows = rows.filter((row) => this.created_articles.has(row.article));
+      }
+      return rows;
     },
 
     // for the "select" checkbox
@@ -652,6 +671,14 @@ returns { error: str } on error
               <label class="ainb-hide-resolved-label">
                 <input v-model="hide_resolved" type="checkbox" />
                 Hide resolved entries
+              </label>
+              <label
+                v-if="created_count"
+                class="ainb-hide-resolved-label"
+                title="Matches rows whose note contains '(page created)'."
+              >
+                <input v-model="show_only_created" type="checkbox" />
+                Show only page creations ({{ created_count }})
               </label>
               <span v-if="num_changed_rows">
                 &middot; {{ num_changed_rows }}

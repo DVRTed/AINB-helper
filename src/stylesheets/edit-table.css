@@ -52,6 +52,10 @@
     border-color: var(--ainb-border-color-base);
 }
 
+.ainb-dialog-table-actions label+label {
+    margin-left: 1em;
+}
+
 .ainb-edit-table-status-select {
     width: 35%;
 }
