@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/DVRTed/AINB-helper/compare/v1.5.0...v1.5.1) (2026-11-01)
+
+
+### Bug Fixes
+
+* **llmprod:** prevent overwriting concurrent edits in the tracking table ([67559b5](https://github.com/DVRTed/AINB-helper/commit/67559b5a57d5428c7cff2e403fb213256b818050))
+
 ## [1.5.0](https://github.com/DVRTed/AINB-helper/compare/v1.4.0...v1.5.0) (2026-11-01)
 
 
