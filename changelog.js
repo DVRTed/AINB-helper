@@ -1,5 +1,12 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 1.5.0 (2026-11-01) ==
+
+=== Features ===
+
+* '''author-highlight:''' open edit page in a new tab ([https://github.com/DVRTed/AINB-helper/commit/fcd451f96324226d58aac918ac05f0a05afa8ca2 fcd451f])
+* '''author-highlight:''' scroll to first highlighted segment on open ([https://github.com/DVRTed/AINB-helper/commit/be79e975e59d59e667ab8c2a53958b79cf3c8b6b be79e97])
+
 == 1.4.0 (2026-10-31) ==
 
 === Features ===
