@@ -16,6 +16,7 @@ import {
   close_app,
   get_article_row_regex,
   get_case_origin,
+  get_page_info,
   normalize_title,
   rm_underscores,
 } from "../shared.js";
@@ -244,22 +245,14 @@ export default {
         return { ok: false, message: "no case set" };
       }
       try {
-        const res = await api.get({
-          action: "query",
-          prop: "revisions",
-          titles: this.case_name,
-          rvprop: "content",
-          rvslots: "main",
-          formatversion: 2,
-        });
-        const page = res.query?.pages?.[0];
-        if (!page || page.missing) {
+        const page_info = await get_page_info(this.case_name);
+        if (!page_info) {
           return {
             ok: false,
             message: `case page "${this.case_name}" not found`,
           };
         }
-        const wikitext = page.revisions[0].slots.main.content;
+        const wikitext = page_info.text;
 
         const row_re = get_article_row_regex(this.page_name, true);
         const matches = [...wikitext.matchAll(row_re)];
@@ -288,6 +281,8 @@ export default {
           title: this.case_name,
           text: new_text,
           summary: `Updated status for [[${this.page_name}]] to ${new_status} ${APP_AD}`,
+          baserevid: page_info.revid,
+          starttimestamp: page_info.starttimestamp,
         });
         return { ok: true, message: "" };
       } catch (err) {
@@ -323,6 +318,7 @@ export default {
 
       let edit_res;
       const edit_step = await this.run_step(edit_label, async () => {
+        const page_info = await get_page_info(this.page_name);
         edit_res = await api.postWithEditToken({
           action: "edit",
           title: this.page_name,
@@ -330,6 +326,8 @@ export default {
           summary: `${this.editable_summary.trim()} ${APP_AD}`,
           watchlist: this.watch_page ? "watch" : "nochange",
           nocreate: true,
+          baserevid: page_info?.revid,
+          starttimestamp: page_info?.starttimestamp,
         });
       });
 
