@@ -1,5 +1,11 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 1.5.1 (2026-11-01) ==
+
+=== Bug Fixes ===
+
+* '''llmprod:''' prevent overwriting concurrent edits in the tracking table ([https://github.com/DVRTed/AINB-helper/commit/67559b5a57d5428c7cff2e403fb213256b818050 67559b5])
+
 == 1.5.0 (2026-11-01) ==
 
 === Features ===
