@@ -29,6 +29,9 @@ export default {
     has_highlighted_text() {
       return this.segments.some((segment) => segment.mine && segment.text);
     },
+    first_token_index() {
+      return this.segments.findIndex((segment) => segment.mine && segment.text);
+    },
   },
 
   mounted() {
@@ -76,6 +79,16 @@ export default {
           this.loading = false;
         }
       }
+      if (!this.status_error) this.scroll_to_first_highlight();
+    },
+
+    scroll_to_first_highlight() {
+      this.$nextTick(() => {
+        this.$refs.first_mark?.[0]?.scrollIntoView({
+          block: "center",
+          behavior: "instant",
+        });
+      });
     },
 
     async load() {
@@ -158,9 +171,12 @@ export default {
         style="white-space: pre-wrap; font-family: monospace; font-size: 0.8em"
       >
         <template v-for="(seg, i) in segments">
-          <mark v-if="seg.mine" :key="i" style="background: #ffe066">{{
-            seg.text
-          }}</mark>
+          <mark
+            v-if="seg.mine"
+            :key="i"
+            :ref="i === first_token_index ? 'first_mark' : undefined"
+            style="background: #ffe066"
+          >{{ seg.text }}</mark>
           <span v-else :key="'else' + i">{{ seg.text }}</span>
         </template>
       </div>
