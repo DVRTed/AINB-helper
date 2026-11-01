@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0](https://github.com/DVRTed/AINB-helper/compare/v1.4.0...v1.5.0) (2026-11-01)
+
+
+### Features
+
+* **author-highlight:** open edit page in a new tab ([fcd451f](https://github.com/DVRTed/AINB-helper/commit/fcd451f96324226d58aac918ac05f0a05afa8ca2))
+* **author-highlight:** scroll to first highlighted segment on open ([be79e97](https://github.com/DVRTed/AINB-helper/commit/be79e975e59d59e667ab8c2a53958b79cf3c8b6b))
+
 ## [1.4.0](https://github.com/DVRTed/AINB-helper/compare/v1.3.2...v1.4.0) (2026-10-31)
 
 
