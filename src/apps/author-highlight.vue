@@ -58,7 +58,8 @@ export default {
           summary,
         }),
       );
-      window.location.assign(mw.util.getUrl(this.article, { action: "edit" }));
+      window.open(mw.util.getUrl(this.article, { action: "edit" }), "_blank");
+      this.confirm_open = false;
     },
 
     async show(username) {
