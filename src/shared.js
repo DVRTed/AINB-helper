@@ -285,9 +285,13 @@ export function create_app(App, props = {}) {
 }
 
 // mounts a component, returns the function to remove it
-export function mount_component(Component, props = {}) {
+export function mount_component(
+  Component,
+  props = {},
+  mount_target = document.body,
+) {
   const mount_point = document.createElement("div");
-  document.body.appendChild(mount_point);
+  mount_target.appendChild(mount_point);
 
   const app = createMwApp(Component, props);
   app.mount(mount_point);

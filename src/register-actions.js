@@ -1,5 +1,6 @@
 import { init_banner_edit } from "./page-actions/CaseActions.js";
 import {
+  init_cleanup_summaries,
   init_infocard_updates,
   init_progress_bar,
   init_row_editing,
@@ -13,4 +14,5 @@ export function add_page_buttons() {
   init_check_affected();
   init_banner_edit();
   init_infocard_updates();
+  init_cleanup_summaries();
 }

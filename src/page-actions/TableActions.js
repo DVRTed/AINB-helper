@@ -2,10 +2,12 @@ import {
   create_app,
   get_case_page_name,
   get_case_username,
+  mount_component,
   set_case_origin,
 } from "../shared.js";
 import EditTable from "../apps/edit-table.vue";
 import UpdateTable from "../apps/rebuild-table.vue";
+import EditSummaries from "../apps/components/edit_summaries.vue";
 
 const wgPageName = mw.config.get("wgPageName");
 const saved_filters = {};
@@ -295,5 +297,17 @@ export function init_infocard_updates() {
     $(el).addClass("ainb-infocard-update-done");
     get_table_actions($(el)).append($button);
     infocard = null;
+  });
+}
+
+export function init_cleanup_summaries() {
+  const $actions = $(".ainb-table-actions").not(".ainb-cleanup-summaries-done");
+
+  if (!$actions.length) return;
+  $actions.each(function () {
+    const mount = document.createElement("div");
+    mount.className = "ainb-cleanup-summaries";
+    $(this).addClass("ainb-cleanup-summaries-done").before(mount);
+    mount_component(EditSummaries, {}, mount);
   });
 }
