@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.7.0](https://github.com/DVRTed/AINB-helper/compare/v1.6.0...v1.7.0) (2026-11-02)
+
+
+### Features
+
+* **rebuild-table:** add option to delete only to-do entries and improve edit summary ([9b183b7](https://github.com/DVRTed/AINB-helper/commit/9b183b7334ad510e46df5728d37240935ba2a4f6))
+
+
+### Bug Fixes
+
+* avoid duplicate Vue IDs across mounted apps ([3499d6a](https://github.com/DVRTed/AINB-helper/commit/3499d6aba9932f3fd594690e9685fce4451371cb))
+
 ## [1.6.0](https://github.com/DVRTed/AINB-helper/compare/v1.5.1...v1.6.0) (2026-11-02)
 
 
