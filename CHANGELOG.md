@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/DVRTed/AINB-helper/compare/v1.5.1...v1.6.0) (2026-11-02)
+
+
+### Features
+
+* add convenient edit summaries above tracking tables ([8cad722](https://github.com/DVRTed/AINB-helper/commit/8cad72248f22d3003fb1328ef915c9c24d602376))
+
 ## [1.5.1](https://github.com/DVRTed/AINB-helper/compare/v1.5.0...v1.5.1) (2026-11-01)
 
 
