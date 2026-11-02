@@ -26,6 +26,48 @@ import { build_article_row } from "./main-app.vue";
 import NoteEditor from "./components/note_editor.vue";
 import Table_indexer from "./components/table_indexer.vue";
 
+export const STATUS_OPTIONS = [
+  {
+    value: "completed",
+    label: "Completed",
+    description: "Cleanup completed.",
+    aliases: ["c"],
+  },
+  {
+    value: "ongoing",
+    label: "Ongoing",
+    description:
+      "Cleanup is ongoing, or the article is tagged with {{LLMprod}}.",
+    aliases: ["o"],
+  },
+  {
+    value: "unnecessary",
+    label: "Unnecessary",
+    description: "Cleanup is not necessary.",
+    aliases: ["u", "unneeded"],
+  },
+  {
+    value: "tagged",
+    label: "Tagged",
+    description: "The article is tagged with {{AI-generated}}.",
+    aliases: ["tg", "tag"],
+  },
+  {
+    value: "requested",
+    label: "Requested/To-do",
+    description: "Cleanup requested.",
+    aliases: ["r", "td", "todo", "to do", "t"],
+  },
+];
+
+export function normalize_status(value) {
+  const trimmed = value?.trim().toLowerCase() || "";
+  const status = STATUS_OPTIONS.find(
+    (option) => option.value === trimmed || option.aliases?.includes(trimmed),
+  );
+  return status ? status.value : "requested";
+}
+
 export default {
   name: "EditRow",
 
@@ -60,39 +102,7 @@ export default {
       app_loading: false,
       app_error: "",
 
-      status_options: [
-        {
-          value: "completed",
-          label: "Completed",
-          description: "Cleanup completed.",
-          aliases: ["c"],
-        },
-        {
-          value: "ongoing",
-          label: "Ongoing",
-          description:
-            "Cleanup is ongoing, or the article is tagged with {{LLMprod}}.",
-          aliases: ["o"],
-        },
-        {
-          value: "unnecessary",
-          label: "Unnecessary",
-          description: "Cleanup is not necessary.",
-          aliases: ["u", "unneeded"],
-        },
-        {
-          value: "tagged",
-          label: "Tagged",
-          description: "The article is tagged with {{AI-generated}}.",
-          aliases: ["tg", "tag"],
-        },
-        {
-          value: "requested",
-          label: "Requested/To-do",
-          description: "Cleanup requested.",
-          aliases: ["r", "td", "todo", "to do", "t"],
-        },
-      ],
+      status_options: STATUS_OPTIONS,
 
       hide_resolved: false,
       show_only_created: false,
@@ -247,12 +257,7 @@ export default {
     },
 
     normalize_status(value) {
-      const trimmed = value?.trim().toLowerCase() || "";
-      const status = this.status_options.find(
-        (option) =>
-          option.value === trimmed || option.aliases?.includes(trimmed),
-      );
-      return status ? status.value : "requested";
+      return normalize_status(value);
     },
 
     // ranges of all {{AIC article list |index=X |...}} templates
