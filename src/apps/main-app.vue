@@ -499,9 +499,9 @@ export default {
 
         if (normalized_users.length > 1) {
           const user_list = normalized_users
-            .map((u) => `[[User:${u}]]`)
-            .join(", ");
-          this.extra_notes = `* Includes contributions from multiple accounts: ${user_list}`;
+            .map((u) => `*# {{User-ainb|1=${u}}}`)
+            .join("\n");
+          this.extra_notes = `* Includes contributions from multiple accounts:\n${user_list}`;
           this.notes_visible = true;
         }
 
