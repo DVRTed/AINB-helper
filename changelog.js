@@ -1,5 +1,11 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 1.6.0 (2026-11-02) ==
+
+=== Features ===
+
+* add convenient edit summaries above tracking tables ([https://github.com/DVRTed/AINB-helper/commit/8cad72248f22d3003fb1328ef915c9c24d602376 8cad722])
+
 == 1.5.1 (2026-11-01) ==
 
 === Bug Fixes ===
