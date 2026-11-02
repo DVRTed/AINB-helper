@@ -1,5 +1,15 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 1.7.0 (2026-11-02) ==
+
+=== Features ===
+
+* '''rebuild-table:''' add option to delete only to-do entries and improve edit summary ([https://github.com/DVRTed/AINB-helper/commit/9b183b7334ad510e46df5728d37240935ba2a4f6 9b183b7])
+
+=== Bug Fixes ===
+
+* avoid duplicate Vue IDs across mounted apps ([https://github.com/DVRTed/AINB-helper/commit/3499d6aba9932f3fd594690e9685fce4451371cb 3499d6a])
+
 == 1.6.0 (2026-11-02) ==
 
 === Features ===
