@@ -4,8 +4,10 @@ import {
   CdxCheckbox,
   CdxDialog,
   CdxMessage,
+  CdxRadio,
 } from "@wikimedia/codex";
 import MainApp, { build_table_text } from "./main-app.vue";
+import { normalize_status } from "./edit-table.vue";
 import {
   APP_AD,
   api,
@@ -18,7 +20,14 @@ import {
 } from "../shared.js";
 
 export default {
-  components: { CdxButton, CdxCheckbox, CdxDialog, CdxMessage, MainApp },
+  components: {
+    CdxButton,
+    CdxCheckbox,
+    CdxDialog,
+    CdxMessage,
+    CdxRadio,
+    MainApp,
+  },
 
   props: {
     initial_username: { type: String, default: "" },
@@ -38,6 +47,7 @@ export default {
       options_open: true,
       retain_existing_statuses: true,
       delete_missing_entries: true,
+      delete_missing_mode: "todo",
     };
   },
 
@@ -53,6 +63,22 @@ export default {
 
     handle_options_dialog(open) {
       if (!open && !this.app_started) close_app();
+    },
+
+    // determine if an existing row that the rebuild
+    // didn't generate should stay in the table
+    should_keep_missing_row(row) {
+      // "delete missing entries" isn't checked, so keep this (and all) row(s)
+      if (!this.delete_missing_entries) return true;
+
+      // suboption "delete all rows" is selected, so we don't keep this row
+      if (this.delete_missing_mode === "all") return false;
+
+      // suboption "only delete to-do rows" is selected,
+      //  so we check if it's todo
+      // if todo delete, else keep
+      const is_todo = normalize_status(row.status) === "requested";
+      return !is_todo;
     },
 
     // data = { infocard: { user, start_date, end_date }, notes, rows: [{ article, status, notes }] }
@@ -103,16 +129,16 @@ export default {
           });
         }
 
-        // restore old rows that the new generation doesn't include
-        if (!this.delete_missing_entries) {
-          const generated_articles = new Set(
-            rows.map((row) => normalize_title(row.article)),
-          );
-          const missing_rows = Object.entries(existing_rows)
-            .filter(([article_key]) => !generated_articles.has(article_key))
-            .map(([, row]) => row);
-          rows = [...rows, ...missing_rows];
-        }
+        // re-add existing rows the rebuild didn't produce... based on the option
+        const generated_keys = new Set(
+          rows.map((row) => normalize_title(row.article)),
+        );
+        const kept_missing_rows = Object.entries(existing_rows)
+          .filter(([article_key]) => !generated_keys.has(article_key))
+          .map(([, row]) => row)
+          .filter((row) => this.should_keep_missing_row(row));
+
+        rows = [...rows, ...kept_missing_rows];
 
         // after the previous table (if any) and before this table
         const previous_table_end =
@@ -135,11 +161,31 @@ export default {
           build_table_text({ ...data, rows }).trimEnd(),
         );
 
+        const edit_summary_details = [];
+
+        if (this.retain_existing_statuses) {
+          edit_summary_details.push("retain statuses");
+        } else {
+          edit_summary_details.push("reset statuses");
+        }
+
+        if (this.delete_missing_entries) {
+          if (this.delete_missing_mode === "todo") {
+            edit_summary_details.push("delete missing to-dos");
+          } else {
+            edit_summary_details.push("delete all missing entries");
+          }
+        } else {
+          edit_summary_details.push("keep missing entries");
+        }
+
+        const edit_summary = `Rebuilding tracking table: ${edit_summary_details.join(", ")}`;
+
         await api.postWithEditToken({
           action: "edit",
           title: this.target_page_title,
           text: new_text,
-          summary: `Rebuilding tracking table ${APP_AD}`,
+          summary: `${edit_summary} ${APP_AD}`,
           baserevid: page.revid,
           starttimestamp: page.starttimestamp,
           nocreate: true,
@@ -174,7 +220,6 @@ export default {
           This will replace the notes parameter of each entry with the latest
           edits, removing any existing custom notes.
         </cdx-message>
-
         <cdx-checkbox v-model="retain_existing_statuses">
           Retain statuses of existing entries
           <template #description>
@@ -190,6 +235,29 @@ export default {
             the rebuild.
           </template>
         </cdx-checkbox>
+
+        <div class="ainb-rebuild-suboptions">
+          <cdx-radio
+            v-model="delete_missing_mode"
+            input-value="todo"
+            name="delete-missing-mode"
+            :disabled="!delete_missing_entries"
+          >
+            Delete only to-do entries
+            <template #description>
+              Only delete missing entries that are marked as "To-do".
+            </template>
+          </cdx-radio>
+
+          <cdx-radio
+            v-model="delete_missing_mode"
+            input-value="all"
+            name="delete-missing-mode"
+            :disabled="!delete_missing_entries"
+          >
+            Delete all missing entries
+          </cdx-radio>
+        </div>
         <cdx-message type="warning">
           Rebuilding a tracking list can remove entries or reset their statuses,
           which may not be desirable in every situation; review the options
@@ -222,3 +290,12 @@ export default {
     />
   </div>
 </template>
+
+<style>
+.ainb-rebuild-suboptions {
+  margin-left: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+</style>
