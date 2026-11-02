@@ -5,7 +5,7 @@ import {
   CdxToast,
   CdxToastContainer,
 } from "@wikimedia/codex";
-import { wgPageName } from "../../shared";
+import { rm_underscores, wgPageName } from "../../shared";
 
 export default {
   name: "EditSummaries",
@@ -22,11 +22,11 @@ export default {
       summaries: [
         {
           label: "Copy revert summary",
-          text: `Restore earlier version per [[WP:LLMPRV]], see [[${wgPageName}]]`,
+          text: `Restore earlier version per [[WP:LLMPRV]], see [[${rm_underscores(wgPageName)}]]`,
         },
         {
           label: "Copy removal summary",
-          text: `[[WP:LLMPRV|Presumptive removal of LLM-generated content]], see [[${wgPageName}]]`,
+          text: `[[WP:LLMPRV|Presumptive removal of LLM-generated content]], see [[${rm_underscores(wgPageName)}]]`,
         },
       ],
       copied: null,
