@@ -11,6 +11,13 @@ if (DEBUG_MODE) console.clear();
 export const api = new mw.Api();
 
 let current_app = null;
+let app_instance_id = 0;
+
+function create_app_instance(Component, props) {
+  const app = createMwApp(Component, props);
+  app.config.idPrefix = `${APP_ID}-${++app_instance_id}`;
+  return app;
+}
 
 export const wgPageName = mw.config.get("wgPageName");
 export const wgNamespaceNumber = mw.config.get("wgNamespaceNumber");
@@ -276,7 +283,7 @@ export function create_app(App, props = {}) {
     document.body.appendChild(mount_point);
   }
 
-  const app = createMwApp(App, app_props);
+  const app = create_app_instance(App, app_props);
 
   app.mount(mount_point);
   if (!mount_target) {
@@ -293,7 +300,7 @@ export function mount_component(
   const mount_point = document.createElement("div");
   mount_target.appendChild(mount_point);
 
-  const app = createMwApp(Component, props);
+  const app = create_app_instance(Component, props);
   app.mount(mount_point);
 
   return function unmount() {
