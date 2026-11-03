@@ -1,5 +1,12 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 1.8.0 (2026-11-03) ==
+
+=== Features ===
+
+* '''main-app:''' use User-ainb template to link multiple users ([https://github.com/DVRTed/AINB-helper/commit/bc4627ecf97e27801d7917a7d5a57aa12271c9bc bc4627e])
+* '''rebuild-table:''' support populating multiple usernames ([https://github.com/DVRTed/AINB-helper/commit/fc99ed14e2bd73574ee5c4384bd0e060d69e8581 fc99ed1])
+
 == 1.7.0 (2026-11-02) ==
 
 === Features ===
