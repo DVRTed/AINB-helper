@@ -150,6 +150,19 @@ export default {
       <div v-if="loading || status_error" class="ainb-loading">
         {{ status }}
       </div>
+      <div v-else-if="!user_tokens_size">
+        <cdx-message type="success">
+          No content authored by User:{{ selected_username }} was found in the
+          current revision.
+        </cdx-message>
+      </div>
+      <div v-else-if="!has_highlighted_text">
+        <cdx-message type="warning">
+          WikiWho attributes {{ user_tokens_size }} tokens to User:{{
+            selected_username
+          }}, but they could not be highlighted.
+        </cdx-message>
+      </div>
       <div
         v-else
         style="white-space: pre-wrap; font-family: monospace; font-size: 0.8em"
