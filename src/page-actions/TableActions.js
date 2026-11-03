@@ -276,7 +276,7 @@ export function init_infocard_updates() {
       .on("click", async (e) => {
         e.preventDefault();
 
-        const initial_username = await get_case_username();
+        const initial_username = await get_case_username(null, true);
         if (!initial_username) return;
         const initial_case_page = get_case_page_name(wgPageName);
         const initial_is_custom_case_page =
