@@ -130,7 +130,7 @@ export default {
       add(text.slice(pos), false);
 
       this.segments = segs;
-      this.status = `${data.user_tokens_percentage}% (${data.user_tokens_size}/${data.total_tokens_size} tokens, ${data.user_chars_size} characters)`;
+      this.status = `${data.user_chars_percentage}% (${data.user_chars_size}/${data.total_chars_size} characters) · ${data.user_tokens_size}/${data.total_tokens_size} tokens`;
     },
   },
 };

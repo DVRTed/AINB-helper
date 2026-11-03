@@ -11,6 +11,12 @@ const WIKIWHO_API =
 const MAX_AFFECTED_LOOKUPS = 5;
 let active_affected_lookups = 0;
 
+// 2000 -> 2K
+const convert_num = new Intl.NumberFormat("en", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+
 // returns { error:... } for excepted failures and throws for unexpected
 export async function get_authorship_data(article, username) {
   const user_query = new URLSearchParams({
@@ -60,18 +66,24 @@ export async function get_authorship_data(article, username) {
     0,
   );
 
+  const user_chars_percentage = user_chars_size
+    ? ((user_chars_size / total_chars_size) * 100).toFixed(1)
+    : "0";
+
   return {
     userid,
     rev_id,
+
     total_tokens,
     total_tokens_size,
+    total_chars_size,
 
     user_tokens,
     user_tokens_size,
     user_tokens_percentage,
 
     user_chars_size,
-    total_chars_size,
+    user_chars_percentage,
   };
 }
 
@@ -118,9 +130,10 @@ export function init_check_affected() {
               return;
             }
 
+            const info = `<b>${data.user_chars_percentage}%</b> (${convert_num.format(data.user_chars_size)}/${convert_num.format(data.total_chars_size)} characters)`;
             $span
               .html(
-                `<b>${data.user_tokens_percentage}%</b> (${data.user_tokens_size}/${data.total_tokens_size} tokens, ${data.user_chars_size} characters) of the current revision's content was authored by <b class="ww-ainb-uname"></b>` +
+                `${info} of the current revision's content was authored by <b class="ww-ainb-uname"></b>` +
                   ` (using WikiWho API)`,
               )
               .find(".ww-ainb-uname")
