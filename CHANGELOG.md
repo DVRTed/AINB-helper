@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.8.0](https://github.com/DVRTed/AINB-helper/compare/v1.7.0...v1.8.0) (2026-11-03)
+
+
+### Features
+
+* **main-app:** use User-ainb template to link multiple users ([bc4627e](https://github.com/DVRTed/AINB-helper/commit/bc4627ecf97e27801d7917a7d5a57aa12271c9bc))
+* **rebuild-table:** support populating multiple usernames ([fc99ed1](https://github.com/DVRTed/AINB-helper/commit/fc99ed14e2bd73574ee5c4384bd0e060d69e8581))
+
 ## [1.7.0](https://github.com/DVRTed/AINB-helper/compare/v1.6.0...v1.7.0) (2026-11-02)
 
 
