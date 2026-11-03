@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.9.0](https://github.com/DVRTed/AINB-helper/compare/v1.8.0...v1.9.0) (2026-11-03)
+
+
+### Features
+
+* **author-highlight:** show messages when no content is found or highlightable ([4311d42](https://github.com/DVRTed/AINB-helper/commit/4311d42c1733ccf5e9148af7a6962c0cde1449d3))
+* show authorship percentage by characters instead of tokens ([9011b4a](https://github.com/DVRTed/AINB-helper/commit/9011b4a095ca74a944e0e202a2745e7c3d6133fe))
+
 ## [1.8.0](https://github.com/DVRTed/AINB-helper/compare/v1.7.0...v1.8.0) (2026-11-03)
 
 
