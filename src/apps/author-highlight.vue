@@ -20,6 +20,7 @@ export default {
       status: "",
       status_error: false,
       segments: [],
+      user_tokens_size: 0,
       selected_username: "",
       loaded_username: "",
     };
@@ -131,6 +132,7 @@ export default {
 
       this.segments = segs;
       this.status = `${data.user_chars_percentage}% (${data.user_chars_size}/${data.total_chars_size} characters) · ${data.user_tokens_size}/${data.total_tokens_size} tokens`;
+      this.user_tokens_size = data.user_tokens_size;
     },
   },
 };
