@@ -1,5 +1,12 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 1.9.0 (2026-11-03) ==
+
+=== Features ===
+
+* '''author-highlight:''' show messages when no content is found or highlightable ([https://github.com/DVRTed/AINB-helper/commit/4311d42c1733ccf5e9148af7a6962c0cde1449d3 4311d42])
+* show authorship percentage by characters instead of tokens ([https://github.com/DVRTed/AINB-helper/commit/9011b4a095ca74a944e0e202a2745e7c3d6133fe 9011b4a])
+
 == 1.8.0 (2026-11-03) ==
 
 === Features ===
