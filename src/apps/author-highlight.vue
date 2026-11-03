@@ -1,10 +1,9 @@
 <script>
 import { CdxButton, CdxDialog, CdxMessage } from "@wikimedia/codex";
 import { api, get_case_origin } from "../shared.js";
+import { get_authorship_data } from "../page-actions/WikiWhoActions.js";
 import ConfirmDialog from "./components/confirm_dialog.vue";
 
-const WIKIWHO =
-  "https://wikiwho.wmcloud.org/en/api/v1.0.0-beta/latest_rev_content/";
 const EDIT_TEXT_KEY = "ainb-author-highlight-edit-text";
 
 export default {
@@ -93,29 +92,16 @@ export default {
     },
 
     async load() {
-      // user id
-      const u = await api.get({
-        action: "query",
-        list: "users",
-        ususers: this.selected_username,
-        formatversion: 2,
-      });
-      const userid = String(u.query.users[0]?.userid || "");
-      if (!userid) throw new Error("user not found");
-
-      // WikiWho tokens for the latest revision
-      const q = new URLSearchParams({ editor: true, str: true });
-      const res = await fetch(
-        `${WIKIWHO}${encodeURIComponent(this.article)}/?${q}`,
+      const data = await get_authorship_data(
+        this.article,
+        this.selected_username,
       );
-      const data = await res.json();
-      if (!data.success) throw new Error("WikiWho API error");
-      const [revid, rev] = Object.entries(data.revisions[0])[0];
+      if (data.error) throw new Error(data.error);
 
       const r = await api.get({
         action: "query",
         prop: "revisions",
-        revids: revid,
+        revids: data.rev_id,
         rvprop: "content",
         rvslots: "main",
         formatversion: 2,
@@ -131,25 +117,20 @@ export default {
         else if (t) segs.push({ text: t, mine });
       };
       let pos = 0;
-      let mine = 0;
-      for (const t of rev.tokens) {
+      for (const t of data.total_tokens) {
         const idx = lower.indexOf(t.str.toLowerCase(), pos);
         if (idx === -1 || idx - pos > 300) continue; // can't place token
-        const isMine = t.editor === userid;
+        const isMine = t.editor === data.userid;
         const gap = text.slice(pos, idx);
         const last = segs[segs.length - 1];
         add(gap, isMine && !gap.trim() && !!last?.mine);
         add(text.slice(idx, idx + t.str.length), isMine);
         pos = idx + t.str.length;
-        if (isMine) mine++;
       }
       add(text.slice(pos), false);
 
-      const total = rev.tokens.length;
       this.segments = segs;
-      this.status = `${((mine / total) * 100).toFixed(
-        1,
-      )}% (${mine}/${total} tokens)`;
+      this.status = `${data.user_tokens_percentage}% (${data.user_tokens_size}/${data.total_tokens_size} tokens, ${data.user_chars_size} characters)`;
     },
   },
 };

@@ -11,6 +11,70 @@ const WIKIWHO_API =
 const MAX_AFFECTED_LOOKUPS = 5;
 let active_affected_lookups = 0;
 
+// returns { error:... } for excepted failures and throws for unexpected
+export async function get_authorship_data(article, username) {
+  const user_query = new URLSearchParams({
+    action: "query",
+    list: "users",
+    ususers: username,
+    format: "json",
+    origin: "*",
+  });
+  const user_response = await fetch(`/w/api.php?${user_query}`);
+  const user_data = await user_response.json();
+  const userid = String(user_data.query.users[0]?.userid || "");
+  if (!userid) return { error: `user "${username}" not found` };
+
+  const wikiwho_query = new URLSearchParams({
+    o_rev_id: false,
+    editor: true,
+    token_id: false,
+    str: true,
+    out: false,
+    in: false,
+  });
+  const wikiwho_response = await fetch(
+    `${WIKIWHO_API}${encodeURIComponent(article)}/?${wikiwho_query}`,
+  );
+  const wikiwho_data = await wikiwho_response.json();
+  if (!wikiwho_data.success) return { error: "WikiWho API error" };
+
+  const rev_obj = wikiwho_data.revisions[0];
+  const rev_id = Object.keys(rev_obj)[0];
+  const total_tokens = rev_obj[rev_id].tokens;
+  const total_tokens_size = total_tokens.length;
+
+  const user_tokens = total_tokens.filter((token) => token.editor === userid);
+  const user_tokens_size = user_tokens.length;
+
+  const user_tokens_percentage = user_tokens_size
+    ? ((user_tokens_size / total_tokens_size) * 100).toFixed(1)
+    : "0";
+
+  const user_chars_size = user_tokens.reduce(
+    (n, token) => n + token.str.length,
+    0,
+  );
+  const total_chars_size = total_tokens.reduce(
+    (n, token) => n + token.str.length,
+    0,
+  );
+
+  return {
+    userid,
+    rev_id,
+    total_tokens,
+    total_tokens_size,
+
+    user_tokens,
+    user_tokens_size,
+    user_tokens_percentage,
+
+    user_chars_size,
+    total_chars_size,
+  };
+}
+
 export function init_check_affected() {
   $('tr[class*="aic-row-"]')
     .not(".ainb-check-affected-done")
@@ -48,47 +112,15 @@ export function init_check_affected() {
               return;
             }
 
-            const uq = new URLSearchParams({
-              action: "query",
-              list: "users",
-              ususers: username,
-              format: "json",
-              origin: "*",
-            });
-            const udata = await (await fetch(`/w/api.php?${uq}`)).json();
-            const userid = String(udata.query.users[0]?.userid || "");
-            if (!userid) {
-              $span.text(`user "${username}" not found`);
+            const data = await get_authorship_data(article, username);
+            if (data.error) {
+              $span.text(data.error);
               return;
             }
 
-            const wq = new URLSearchParams({
-              o_rev_id: false,
-              editor: true,
-              token_id: false,
-              out: false,
-              in: false,
-            });
-            const wdata = await (
-              await fetch(`${WIKIWHO_API}${encodeURIComponent(article)}/?${wq}`)
-            ).json();
-            if (!wdata.success) {
-              $span.text("WikiWho API error");
-              return;
-            }
-
-            const rev_obj = wdata.revisions[0];
-            const tokens = rev_obj[Object.keys(rev_obj)[0]].tokens;
-            const rel_user_tokens = tokens.filter(
-              (token) => token.editor === userid,
-            ).length;
-
-            const pct = tokens.length
-              ? ((rel_user_tokens / tokens.length) * 100).toFixed(1)
-              : "0";
             $span
               .html(
-                `<b>${pct}%</b> (${rel_user_tokens}/${tokens.length} tokens) of the current revision's content was authored by <b class="ww-ainb-uname"></b>` +
+                `<b>${data.user_tokens_percentage}%</b> (${data.user_tokens_size}/${data.total_tokens_size} tokens, ${data.user_chars_size} characters) of the current revision's content was authored by <b class="ww-ainb-uname"></b>` +
                   ` (using WikiWho API)`,
               )
               .find(".ww-ainb-uname")
