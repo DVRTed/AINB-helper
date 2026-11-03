@@ -20,7 +20,7 @@ import ShowPreview from "./components/show_preview.vue";
 
 // freeze rev of Wikipedia:AI noticeboard/AINB/Blank report
 // note that the current rev is fetched instead of this when DEBUG_MODE is enabled
-const BLANK_REPORT_REVISION = DEBUG_MODE ? null : 1381727967;
+const BLANK_REPORT_REVISION = DEBUG_MODE ? null : 1383592515;
 
 export default {
   components: {
