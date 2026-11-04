@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.1](https://github.com/DVRTed/AINB-helper/compare/v1.9.0...v1.9.1) (2026-11-04)
+
+
+### Bug Fixes
+
+* **edit-table:** stop breaking DiscussionTools' Reply buttons ([9fb6581](https://github.com/DVRTed/AINB-helper/commit/9fb6581d4e9379a74aba112775cca214d787e2b6))
+
 ## [1.9.0](https://github.com/DVRTed/AINB-helper/compare/v1.8.0...v1.9.0) (2026-11-03)
 
 
