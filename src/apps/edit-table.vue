@@ -566,20 +566,45 @@ returns { error: str } on error
         window.removeEventListener("beforeunload", before_unload);
       }
     },
+
     async refresh_page_content(page_name) {
-      // could re-use this for banners too
+      const $headings = $("h2#Cleanup");
+      if ($headings.length !== 1) {
+        mw.notify(
+          "There must be exactly one level-2 Cleanup heading for the page refresh to work.",
+          { type: "warn" },
+        );
+        return;
+      }
+
       const result = await api.get({
         action: "parse",
         page: page_name,
         prop: "text",
+        disablelimitreport: true,
+        formatversion: 2,
       });
-      const content = document.querySelector(
-        "#mw-content-text .mw-parser-output",
-      );
-      if (content) {
-        content.innerHTML = result.parse.text["*"];
-        add_page_buttons();
+
+      const $parsed = $("<div>").html(result.parse.text);
+      const $new_heading = $parsed.find("h2#Cleanup").first();
+      if (!$new_heading.length) {
+        throw new Error("Cleanup heading not found in parsed output");
       }
+
+      const unwrap = ($h) => {
+        const $wrapper = $h.closest(".mw-heading");
+        return $wrapper.length ? $wrapper : $h;
+      };
+      const $old_anchor = unwrap($headings);
+      const $new_anchor = unwrap($new_heading);
+
+      const stop_at = ".mw-heading2, h2";
+      const $new_content = $new_anchor.nextUntil(stop_at);
+
+      $old_anchor.nextUntil(stop_at).remove();
+      $old_anchor.after($new_content);
+
+      add_page_buttons();
     },
 
     // for the select checkbox
