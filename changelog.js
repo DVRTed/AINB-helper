@@ -1,5 +1,11 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 1.9.1 (2026-11-04) ==
+
+=== Bug Fixes ===
+
+* '''edit-table:''' stop breaking DiscussionTools' Reply buttons ([https://github.com/DVRTed/AINB-helper/commit/9fb6581d4e9379a74aba112775cca214d787e2b6 9fb6581])
+
 == 1.9.0 (2026-11-03) ==
 
 === Features ===
