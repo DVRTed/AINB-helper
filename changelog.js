@@ -1,5 +1,11 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 1.10.0 (2026-11-05) ==
+
+=== Features ===
+
+* show a completion message instead of the progress bar on completed trackers ([https://github.com/DVRTed/AINB-helper/commit/e747de306507707a0c7bad296cf9417d7785b06a e747de3])
+
 == 1.9.1 (2026-11-04) ==
 
 === Bug Fixes ===
