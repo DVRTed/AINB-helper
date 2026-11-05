@@ -1,5 +1,15 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 1.11.0 (2026-11-05) ==
+
+=== Features ===
+
+* '''main-app:''' refresh case page after creating a tracking table ([https://github.com/DVRTed/AINB-helper/commit/aeeac493e405f7c4394cfb7bab8a52363a83efec aeeac49])
+
+=== Bug Fixes ===
+
+* '''edit-table:''' re-initialize other scripts (e.g., navpopups) on refresh ([https://github.com/DVRTed/AINB-helper/commit/d52dde3014998fe3dee174684fef627c84c4da13 d52dde3])
+
 == 1.10.0 (2026-11-05) ==
 
 === Features ===
