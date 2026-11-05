@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/DVRTed/AINB-helper/compare/v1.9.1...v1.10.0) (2026-11-05)
+
+
+### Features
+
+* show a completion message instead of the progress bar on completed trackers ([e747de3](https://github.com/DVRTed/AINB-helper/commit/e747de306507707a0c7bad296cf9417d7785b06a))
+
 ## [1.9.1](https://github.com/DVRTed/AINB-helper/compare/v1.9.0...v1.9.1) (2026-11-04)
 
 
