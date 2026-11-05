@@ -255,6 +255,9 @@ export async function refresh_tracking_table(page_name, no_error = false) {
   $old_anchor.nextUntil(stop_at).remove();
   $old_anchor.after($new_content);
 
+  const $cleanup_section = unwrap($("h2#Cleanup")).parent("section");
+
+  mw.hook("wikipage.content").fire($cleanup_section);
   add_page_buttons();
 }
 
