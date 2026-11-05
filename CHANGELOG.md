@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.11.0](https://github.com/DVRTed/AINB-helper/compare/v1.10.0...v1.11.0) (2026-11-05)
+
+
+### Features
+
+* **main-app:** refresh case page after creating a tracking table ([aeeac49](https://github.com/DVRTed/AINB-helper/commit/aeeac493e405f7c4394cfb7bab8a52363a83efec))
+
+
+### Bug Fixes
+
+* **edit-table:** re-initialize other scripts (e.g., navpopups) on refresh ([d52dde3](https://github.com/DVRTed/AINB-helper/commit/d52dde3014998fe3dee174684fef627c84c4da13))
+
 ## [1.10.0](https://github.com/DVRTed/AINB-helper/compare/v1.9.1...v1.10.0) (2026-11-05)
 
 
