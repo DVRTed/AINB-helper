@@ -122,6 +122,29 @@
   border-radius: 4px;
 }
 
+/* tweaks for when completed */
+.ainb-progress-complete {
+  position: relative;
+  padding: 20px;
+  border-color: var(--ainb-border-color-subtle);
+  background: var(--background-color-success-subtle);
+}
+
+.ainb-progress-complete .ainb-progress-top {
+  margin-bottom: 0;
+}
+
+.ainb-progress-complete .ainb-progress-percent {
+  color: var(--ainb-color-success);
+  font-weight: 400;
+}
+
+.ainb-progress-complete .ainb-progress-credit {
+  position: absolute;
+  right: 12px;
+  bottom: 6px;
+}
+
 .ainb-progress-top {
   display: flex;
   align-items: center;
