@@ -208,7 +208,7 @@ export function get_case_origin(article) {
   return case_name ?? null;
 }
 
-export async function refresh_tracking_table(page_name, no_error = false) {
+export async function refresh_cleanup_section(page_name, no_error = false) {
   if (page_name !== wgPageName) {
     // called from outside a case page
     // e.g., generating table from portlet

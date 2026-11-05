@@ -20,7 +20,7 @@ import {
   get_page_info,
   find_template_ranges,
   splice,
-  refresh_tracking_table,
+  refresh_cleanup_section,
 } from "../shared.js";
 import { build_article_row } from "./main-app.vue";
 import NoteEditor from "./components/note_editor.vue";
@@ -554,7 +554,7 @@ returns { error: str } on error
           starttimestamp: this.starttimestamp,
         });
 
-        await refresh_tracking_table(page_name);
+        await refresh_cleanup_section(page_name);
         mw.notify("Row(s) saved successfully.", { type: "success" });
       } catch (e) {
         mw.notify("Error saving changes: " + e.message, {
