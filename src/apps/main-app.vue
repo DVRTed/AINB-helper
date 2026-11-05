@@ -17,6 +17,8 @@ import {
   api,
   get_page_wikitext,
   get_page_info,
+  wgPageName,
+  normalize_title,
 } from "../shared.js";
 
 import DiffView from "./components/diff_view.vue";
@@ -754,6 +756,13 @@ export default {
         this.result_message = page_exists
           ? "Tracking table added to the case page."
           : "Case page created with the tracking table.";
+        // we could use refresh_cleanup_section(title, true) here to refresh only the
+        // cleanup section
+        // but it's adding the "user card" button (that doesn't even work)
+        // so we reload the entire page
+        if (normalize_title(title) === normalize_title(wgPageName)) {
+          location.reload();
+        }
       } catch (error) {
         this.create_error =
           "Error saving page: " + (error?.message ?? String(error));

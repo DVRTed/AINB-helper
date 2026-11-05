@@ -209,7 +209,7 @@ export function get_case_origin(article) {
 }
 
 export async function refresh_cleanup_section(page_name, no_error = false) {
-  if (page_name !== wgPageName) {
+  if (normalize_title(page_name) !== normalize_title(wgPageName)) {
     // called from outside a case page
     // e.g., generating table from portlet
     return;
