@@ -1,9 +1,8 @@
 import {
   create_app,
   wgAction,
-  wgPageName,
   wgNamespaceNumber,
-  DEBUG_PAGE,
+  check_if_case_page,
 } from "./shared.js";
 
 import styles from "./stylesheets/AINB-helper.css?inline";
@@ -33,16 +32,11 @@ $(portlet_link).on("click", (e) => {
   create_app(NewCaseApp);
 });
 
-if (wgAction === "view") {
-  if (
-    wgPageName.startsWith("Wikipedia:AI_noticeboard/") ||
-    wgPageName == DEBUG_PAGE
-  ) {
-    mw.hook("wikipage.content").add(($content) => {
-      if (!$content.is("#mw-content-text")) return;
-      add_page_buttons();
-    });
-  }
+if (check_if_case_page()) {
+  mw.hook("wikipage.content").add(($content) => {
+    if (!$content.is("#mw-content-text")) return;
+    add_page_buttons();
+  });
 }
 
 // article or draft

@@ -20,8 +20,8 @@ import {
   get_page_info,
   find_template_ranges,
   splice,
+  refresh_tracking_table,
 } from "../shared.js";
-import { add_page_buttons } from "../register-actions.js";
 import { build_article_row } from "./main-app.vue";
 import NoteEditor from "./components/note_editor.vue";
 import Table_indexer from "./components/table_indexer.vue";
@@ -554,7 +554,7 @@ returns { error: str } on error
           starttimestamp: this.starttimestamp,
         });
 
-        await this.refresh_page_content(page_name);
+        await refresh_tracking_table(page_name);
         mw.notify("Row(s) saved successfully.", { type: "success" });
       } catch (e) {
         mw.notify("Error saving changes: " + e.message, {
@@ -565,46 +565,6 @@ returns { error: str } on error
       } finally {
         window.removeEventListener("beforeunload", before_unload);
       }
-    },
-
-    async refresh_page_content(page_name) {
-      const $headings = $("h2#Cleanup");
-      if ($headings.length !== 1) {
-        mw.notify(
-          "There must be exactly one level-2 Cleanup heading for the page refresh to work.",
-          { type: "warn" },
-        );
-        return;
-      }
-
-      const result = await api.get({
-        action: "parse",
-        page: page_name,
-        prop: "text",
-        disablelimitreport: true,
-        formatversion: 2,
-      });
-
-      const $parsed = $("<div>").html(result.parse.text);
-      const $new_heading = $parsed.find("h2#Cleanup").first();
-      if (!$new_heading.length) {
-        throw new Error("Cleanup heading not found in parsed output");
-      }
-
-      const unwrap = ($h) => {
-        const $wrapper = $h.closest(".mw-heading");
-        return $wrapper.length ? $wrapper : $h;
-      };
-      const $old_anchor = unwrap($headings);
-      const $new_anchor = unwrap($new_heading);
-
-      const stop_at = ".mw-heading2, h2";
-      const $new_content = $new_anchor.nextUntil(stop_at);
-
-      $old_anchor.nextUntil(stop_at).remove();
-      $old_anchor.after($new_content);
-
-      add_page_buttons();
     },
 
     // for the select checkbox

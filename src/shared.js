@@ -1,5 +1,6 @@
 import { createMwApp } from "vue";
 import Option_picker from "./apps/components/option_picker.vue";
+import { add_page_buttons } from "./register-actions.js";
 
 export const APP_ID = "ainb-helper";
 export const APP_AD = "(using [[User:DVRTed/AINB-helper|AINB-helper]])";
@@ -66,6 +67,16 @@ export function get_history_url(title) {
 export function normalize_title(t) {
   const title = new mw.Title(t);
   return title.getPrefixedText();
+}
+
+export function check_if_case_page() {
+  if (wgAction !== "view") return false;
+  if (
+    wgPageName.startsWith("Wikipedia:AI_noticeboard/") ||
+    wgPageName == DEBUG_PAGE
+  ) {
+    return true;
+  }
 }
 
 // async to await the select component when there are multiple usernames
@@ -195,6 +206,56 @@ export function get_case_origin(article) {
 
   const [case_name] = rel_case || [];
   return case_name ?? null;
+}
+
+export async function refresh_tracking_table(page_name, no_error = false) {
+  if (page_name !== wgPageName) {
+    // called from outside a case page
+    // e.g., generating table from portlet
+    return;
+  }
+
+  const $headings = $("h2#Cleanup");
+  if ($headings.length !== 1) {
+    if (no_error) {
+      location.reload();
+    } else {
+      mw.notify(
+        "There must be exactly one level-2 Cleanup heading for the page refresh to work.",
+        { type: "warn" },
+      );
+    }
+    return;
+  }
+
+  const result = await api.get({
+    action: "parse",
+    page: page_name,
+    prop: "text",
+    disablelimitreport: true,
+    formatversion: 2,
+  });
+
+  const $parsed = $("<div>").html(result.parse.text);
+  const $new_heading = $parsed.find("h2#Cleanup").first();
+  if (!$new_heading.length) {
+    throw new Error("Cleanup heading not found in parsed output");
+  }
+
+  const unwrap = ($h) => {
+    const $wrapper = $h.closest(".mw-heading");
+    return $wrapper.length ? $wrapper : $h;
+  };
+  const $old_anchor = unwrap($headings);
+  const $new_anchor = unwrap($new_heading);
+
+  const stop_at = ".mw-heading2, h2";
+  const $new_content = $new_anchor.nextUntil(stop_at);
+
+  $old_anchor.nextUntil(stop_at).remove();
+  $old_anchor.after($new_content);
+
+  add_page_buttons();
 }
 
 export function find_template_ranges(text, template_name) {
