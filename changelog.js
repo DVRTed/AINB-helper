@@ -1,5 +1,11 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 1.12.0 (2026-11-06) ==
+
+=== Features ===
+
+* '''author-highlight:''' add prev/next navigation between highlighted regions ([https://github.com/DVRTed/AINB-helper/commit/7d2691a3bc5830d5fd91dfbc7e971cdf28c62790 7d2691a])
+
 == 1.11.0 (2026-11-05) ==
 
 === Features ===
