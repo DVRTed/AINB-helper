@@ -23,14 +23,29 @@ export default {
       user_tokens_size: 0,
       selected_username: "",
       loaded_username: "",
+      current_region: 0,
     };
   },
   computed: {
     has_highlighted_text() {
       return this.segments.some((segment) => segment.mine && segment.text);
     },
-    first_token_index() {
-      return this.segments.findIndex((segment) => segment.mine && segment.text);
+
+    // marked segments less than 200 chars apart count as one region.
+    regions() {
+      const regions = [];
+      let current = null;
+      let gap = 0;
+      this.segments.forEach((seg, i) => {
+        if (seg.mine) {
+          if (current && gap < 200) current.end = i;
+          else regions.push((current = { start: i, end: i }));
+          gap = 0;
+        } else {
+          gap += seg.text.length;
+        }
+      });
+      return regions;
     },
   },
 
@@ -68,6 +83,7 @@ export default {
       this.status_error = false;
       if (this.loaded_username !== username) {
         this.segments = [];
+        this.current_region = 0;
         this.loading = true;
         this.status = "loading...";
         try {
@@ -80,15 +96,18 @@ export default {
           this.loading = false;
         }
       }
-      if (!this.status_error) this.scroll_to_first_highlight();
+      if (!this.status_error) this.go_to_region(this.current_region);
     },
 
-    scroll_to_first_highlight() {
+    go_to_region(index) {
+      const n = this.regions.length;
+      if (!n) return;
+      this.current_region = ((index % n) + n) % n; // wraps around
       this.$nextTick(() => {
-        this.$refs.first_mark?.[0]?.scrollIntoView({
-          block: "center",
-          behavior: "instant",
-        });
+        const start = this.regions[this.current_region].start;
+        this.$refs.content
+          ?.querySelector(`mark[data-seg="${start}"]`)
+          ?.scrollIntoView({ block: "center", behavior: "instant" });
       });
     },
 
@@ -165,26 +184,46 @@ export default {
       </div>
       <div
         v-else
+        ref="content"
         style="white-space: pre-wrap; font-family: monospace; font-size: 0.8em"
       >
         <template v-for="(seg, i) in segments">
           <mark
             v-if="seg.mine"
             :key="i"
-            :ref="i === first_token_index ? 'first_mark' : undefined"
+            :data-seg="i"
             style="background: #ffe066"
           >{{ seg.text }}</mark>
           <span v-else :key="'else' + i">{{ seg.text }}</span>
         </template>
       </div>
       <template #footer>
-        <cdx-button
-          action="destructive"
-          :disabled="!has_highlighted_text"
-          @click="confirm_open = true"
-        >
-          Remove all content authored by this user
-        </cdx-button>
+        <div class="ainb-footer">
+          <div class="ainb-nav">
+            <template v-if="regions.length">
+              <cdx-button
+                aria-label="Previous highlighted region"
+                @click="go_to_region(current_region - 1)"
+              >
+                ◀
+              </cdx-button>
+              <span>{{ current_region + 1 }} / {{ regions.length }} regions</span>
+              <cdx-button
+                aria-label="Next highlighted region"
+                @click="go_to_region(current_region + 1)"
+              >
+                ▶
+              </cdx-button>
+            </template>
+          </div>
+          <cdx-button
+            action="destructive"
+            :disabled="!has_highlighted_text"
+            @click="confirm_open = true"
+          >
+            Remove all content authored by this user
+          </cdx-button>
+        </div>
       </template>
     </cdx-dialog>
 
@@ -210,3 +249,23 @@ export default {
     </ConfirmDialog>
   </div>
 </template>
+
+<style>
+.ainb-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+.ainb-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ainb-nav span {
+  min-width: 8em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+</style>
