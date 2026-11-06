@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0](https://github.com/DVRTed/AINB-helper/compare/v1.11.0...v1.12.0) (2026-11-06)
+
+
+### Features
+
+* **author-highlight:** add prev/next navigation between highlighted regions ([7d2691a](https://github.com/DVRTed/AINB-helper/commit/7d2691a3bc5830d5fd91dfbc7e971cdf28c62790))
+
 ## [1.11.0](https://github.com/DVRTed/AINB-helper/compare/v1.10.0...v1.11.0) (2026-11-05)
 
 
