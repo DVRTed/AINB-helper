@@ -18,10 +18,9 @@ import {
   get_article_url,
   get_history_url,
   get_page_info,
-  find_template_ranges,
-  splice,
   refresh_cleanup_section,
 } from "../shared.js";
+import { find_template_ranges, splice } from "../template-helpers.js";
 import { build_article_row } from "./main-app.vue";
 import NoteEditor from "./components/note_editor.vue";
 import Table_indexer from "./components/table_indexer.vue";
