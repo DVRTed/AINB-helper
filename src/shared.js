@@ -11,6 +11,16 @@ if (DEBUG_MODE) console.clear();
 
 export const api = new mw.Api();
 
+export const wgPageName = mw.config.get("wgPageName");
+export const wgNamespaceNumber = mw.config.get("wgNamespaceNumber");
+export const wgAction = mw.config.get("wgAction");
+export const script_url = mw.util.getUrl("User:DVRTed/AINB-helper");
+
+export const CASE_ORIGIN_KEY = "ainb-case-origin";
+const CASE_ORIGIN_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+const CASE_ORIGIN_MAX_CASES = 10;
+const CASE_ORIGIN_MAX_ARTICLES = 500;
+
 let current_app = null;
 let app_instance_id = 0;
 
@@ -20,63 +30,75 @@ function create_app_instance(Component, props) {
   return app;
 }
 
-export const wgPageName = mw.config.get("wgPageName");
-export const wgNamespaceNumber = mw.config.get("wgNamespaceNumber");
-export const wgAction = mw.config.get("wgAction");
-
-export const CASE_ORIGIN_KEY = "ainb-case-origin";
-const CASE_ORIGIN_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
-const CASE_ORIGIN_MAX_CASES = 10;
-const CASE_ORIGIN_MAX_ARTICLES = 500;
-
-export function get_article_row_regex(
-  article,
-  global = false,
-  no_escape = false,
-) {
-  const escaped_article = no_escape ? article : mw.util.escapeRegExp(article);
-  return new RegExp(
-    `\\{\\{[aA]IC article row\\s*\\|\\s*(?:article=)?\\s*${escaped_article}\\s*(?:\\|\\s*(?:status=)?\\s*([^|}]*))?(?:\\|\\s*(?:notes=)?\\s*([^}]*))?\\s*\\}\\}`,
-    global ? "g" : "",
-  );
-}
-
-// [1] = article, [2] = status, [3] = notes
-export function get_all_article_row_regex() {
-  return get_article_row_regex("([^|}]+?)", true, true);
-}
-
-export const script_url = mw.util.getUrl("User:DVRTed/AINB-helper");
-
-export function rm_underscores(value) {
-  return value.replace(/_/g, " ");
-}
-
-export function format_number(number) {
-  return number.toLocaleString();
-}
-
-export function get_article_url(title) {
-  return mw.util.getUrl(title);
-}
-
-export function get_history_url(title) {
-  return mw.util.getUrl(title, { action: "history" });
-}
-
-export function normalize_title(t) {
-  const title = new mw.Title(t);
-  return title.getPrefixedText();
-}
-
-export function check_if_case_page() {
-  if (wgAction !== "view") return false;
-  if (
-    wgPageName.startsWith("Wikipedia:AI_noticeboard/") ||
-    wgPageName == DEBUG_PAGE
-  ) {
-    return true;
+export function close_app() {
+  if (current_app) {
+    current_app.unmount();
+    current_app = null;
   }
+  document.getElementById(APP_ID)?.remove();
+}
+
+// will yank out existing mounted apps
+export function create_app(App, props = {}) {
+  const { mount_target, ...app_props } = props;
+  if (!mount_target) {
+    close_app();
+  }
+
+  const mount_point = document.createElement("div");
+  if (!mount_target) {
+    mount_point.id = APP_ID;
+  }
+  if (mount_target) {
+    mount_target.prepend(mount_point);
+  } else {
+    document.body.appendChild(mount_point);
+  }
+
+  const app = create_app_instance(App, app_props);
+
+  app.mount(mount_point);
+  if (!mount_target) {
+    current_app = app;
+  }
+}
+
+// mounts a component, returns the function to remove it
+export function mount_component(
+  Component,
+  props = {},
+  mount_target = document.body,
+) {
+  const mount_point = document.createElement("div");
+  mount_target.appendChild(mount_point);
+
+  const app = create_app_instance(Component, props);
+  app.mount(mount_point);
+
+  return function unmount() {
+    app.unmount();
+    mount_point.remove();
+  };
+}
+
+// returns a promise that resolves when the component emits
+// one of the given events.
+// resolves with the event's payload (or null).
+export function open_component(Component, props = {}, close_events = []) {
+  return new Promise((resolve) => {
+    const handlers = {};
+
+    for (const event of close_events) {
+      // "select" -> "onSelect"
+      const handler_name = "on" + event[0].toUpperCase() + event.slice(1);
+      handlers[handler_name] = (payload) => {
+        unmount();
+        resolve(payload ?? null);
+      };
+    }
+
+    const unmount = mount_component(Component, { ...props, ...handlers });
+  });
 }
 
 // async to await the select component when there are multiple usernames
@@ -261,6 +283,16 @@ export async function refresh_cleanup_section(page_name, no_error = false) {
   add_page_buttons();
 }
 
+export function check_if_case_page() {
+  if (wgAction !== "view") return false;
+  if (
+    wgPageName.startsWith("Wikipedia:AI_noticeboard/") ||
+    wgPageName == DEBUG_PAGE
+  ) {
+    return true;
+  }
+}
+
 export function find_template_ranges(text, template_name) {
   const opening = new RegExp(`\\{\\{\\s*${template_name}\\s*\\|`, "gi");
   const ranges = [];
@@ -322,73 +354,40 @@ export async function get_page_wikitext(title) {
   return info ? info.text : null;
 }
 
-export function close_app() {
-  if (current_app) {
-    current_app.unmount();
-    current_app = null;
-  }
-  document.getElementById(APP_ID)?.remove();
-}
-
-// will yank out existing mounted apps
-export function create_app(App, props = {}) {
-  const { mount_target, ...app_props } = props;
-  if (!mount_target) {
-    close_app();
-  }
-
-  const mount_point = document.createElement("div");
-  if (!mount_target) {
-    mount_point.id = APP_ID;
-  }
-  if (mount_target) {
-    mount_target.prepend(mount_point);
-  } else {
-    document.body.appendChild(mount_point);
-  }
-
-  const app = create_app_instance(App, app_props);
-
-  app.mount(mount_point);
-  if (!mount_target) {
-    current_app = app;
-  }
-}
-
-// mounts a component, returns the function to remove it
-export function mount_component(
-  Component,
-  props = {},
-  mount_target = document.body,
+export function get_article_row_regex(
+  article,
+  global = false,
+  no_escape = false,
 ) {
-  const mount_point = document.createElement("div");
-  mount_target.appendChild(mount_point);
-
-  const app = create_app_instance(Component, props);
-  app.mount(mount_point);
-
-  return function unmount() {
-    app.unmount();
-    mount_point.remove();
-  };
+  const escaped_article = no_escape ? article : mw.util.escapeRegExp(article);
+  return new RegExp(
+    `\\{\\{[aA]IC article row\\s*\\|\\s*(?:article=)?\\s*${escaped_article}\\s*(?:\\|\\s*(?:status=)?\\s*([^|}]*))?(?:\\|\\s*(?:notes=)?\\s*([^}]*))?\\s*\\}\\}`,
+    global ? "g" : "",
+  );
 }
 
-// returns a promise that resolves when the component emits
-// one of the given events.
-// resolves with the event's payload (or null).
-export function open_component(Component, props = {}, close_events = []) {
-  return new Promise((resolve) => {
-    const handlers = {};
+// [1] = article, [2] = status, [3] = notes
+export function get_all_article_row_regex() {
+  return get_article_row_regex("([^|}]+?)", true, true);
+}
 
-    for (const event of close_events) {
-      // "select" -> "onSelect"
-      const handler_name = "on" + event[0].toUpperCase() + event.slice(1);
-      handlers[handler_name] = (payload) => {
-        unmount();
-        resolve(payload ?? null);
-      };
-    }
+export function normalize_title(t) {
+  const title = new mw.Title(t);
+  return title.getPrefixedText();
+}
 
-    const unmount = mount_component(Component, { ...props, ...handlers });
-  });
+export function rm_underscores(value) {
+  return value.replace(/_/g, " ");
+}
+
+export function format_number(number) {
+  return number.toLocaleString();
+}
+
+export function get_article_url(title) {
+  return mw.util.getUrl(title);
+}
+
+export function get_history_url(title) {
+  return mw.util.getUrl(title, { action: "history" });
 }
