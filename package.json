@@ -2,6 +2,7 @@
     "name": "ainb-helper",
     "version": "1.12.0",
     "private": true,
+    "type": "module",
     "scripts": {
         "dev": "vite build --mode development --watch",
         "lint": "eslint .",
