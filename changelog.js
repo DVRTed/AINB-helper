@@ -1,5 +1,21 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 2.0.0 (2026-11-08) ==
+
+=== ⚠ BREAKING CHANGES ===
+
+* switch to a new template-aware row parser
+
+=== Features ===
+
+* '''edit-table:''' support templates inside notes via new row parser ([https://github.com/DVRTed/AINB-helper/commit/964b1433ebbe0eaaf70039d7c98ce05f59bfdad4 964b143])
+* '''llmprod:''' add support for templates inside notes when updating tracker ([https://github.com/DVRTed/AINB-helper/commit/c9f0186a4b934f6cf3f5114b6e57c53b38def1e0 c9f0186])
+* '''rebuild-table:''' add support for templates inside notes when rebuilding table ([https://github.com/DVRTed/AINB-helper/commit/2a2969c53d96d0128cffca7457829ff4def9d63b 2a2969c])
+
+=== Bug Fixes ===
+
+* '''edit-table:''' scope row "updating" indicator to the edited table ([https://github.com/DVRTed/AINB-helper/commit/0798712a72c091bd9f1b97690060c71442016733 0798712])
+
 == 1.12.0 (2026-11-06) ==
 
 === Features ===
