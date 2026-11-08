@@ -523,7 +523,19 @@ returns { error: str } on error
       const article_names = this.changed_rows_original_data.map(
         (r) => r.article,
       );
-      $('tr[class*="aic-row-"]')
+
+      const table_index = this.table_index;
+      const $scope =
+        table_index == null
+          ? $(".ainb-cleanup-table")
+          : $(".ainb-cleanup-table").filter(function () {
+              return (
+                Number($(this).data("table-index")) === Number(table_index)
+              );
+            });
+
+      $scope
+        .find('tr[class*="aic-row-"]')
         .filter(function () {
           return article_names.includes(
             $(this).find("a").first().text().trim(),
