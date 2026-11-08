@@ -12,12 +12,14 @@ import {
   APP_AD,
   api,
   close_app,
-  get_all_article_row_regex,
   get_page_info,
-  find_template_ranges,
   normalize_title,
-  splice,
 } from "../shared.js";
+import {
+  find_article_rows,
+  find_template_ranges,
+  splice,
+} from "../template-helpers.js";
 
 export default {
   components: {
@@ -106,7 +108,7 @@ export default {
 
         // existing rows keyed by article
         const existing_rows = {};
-        for (const match of range_text.matchAll(get_all_article_row_regex())) {
+        for (const match of find_article_rows(range_text)) {
           const article = match[1].trim();
           const article_key = normalize_title(article);
           if (article_key in existing_rows) continue; // article is repeated in the same table... why?

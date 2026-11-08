@@ -9,11 +9,10 @@ import {
   APP_AD,
   api,
   close_app,
-  find_template_ranges,
   get_page_info,
-  splice,
   wgPageName,
 } from "../../shared.js";
+import { find_template_ranges, splice } from "../../template-helpers.js";
 
 export default {
   components: { CdxButton, CdxDialog, CdxMessage, CdxProgressBar },

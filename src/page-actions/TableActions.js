@@ -45,7 +45,14 @@ export function init_row_editing() {
     .not(".ainb-row-editing-done")
     .each(function () {
       const $table = $(this).addClass("ainb-row-editing-done");
-      const table_index = $($table).data("table-index");
+      const data_table_index = $($table).data("table-index");
+      const data_table_index_as_num = Number(data_table_index);
+
+      const table_index =
+        data_table_index === undefined || Number.isNaN(data_table_index_as_num)
+          ? null
+          : data_table_index_as_num;
+
       const $header_tr = $table.find("tr").has("th").first();
       $header_tr.prepend(
         '<th class="ainb-action-header unsortable">Action</th>',

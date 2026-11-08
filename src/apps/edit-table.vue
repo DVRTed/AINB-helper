@@ -14,14 +14,17 @@ import {
   api,
   close_app,
   create_app,
-  get_article_row_regex,
   get_article_url,
   get_history_url,
   get_page_info,
-  find_template_ranges,
-  splice,
   refresh_cleanup_section,
 } from "../shared.js";
+import {
+  find_article_rows,
+  find_template_ranges,
+  replace_article_rows,
+  splice,
+} from "../template-helpers.js";
 import { build_article_row } from "./main-app.vue";
 import NoteEditor from "./components/note_editor.vue";
 import Table_indexer from "./components/table_indexer.vue";
@@ -263,11 +266,9 @@ export default {
     // ranges of all {{AIC article list |index=X |...}} templates
     // whose index matches this.table_index
     get_index_table_ranges(wikitext) {
-      const index = Number(this.table_index);
+      const index = this.table_index;
 
-      if (this.table_index == null || Number.isNaN(index)) {
-        return [];
-      }
+      if (index === null) return [];
 
       return find_template_ranges(wikitext, "AIC article list").filter(
         ({ start, end }) => {
@@ -295,15 +296,13 @@ returns { range, matches, row_regex }
 returns { error: str } on error
 */
     find_row_matches(wikitext, article) {
-      const row_regex = get_article_row_regex(article, true);
-      const page_matches = [...wikitext.matchAll(row_regex)];
+      const page_matches = find_article_rows(wikitext, article);
 
       // single match
       if (page_matches.length <= 1) {
         return {
           range: { start: 0, end: wikitext.length },
           matches: page_matches,
-          row_regex,
         };
       }
 
@@ -325,7 +324,6 @@ returns { error: str } on error
         return {
           range: tables[first_table_id],
           matches: page_matches,
-          row_regex,
         };
       }
 
@@ -340,10 +338,10 @@ returns { error: str } on error
       const range = index_ranges[0];
       return {
         range,
-        matches: [
-          ...wikitext.slice(range.start, range.end).matchAll(row_regex),
-        ],
-        row_regex,
+        matches: find_article_rows(
+          wikitext.slice(range.start, range.end),
+          article,
+        ),
       };
     },
 
@@ -387,8 +385,8 @@ returns { error: str } on error
             const match = matches[0];
             loaded_rows.push({
               article,
-              status: this.normalize_status(match[1]?.trim()),
-              notes: match[2]?.trim() || "",
+              status: this.normalize_status(match[2]?.trim()),
+              notes: match[3]?.trim() || "",
               match_count: matches.length,
               is_new,
             });
@@ -438,14 +436,14 @@ returns { error: str } on error
           return;
         }
 
-        const { range, row_regex } = found;
+        const { range } = found;
         const new_row = build_article_row(row.article, row.status, row.notes);
         const scope = new_wikitext.slice(range.start, range.end);
 
         new_wikitext = splice(
           new_wikitext,
           range,
-          scope.replace(row_regex, () => new_row),
+          replace_article_rows(scope, row.article, new_row),
         );
       }
 
@@ -523,7 +521,17 @@ returns { error: str } on error
       const article_names = this.changed_rows_original_data.map(
         (r) => r.article,
       );
-      $('tr[class*="aic-row-"]')
+
+      const table_index = this.table_index;
+      const $scope =
+        table_index == null
+          ? $(".ainb-cleanup-table")
+          : $(".ainb-cleanup-table").filter(function () {
+              return Number($(this).data("table-index")) === table_index;
+            });
+
+      $scope
+        .find('tr[class*="aic-row-"]')
         .filter(function () {
           return article_names.includes(
             $(this).find("a").first().text().trim(),
