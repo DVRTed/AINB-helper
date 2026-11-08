@@ -14,13 +14,17 @@ import {
   api,
   close_app,
   create_app,
-  get_article_row_regex,
   get_article_url,
   get_history_url,
   get_page_info,
   refresh_cleanup_section,
 } from "../shared.js";
-import { find_template_ranges, splice } from "../template-helpers.js";
+import {
+  find_article_rows,
+  find_template_ranges,
+  replace_article_rows,
+  splice,
+} from "../template-helpers.js";
 import { build_article_row } from "./main-app.vue";
 import NoteEditor from "./components/note_editor.vue";
 import Table_indexer from "./components/table_indexer.vue";
@@ -294,15 +298,13 @@ returns { range, matches, row_regex }
 returns { error: str } on error
 */
     find_row_matches(wikitext, article) {
-      const row_regex = get_article_row_regex(article, true);
-      const page_matches = [...wikitext.matchAll(row_regex)];
+      const page_matches = find_article_rows(wikitext, article);
 
       // single match
       if (page_matches.length <= 1) {
         return {
           range: { start: 0, end: wikitext.length },
           matches: page_matches,
-          row_regex,
         };
       }
 
@@ -324,7 +326,6 @@ returns { error: str } on error
         return {
           range: tables[first_table_id],
           matches: page_matches,
-          row_regex,
         };
       }
 
@@ -339,10 +340,10 @@ returns { error: str } on error
       const range = index_ranges[0];
       return {
         range,
-        matches: [
-          ...wikitext.slice(range.start, range.end).matchAll(row_regex),
-        ],
-        row_regex,
+        matches: find_article_rows(
+          wikitext.slice(range.start, range.end),
+          article,
+        ),
       };
     },
 
@@ -437,14 +438,14 @@ returns { error: str } on error
           return;
         }
 
-        const { range, row_regex } = found;
+        const { range } = found;
         const new_row = build_article_row(row.article, row.status, row.notes);
         const scope = new_wikitext.slice(range.start, range.end);
 
         new_wikitext = splice(
           new_wikitext,
           range,
-          scope.replace(row_regex, () => new_row),
+          replace_article_rows(scope, row.article, new_row),
         );
       }
 
