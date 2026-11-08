@@ -5,7 +5,7 @@
 
 ### ⚠ BREAKING CHANGES
 
-* **edit-table:** support templates inside notes via new row parser
+* switch to a new template-aware row parser
 
 ### Features
 
