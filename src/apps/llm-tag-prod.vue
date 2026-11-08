@@ -14,12 +14,12 @@ import {
   APP_AD,
   api,
   close_app,
-  get_article_row_regex,
   get_case_origin,
   get_page_info,
   normalize_title,
   rm_underscores,
 } from "../shared.js";
+import { find_article_rows, splice } from "../template-helpers.js";
 import { build_article_row } from "./main-app.vue";
 import ShowPreview from "./components/show_preview.vue";
 
@@ -254,23 +254,28 @@ export default {
         }
         const wikitext = page_info.text;
 
-        const row_re = get_article_row_regex(this.page_name, true);
-        const matches = [...wikitext.matchAll(row_re)];
+        const matches = find_article_rows(wikitext, this.page_name);
         if (matches.length === 0) {
           return { ok: false, message: "row not found" };
         }
 
-        const new_text = wikitext.replace(
-          row_re,
-          (full_match, status_group, notes_group) => {
-            const notes = (notes_group || "").trim();
-            const note_text =
-              this.selected_option === "llm_prod" ? "prodded" : "AI tagged";
-            const diff_link = `[[special:diff/${revid}|${note_text}]]`;
-            const new_notes = `${notes} ${diff_link}`;
-            return build_article_row(this.page_name, new_status, new_notes);
-          },
-        );
+        const note_text =
+          this.selected_option === "llm_prod" ? "prodded" : "AI tagged";
+        const diff_link = `[[special:diff/${revid}|${note_text}]]`;
+        let new_text = wikitext;
+        for (const match of matches.reverse()) {
+          const notes = (match[3] || "").trim();
+          const new_row = build_article_row(
+            this.page_name,
+            new_status,
+            `${notes} ${diff_link}`,
+          );
+          new_text = splice(
+            new_text,
+            { start: match.index, end: match.end },
+            new_row,
+          );
+        }
 
         if (new_text === wikitext) {
           return { ok: false, message: "row not changed" };
