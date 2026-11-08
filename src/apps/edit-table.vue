@@ -266,11 +266,9 @@ export default {
     // ranges of all {{AIC article list |index=X |...}} templates
     // whose index matches this.table_index
     get_index_table_ranges(wikitext) {
-      const index = Number(this.table_index);
+      const index = this.table_index;
 
-      if (this.table_index == null || Number.isNaN(index)) {
-        return [];
-      }
+      if (index === null) return [];
 
       return find_template_ranges(wikitext, "AIC article list").filter(
         ({ start, end }) => {
@@ -529,9 +527,7 @@ returns { error: str } on error
         table_index == null
           ? $(".ainb-cleanup-table")
           : $(".ainb-cleanup-table").filter(function () {
-              return (
-                Number($(this).data("table-index")) === Number(table_index)
-              );
+              return Number($(this).data("table-index")) === table_index;
             });
 
       $scope
