@@ -322,23 +322,6 @@ export async function get_page_wikitext(title) {
   return info ? info.text : null;
 }
 
-export function get_article_row_regex(
-  article,
-  global = false,
-  no_escape = false,
-) {
-  const escaped_article = no_escape ? article : mw.util.escapeRegExp(article);
-  return new RegExp(
-    `\\{\\{[aA]IC article row\\s*\\|\\s*(?:article=)?\\s*${escaped_article}\\s*(?:\\|\\s*(?:status=)?\\s*([^|}]*))?(?:\\|\\s*(?:notes=)?\\s*([^}]*))?\\s*\\}\\}`,
-    global ? "g" : "",
-  );
-}
-
-// [1] = article, [2] = status, [3] = notes
-export function get_all_article_row_regex() {
-  return get_article_row_regex("([^|}]+?)", true, true);
-}
-
 export function normalize_title(t) {
   const title = new mw.Title(t);
   return title.getPrefixedText();
