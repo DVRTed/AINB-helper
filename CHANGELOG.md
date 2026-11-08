@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.0.0](https://github.com/DVRTed/AINB-helper/compare/v1.12.0...v2.0.0) (2026-11-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* **edit-table:** support templates inside notes via new row parser
+
+### Features
+
+* **edit-table:** support templates inside notes via new row parser ([964b143](https://github.com/DVRTed/AINB-helper/commit/964b1433ebbe0eaaf70039d7c98ce05f59bfdad4))
+* **llmprod:** add support for templates inside notes when updating tracker ([c9f0186](https://github.com/DVRTed/AINB-helper/commit/c9f0186a4b934f6cf3f5114b6e57c53b38def1e0))
+* **rebuild-table:** add support for templates inside notes when rebuilding table ([2a2969c](https://github.com/DVRTed/AINB-helper/commit/2a2969c53d96d0128cffca7457829ff4def9d63b))
+
+
+### Bug Fixes
+
+* **edit-table:** scope row "updating" indicator to the edited table ([0798712](https://github.com/DVRTed/AINB-helper/commit/0798712a72c091bd9f1b97690060c71442016733))
+
 ## [1.12.0](https://github.com/DVRTed/AINB-helper/compare/v1.11.0...v1.12.0) (2026-11-06)
 
 
