@@ -30,12 +30,14 @@ export function splice(text, { start, end }, replacement) {
   return text.slice(0, start) + replacement + text.slice(end);
 }
 
+// [1] is article, [2] is status
+// [3] is notes
 export function find_article_rows(wikitext, raw_article = false) {
   const match_any_article = !raw_article;
 
   const article = match_any_article
     ? "([^|}]+?)"
-    : mw.util.escapeRegExp(raw_article);
+    : `(${mw.util.escapeRegExp(raw_article)})`;
 
   const row_regex = new RegExp(
     `^\\{\\{[aA]IC article row\\s*\\|\\s*(?:article=)?\\s*${article}\\s*` +

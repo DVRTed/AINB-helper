@@ -387,8 +387,8 @@ returns { error: str } on error
             const match = matches[0];
             loaded_rows.push({
               article,
-              status: this.normalize_status(match[1]?.trim()),
-              notes: match[2]?.trim() || "",
+              status: this.normalize_status(match[2]?.trim()),
+              notes: match[3]?.trim() || "",
               match_count: matches.length,
               is_new,
             });
