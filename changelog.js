@@ -1,5 +1,11 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 2.1.0 (2026-11-09) ==
+
+=== Features ===
+
+* '''main-app:''' sort tags by edit count ([https://github.com/DVRTed/AINB-helper/commit/46c1cad7005d5f1c1c228821e64247cbb8761d09 46c1cad])
+
 == 2.0.1 (2026-11-09) ==
 
 === Performance Improvements ===
