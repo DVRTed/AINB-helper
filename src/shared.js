@@ -16,6 +16,9 @@ export const wgNamespaceNumber = mw.config.get("wgNamespaceNumber");
 export const wgAction = mw.config.get("wgAction");
 export const script_url = mw.util.getUrl("User:DVRTed/AINB-helper");
 
+const PAGE_CACHE = new Map();
+const PAGE_CACHE_MAX = 20;
+
 export const CASE_ORIGIN_KEY = "ainb-case-origin";
 const CASE_ORIGIN_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 const CASE_ORIGIN_MAX_CASES = 10;
@@ -315,6 +318,36 @@ export async function get_page_info(title, revid = null) {
     timestamp: rev?.timestamp,
     starttimestamp: res.curtimestamp,
   };
+}
+
+// caches wikitext and revid, keyed by page name
+//
+// when retrieving, it fetches the current revid
+// to ensure the cache isn't stale, and invalidates it if so.
+export async function get_page_info_cached(title) {
+  const key = normalize_title(title);
+  const cached = PAGE_CACHE.get(key);
+
+  if (cached) {
+    const res = await api.get({
+      action: "query",
+      prop: "revisions",
+      rvprop: "ids",
+      titles: title,
+      formatversion: 2,
+    });
+    const revid = res.query?.pages?.[0]?.revisions?.[0]?.revid;
+    if (revid === cached.revid) return cached;
+  }
+
+  const info = await get_page_info(title);
+  if (info) {
+    PAGE_CACHE.set(key, info);
+    if (PAGE_CACHE.size > PAGE_CACHE_MAX) {
+      PAGE_CACHE.delete(PAGE_CACHE.keys().next().value);
+    }
+  } else PAGE_CACHE.delete(key);
+  return info;
 }
 
 export async function get_page_wikitext(title) {
