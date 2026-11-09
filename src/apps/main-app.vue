@@ -239,9 +239,12 @@ export default {
     },
 
     tags_in_selection() {
-      return this.available_tags.filter(
-        (tag) => (this.tag_counts[tag] || 0) > 0,
-      );
+      return this.available_tags
+        .filter((tag) => (this.tag_counts[tag] || 0) > 0)
+        .sort(
+          (a, b) =>
+            this.tag_counts[b] - this.tag_counts[a] || a.localeCompare(b),
+        );
     },
 
     is_multiple_users() {
@@ -564,7 +567,7 @@ export default {
         valid_edits.forEach((edit) => {
           (edit.tags || []).forEach((tag) => tag_set.add(tag));
         });
-        this.available_tags = Array.from(tag_set).sort();
+        this.available_tags = Array.from(tag_set);
 
         this.article_groups = Object.values(groups);
 
