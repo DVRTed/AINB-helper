@@ -16,7 +16,7 @@ import {
   create_app,
   get_article_url,
   get_history_url,
-  get_page_info,
+  get_page_info_cached,
   refresh_cleanup_section,
 } from "../shared.js";
 import {
@@ -351,7 +351,7 @@ returns { error: str } on error
 
       try {
         const page_name = mw.config.get("wgPageName");
-        const page_info = await get_page_info(page_name);
+        const page_info = await get_page_info_cached(page_name);
         if (!page_info) throw new Error("Page not found");
 
         const wikitext = page_info.text;
