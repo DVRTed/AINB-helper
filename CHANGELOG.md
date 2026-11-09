@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/DVRTed/AINB-helper/compare/v2.0.1...v2.1.0) (2026-11-09)
+
+
+### Features
+
+* **main-app:** sort tags by edit count ([46c1cad](https://github.com/DVRTed/AINB-helper/commit/46c1cad7005d5f1c1c228821e64247cbb8761d09))
+
 ## [2.0.1](https://github.com/DVRTed/AINB-helper/compare/v2.0.0...v2.0.1) (2026-11-09)
 
 
