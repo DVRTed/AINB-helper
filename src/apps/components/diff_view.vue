@@ -167,7 +167,7 @@ export default {
     format_date(timestamp) {
       if (!timestamp) return "";
       const date = new Date(timestamp);
-      if (isNaN(date.getTime())) return timestamp;
+      if (Number.isNaN(date.getTime())) return timestamp;
       return date.toLocaleString(undefined, {
         year: "numeric",
         month: "short",

@@ -313,8 +313,8 @@ export default {
     unselect_smaller_edits() {
       const input = prompt("Unselect edits smaller than (bytes):", "50");
       if (input === null) return;
-      const threshold = parseInt(input, 10);
-      if (isNaN(threshold)) return;
+      const threshold = Number.parseInt(input, 10);
+      if (Number.isNaN(threshold)) return;
 
       this.article_groups.forEach((group) => {
         group.edits.forEach((edit) => {
@@ -875,7 +875,7 @@ export default {
     format_date(timestamp) {
       if (!timestamp) return "";
       const date = new Date(timestamp);
-      if (isNaN(date.getTime())) return timestamp;
+      if (Number.isNaN(date.getTime())) return timestamp;
       return date.toLocaleString(undefined, {
         year: "numeric",
         month: "short",
