@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/DVRTed/AINB-helper/compare/v2.0.0...v2.0.1) (2026-11-09)
+
+
+### Performance Improvements
+
+* **edit-table:** cache page wikitext and validate by revid ([bf63496](https://github.com/DVRTed/AINB-helper/commit/bf634967d0814433b2222eaf275a3657f130fbb8))
+
 ## [2.0.0](https://github.com/DVRTed/AINB-helper/compare/v1.12.0...v2.0.0) (2026-11-08)
 
 
