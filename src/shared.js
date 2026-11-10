@@ -350,6 +350,21 @@ export async function get_page_info_cached(title) {
   return info;
 }
 
+export function update_page_cache_after_edit(title, text, edit, loaded_revid) {
+  const key = normalize_title(title);
+  if (edit?.newrevid && edit.oldrevid === loaded_revid) {
+    // nobody edited in between, the last save is the cur revision
+    PAGE_CACHE.set(key, {
+      text: text.trimEnd(),
+      revid: edit.newrevid,
+      timestamp: edit.newtimestamp,
+      starttimestamp: edit.newtimestamp,
+    });
+  } else if (!edit?.nochange) {
+    PAGE_CACHE.delete(key); // possible edit conflict
+  }
+}
+
 export async function get_page_wikitext(title) {
   const info = await get_page_info(title);
   return info ? info.text : null;
