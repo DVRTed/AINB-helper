@@ -1,5 +1,11 @@
 // {{Wikipedia:USync |repo=https://github.com/DVRTed/AINB-helper |ref=refs/heads/production |path=changelog.js}}
 /* <nowiki>
+== 2.1.1 (2026-11-10) ==
+
+=== Performance Improvements ===
+
+* '''edit-table:''' update page cache after saving ([https://github.com/DVRTed/AINB-helper/commit/24e7f628057a7ac4ceb850956f7a42b2f2b6a7ea 24e7f62])
+
 == 2.1.0 (2026-11-09) ==
 
 === Features ===
