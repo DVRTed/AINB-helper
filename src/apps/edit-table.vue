@@ -18,6 +18,7 @@ import {
   get_history_url,
   get_page_info_cached,
   refresh_cleanup_section,
+  update_page_cache_after_edit,
 } from "../shared.js";
 import {
   find_article_rows,
@@ -116,6 +117,7 @@ export default {
 
       custom_summary: "",
       wikitext: "",
+      curr_revid: null,
       basetimestamp: null,
       starttimestamp: null,
     };
@@ -356,6 +358,7 @@ returns { error: str } on error
 
         const wikitext = page_info.text;
         this.wikitext = wikitext;
+        this.curr_revid = page_info.revid;
         this.basetimestamp = page_info.timestamp;
         this.starttimestamp = page_info.starttimestamp;
 
@@ -553,7 +556,7 @@ returns { error: str } on error
 
       // save and refresh w/out full reload
       try {
-        await api.postWithEditToken({
+        const res = await api.postWithEditToken({
           action: "edit",
           title: page_name,
           text: new_wikitext,
@@ -561,6 +564,13 @@ returns { error: str } on error
           basetimestamp: this.basetimestamp,
           starttimestamp: this.starttimestamp,
         });
+
+        update_page_cache_after_edit(
+          page_name,
+          new_wikitext,
+          res.edit,
+          this.curr_revid,
+        );
 
         await refresh_cleanup_section(page_name);
         mw.notify("Row(s) saved successfully.", { type: "success" });
