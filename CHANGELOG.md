@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/DVRTed/AINB-helper/compare/v2.1.0...v2.1.1) (2026-11-10)
+
+
+### Performance Improvements
+
+* **edit-table:** update page cache after saving ([24e7f62](https://github.com/DVRTed/AINB-helper/commit/24e7f628057a7ac4ceb850956f7a42b2f2b6a7ea))
+
 ## [2.1.0](https://github.com/DVRTed/AINB-helper/compare/v2.0.1...v2.1.0) (2026-11-09)
 
 
