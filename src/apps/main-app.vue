@@ -540,8 +540,10 @@ export default {
         } while (continuation);
 
         const valid_edits = edits.filter(
-          // always filter out reverted edits by default
-          (edit) => !edit.tags?.includes("mw-reverted"),
+          // always filter out reverted and redirect creations by default
+          (edit) =>
+            !edit.tags?.includes("mw-reverted") &&
+            !edit.tags?.includes("mw-new-redirect"),
         );
         const groups = {};
 
