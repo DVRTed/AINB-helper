@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/DVRTed/AINB-helper/compare/v2.1.1...v2.2.0) (2026-11-21)
+
+
+### Features
+
+* **main-app:** filter out edits that create a new redirect ([764f5f0](https://github.com/DVRTed/AINB-helper/commit/764f5f03e4083dae973ca1f91823d4bd7d3c96c3))
+
 ## [2.1.1](https://github.com/DVRTed/AINB-helper/compare/v2.1.0...v2.1.1) (2026-11-10)
 
 
